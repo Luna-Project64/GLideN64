@@ -1,0 +1,186 @@
+diff --git a/src/Combiner.cpp b/src/Combiner.cpp
+index 7cadc5ef..14241e44 100644
+--- a/src/Combiner.cpp
++++ b/src/Combiner.cpp
+@@ -278,13 +278,54 @@ void CombinerInfo::update()
+ {
+ 	// TODO: find, why gDP.changed & CHANGED_COMBINE not always works (e.g. Mario Tennis).
+ //	if (gDP.changed & CHANGED_COMBINE) {
+-		if (gDP.otherMode.cycleType == G_CYC_COPY)
+-			setCombine(EncodeCombineMode(0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0));
+-		else if (gDP.otherMode.cycleType == G_CYC_FILL)
+-			setCombine(EncodeCombineMode(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE));
+-		else
+-			setCombine(gDP.combine.mux);
+-		gDP.changed &= ~CHANGED_COMBINE;
++	if (gDP.otherMode.cycleType == G_CYC_COPY)
++	{
++		setCombine(EncodeCombineMode(0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0));
++	}
++	else if (gDP.otherMode.cycleType == G_CYC_FILL)
++	{
++		setCombine(EncodeCombineMode(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE));
++	}
++	else
++	{			// This is sanity check of provided combiner
++		if (gDP.otherMode.cycleType == G_CYC_1CYCLE)
++		{
++#define FIX_COMBINE(val) gDP.combine.val##1 = gDP.combine.val##0
++			FIX_COMBINE(aA);
++			FIX_COMBINE(aRGB);
++			FIX_COMBINE(mA);
++			FIX_COMBINE(mRGB);
++			FIX_COMBINE(saA);
++			FIX_COMBINE(saRGB);
++			FIX_COMBINE(sbA);
++			FIX_COMBINE(sbRGB);
++#undef FIX_COMBINE
++		}
++
++		// This forces COMBINED usage for 2nd mode and assumes no magic is happening in 2nd cycle
++		// Some magic may happen in the 2CYCLE mode, do not force anything
++		if (gDP.otherMode.cycleType == G_CYC_2CYCLE)
++		{
++			if (gDP.combine.aRGB0 == gDP.combine.aRGB1
++		     && gDP.combine.mRGB0 == gDP.combine.mRGB1
++			 && gDP.combine.saRGB0 == gDP.combine.saRGB1
++			 && gDP.combine.sbRGB0 == gDP.combine.sbRGB1
++			 )
++			{
++				gDP.combine.aA1 = G_CCMUX_COMBINED;
++				gDP.combine.aRGB1 = G_CCMUX_COMBINED;
++				gDP.combine.mA1 = G_CCMUX_0;
++				gDP.combine.mRGB1 = G_CCMUX_0;
++				gDP.combine.saA1 = G_CCMUX_0;
++				gDP.combine.saRGB1 = G_CCMUX_0;
++				gDP.combine.sbA1 = G_CCMUX_0;
++				gDP.combine.sbRGB1 = G_CCMUX_0;
++			}
++		}
++
++		setCombine(gDP.combine.mux);
++	}
++			gDP.changed &= ~CHANGED_COMBINE;
+ //	}
+ }
+ 
+diff --git a/src/GLideN64.cpp b/src/GLideN64.cpp
+index d1b2645f..cb3050e3 100644
+--- a/src/GLideN64.cpp
++++ b/src/GLideN64.cpp
+@@ -1,5 +1,5 @@
+ #include "Revision.h"
+ char pluginName[] = "GLideN64";
+-char pluginNameWithRevision[] = "GLideN64 rev." PLUGIN_REVISION;
++char pluginNameWithRevision[] = "LINK's GLideN64 v4.5.1";
+ wchar_t pluginNameW[] = L"GLideN64";
+ void (*CheckInterrupts)( void );
+diff --git a/src/PluginAPI.h b/src/PluginAPI.h
+index 4a0ae4aa..88ef2bfc 100644
+--- a/src/PluginAPI.h
++++ b/src/PluginAPI.h
+@@ -7,7 +7,7 @@
+ #include "windows/GLideN64_windows.h"
+ #include "ZilmarGFX_1_3.h"
+ #include "FrameBufferInfoAPI.h"
+-//#define RSPTHREAD
++#define RSPTHREAD
+ #endif
+ 
+ #ifdef RSPTHREAD
+diff --git a/src/VI.cpp b/src/VI.cpp
+index b3b88ad9..390632ed 100644
+--- a/src/VI.cpp
++++ b/src/VI.cpp
+@@ -32,6 +32,8 @@ u16 VI_GetMaxBufferHeight(u16 _width)
+ 
+ void VI_UpdateSize()
+ {
++	if (*REG.VI_V_SYNC == 0x0627) *REG.VI_V_SYNC = 0x0834;
++
+ 	const f32 xScale = _FIXED2FLOAT( _SHIFTR( *REG.VI_X_SCALE, 0, 12 ), 10 );
+ //	f32 xOffset = _FIXED2FLOAT( _SHIFTR( *REG.VI_X_SCALE, 16, 12 ), 10 );
+ 
+diff --git a/src/gDP.cpp b/src/gDP.cpp
+index 0c5c231d..db1a6778 100644
+--- a/src/gDP.cpp
++++ b/src/gDP.cpp
+@@ -324,6 +324,36 @@ void gDPSetTileSize( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
+ 	gDP.tiles[tile].flrs = _FIXED2FLOAT( lrs, 2 );
+ 	gDP.tiles[tile].flrt = _FIXED2FLOAT( lrt, 2 );
+ 
++	// Force maskT and maskS for given sizes if we go too far
++	// Get normal sizes for lrs/lrt
++	u32 lrsizes = gDP.tiles[tile].lrs + 1;
++	u32 lrsizet = gDP.tiles[tile].lrt + 1;
++
++	if (lrsizes == 16 && lrsizet == 2)
++	{
++		// Get normal sizes for masks/maskt
++		u32 masksizes = 1 << gDP.tiles[tile].masks;
++		u32 masksizet = 1 << gDP.tiles[tile].maskt;
++
++		// Do validity check
++		// TODO: Not sure if this actually works
++		if (masksizes > lrsizes)
++		{
++			unsigned long index = 0;
++			_BitScanForward(&index, lrsizes);
++			gDP.tiles[tile].masks = index;
++			gDP.tiles[tile].originalMaskS = index;
++		}
++
++		if (masksizet > lrsizet)
++		{
++			unsigned long index = 0;
++			_BitScanForward(&index, lrsizet);
++			gDP.tiles[tile].maskt = index;
++			gDP.tiles[tile].originalMaskT = index;
++		}
++	}
++
+ 	gDP.changed |= CHANGED_TILE;
+ 
+ 	DebugMsg( DEBUG_NORMAL, "gDPSetTileSize( %i, %.2f, %.2f, %.2f, %.2f );\n",
+diff --git a/src/gSP.cpp b/src/gSP.cpp
+index 08a8730f..476a05ab 100644
+--- a/src/gSP.cpp
++++ b/src/gSP.cpp
+@@ -1731,6 +1731,7 @@ void gSPTexture( f32 sc, f32 tc, u32 level, u32 tile, u32 on )
+ {
+ 	gSP.texture.on = on;
+ 	if (on == 0) {
++		gDPSetCombine(0xffffff, 0xFFFE793C);
+ 		DebugMsg(DEBUG_NORMAL, "gSPTexture skipped b/c of off\n");
+ 		return;
+ 	}
+@@ -1884,6 +1885,16 @@ void gSPSetOtherMode_H(u32 _length, u32 _shift, u32 _data)
+ 
+ void gSPSetOtherMode_L(u32 _length, u32 _shift, u32 _data)
+ {
++	// Typo fixrefix
++	// !!! This is very cheesy fix
++	{
++		const u32 maskH = (((u64)1 << 2) - 1) << 0x14;
++		if (!(gDP.otherMode.h & maskH) && _data == 0xC8113078)
++		{
++			_data = 0x00443078;
++		}
++	}
++
+ 	const u32 mask = (((u64)1 << _length) - 1) << _shift;
+ 	gDP.otherMode.l = (gDP.otherMode.l&(~mask)) | _data;
+ 
+diff --git a/src/uCodes/F3D.cpp b/src/uCodes/F3D.cpp
+index aaad5426..920abba4 100644
+--- a/src/uCodes/F3D.cpp
++++ b/src/uCodes/F3D.cpp
+@@ -89,7 +89,7 @@ void F3D_DList( u32 w0, u32 w1 )
+ 		case G_DL_PUSH:
+ 			gSPDisplayList( w1 );
+ 			break;
+-		case G_DL_NOPUSH:
++		default:
+ 			gSPBranchList( w1 );
+ 			break;
+ 	}
