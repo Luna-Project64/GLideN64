@@ -19,6 +19,8 @@
 #include "Log.h"
 #include "DisplayWindow.h"
 
+#include "rtm/matrix4x4f.h"
+
 using namespace std;
 using namespace graphics;
 
@@ -450,28 +452,45 @@ void gSPUpdateLookatVectors()
 /*---------------------------------Vertex Load------------------------------------*/
 
 static
-void gSPTransformVector_default(float vtx[4], float mtx[4][4])
+void gSPTransformVector(float vtx[4], float mtx[4][4])
 {
 	const float x = vtx[0];
 	const float y = vtx[1];
 	const float z = vtx[2];
 
-	vtx[0] = x * mtx[0][0] + y * mtx[1][0] + z * mtx[2][0] + mtx[3][0];
-	vtx[1] = x * mtx[0][1] + y * mtx[1][1] + z * mtx[2][1] + mtx[3][1];
-	vtx[2] = x * mtx[0][2] + y * mtx[1][2] + z * mtx[2][2] + mtx[3][2];
-	vtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
+	float vvtx[4];
+	vvtx[0] = x * mtx[0][0] + y * mtx[1][0] + z * mtx[2][0] + mtx[3][0];
+	vvtx[1] = x * mtx[0][1] + y * mtx[1][1] + z * mtx[2][1] + mtx[3][1];
+	vvtx[2] = x * mtx[0][2] + y * mtx[1][2] + z * mtx[2][2] + mtx[3][2];
+	vvtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
+
+	auto rvtx = rtm::vector_set(vtx[0], vtx[1], vtx[2], 1.f);
+	auto rmtx = tortm44(mtx);
+	auto res = rtm::matrix_mul_vector(rvtx, rmtx);
+
+	toFloat4(res, vtx);
+	floatVerify(vtx, vvtx, sizeof(vvtx) / sizeof(*vvtx));
 }
 
 static
-void gSPInverseTransformVector_default(float vec[3], float mtx[4][4])
+void gSPInverseTransformVector(float vec[3], float mtx[4][4])
 {
 	const float x = vec[0];
 	const float y = vec[1];
 	const float z = vec[2];
 
-	vec[0] = mtx[0][0] * x + mtx[0][1] * y + mtx[0][2] * z;
-	vec[1] = mtx[1][0] * x + mtx[1][1] * y + mtx[1][2] * z;
-	vec[2] = mtx[2][0] * x + mtx[2][1] * y + mtx[2][2] * z;
+	float vres[4];
+	vres[0] = mtx[0][0] * x + mtx[0][1] * y + mtx[0][2] * z;
+	vres[1] = mtx[1][0] * x + mtx[1][1] * y + mtx[1][2] * z;
+	vres[2] = mtx[2][0] * x + mtx[2][1] * y + mtx[2][2] * z;
+
+	auto rvtx = tortm3(vec);
+	auto rmtx = tortm44(mtx);
+	rtm::matrix3x3f rmtx3 = rtm::matrix_cast(rmtx);
+	auto rmtx3t = rtm::matrix_transpose(rmtx3);
+	auto res = rtm::matrix_mul_vector3(rvtx, rmtx3t);
+	toFloat3(res, vec);
+	floatVerify(vec, vres, sizeof(vres) / sizeof(*vres));
 }
 
 template <u32 VNUM>
@@ -772,10 +791,18 @@ void gSPTransformVertex(u32 v, SPVertex * spVtx, float mtx[4][4])
 		x = vtx.x;
 		y = vtx.y;
 		z = vtx.z;
-		vtx.x = x * mtx[0][0] + y * mtx[1][0] + z * mtx[2][0] + mtx[3][0];
-		vtx.y = x * mtx[0][1] + y * mtx[1][1] + z * mtx[2][1] + mtx[3][1];
-		vtx.z = x * mtx[0][2] + y * mtx[1][2] + z * mtx[2][2] + mtx[3][2];
-		vtx.w = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
+		float vvtx[4];
+		vvtx[0] = x * mtx[0][0] + y * mtx[1][0] + z * mtx[2][0] + mtx[3][0];
+		vvtx[1] = x * mtx[0][1] + y * mtx[1][1] + z * mtx[2][1] + mtx[3][1];
+		vvtx[2] = x * mtx[0][2] + y * mtx[1][2] + z * mtx[2][2] + mtx[3][2];
+		vvtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
+
+		auto rvtx = rtm::vector_set(vtx.x, vtx.y, vtx.z, 1.f);
+		auto rmtx = tortm44(mtx);
+		auto res = rtm::matrix_mul_vector(rvtx, rmtx);
+
+		toFloat4(res, &vtx.x);
+		floatVerify(&vtx.x, vvtx, sizeof(vvtx) / sizeof(*vvtx));
 	}
 #else
 	void gSPTransformVector_NEON(float vtx[4], float mtx[4][4]);
@@ -2122,16 +2149,6 @@ void gSPSprite2DBase(u32 _base)
 			drawer.drawScreenSpaceTriangle(4);
 	} while (RSP.nextCmd == 0xBD || RSP.nextCmd == 0xBE);
 }
-
-#ifndef __NEON_OPT
-void(*gSPInverseTransformVector)(float vec[3], float mtx[4][4]) = gSPInverseTransformVector_default;
-void(*gSPTransformVector)(float vtx[4], float mtx[4][4]) = gSPTransformVector_default;
-#else
-void gSPInverseTransformVector_NEON(float vec[3], float mtx[4][4]);
-void gSPTransformVector_NEON(float vtx[4], float mtx[4][4]);
-void(*gSPInverseTransformVector)(float vec[3], float mtx[4][4]) = gSPInverseTransformVector_NEON;
-void(*gSPTransformVector)(float vtx[4], float mtx[4][4]) = gSPTransformVector_NEON;
-#endif //__NEON_OPT
 
 void gSPSetupFunctions()
 {
