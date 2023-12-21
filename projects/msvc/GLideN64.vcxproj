@@ -315,9 +315,10 @@ copy /Y "$(OutDir)$(TargetName).*" "$(Mupen64PluginsDir_x64)")</Command>
     <ClCompile Include="..\..\src\RSP.cpp" />
     <ClCompile Include="..\..\src\RSP_LoadMatrix.cpp">
       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\..\src\RSP_LoadMatrixX86.cpp">
-      <ExcludedFromBuild Condition="'$(Platform)'=='x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_mupenplus|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_mupenplus|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\SoftwareRender.cpp" />
     <ClCompile Include="..\..\src\TexrectDrawer.cpp" />
@@ -460,6 +461,60 @@ copy /Y "$(OutDir)$(TargetName).*" "$(Mupen64PluginsDir_x64)")</Command>
     <ClInclude Include="..\..\src\RDP.h" />
     <ClInclude Include="..\..\src\GraphicsDrawer.h" />
     <ClInclude Include="..\..\src\RSP.h" />
+    <ClInclude Include="..\..\src\rtm\constants.h" />
+    <ClInclude Include="..\..\src\rtm\fwd.h" />
+    <ClInclude Include="..\..\src\rtm\impl\bit_cast.impl.h" />
+    <ClInclude Include="..\..\src\rtm\impl\cmath.impl.h" />
+    <ClInclude Include="..\..\src\rtm\impl\compiler_utils.h" />
+    <ClInclude Include="..\..\src\rtm\impl\detect_arch.h" />
+    <ClInclude Include="..\..\src\rtm\impl\detect_compiler.h" />
+    <ClInclude Include="..\..\src\rtm\impl\detect_cpp_version.h" />
+    <ClInclude Include="..\..\src\rtm\impl\detect_features.h" />
+    <ClInclude Include="..\..\src\rtm\impl\error.h" />
+    <ClInclude Include="..\..\src\rtm\impl\macros.mask4.impl.h" />
+    <ClInclude Include="..\..\src\rtm\impl\macros.matrix.impl.h" />
+    <ClInclude Include="..\..\src\rtm\impl\macros.vector4.impl.h" />
+    <ClInclude Include="..\..\src\rtm\impl\mask_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\matrix_affine_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\matrix_cast.h" />
+    <ClInclude Include="..\..\src\rtm\impl\matrix_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\memory_utils.h" />
+    <ClInclude Include="..\..\src\rtm\impl\quat_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\qvs_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\qvv_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\qv_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\scalar_common.h" />
+    <ClInclude Include="..\..\src\rtm\impl\type_args.h" />
+    <ClInclude Include="..\..\src\rtm\impl\vector_common.h" />
+    <ClInclude Include="..\..\src\rtm\macros.h" />
+    <ClInclude Include="..\..\src\rtm\mask4d.h" />
+    <ClInclude Include="..\..\src\rtm\mask4f.h" />
+    <ClInclude Include="..\..\src\rtm\mask4i.h" />
+    <ClInclude Include="..\..\src\rtm\mask4q.h" />
+    <ClInclude Include="..\..\src\rtm\math.h" />
+    <ClInclude Include="..\..\src\rtm\matrix3x3d.h" />
+    <ClInclude Include="..\..\src\rtm\matrix3x3f.h" />
+    <ClInclude Include="..\..\src\rtm\matrix3x4d.h" />
+    <ClInclude Include="..\..\src\rtm\matrix3x4f.h" />
+    <ClInclude Include="..\..\src\rtm\matrix4x4d.h" />
+    <ClInclude Include="..\..\src\rtm\matrix4x4f.h" />
+    <ClInclude Include="..\..\src\rtm\packing\quatd.h" />
+    <ClInclude Include="..\..\src\rtm\packing\quatf.h" />
+    <ClInclude Include="..\..\src\rtm\quatd.h" />
+    <ClInclude Include="..\..\src\rtm\quatf.h" />
+    <ClInclude Include="..\..\src\rtm\qvd.h" />
+    <ClInclude Include="..\..\src\rtm\qvf.h" />
+    <ClInclude Include="..\..\src\rtm\qvsd.h" />
+    <ClInclude Include="..\..\src\rtm\qvsf.h" />
+    <ClInclude Include="..\..\src\rtm\qvvd.h" />
+    <ClInclude Include="..\..\src\rtm\qvvf.h" />
+    <ClInclude Include="..\..\src\rtm\scalard.h" />
+    <ClInclude Include="..\..\src\rtm\scalarf.h" />
+    <ClInclude Include="..\..\src\rtm\types.h" />
+    <ClInclude Include="..\..\src\rtm\type_traits.h" />
+    <ClInclude Include="..\..\src\rtm\vector4d.h" />
+    <ClInclude Include="..\..\src\rtm\vector4f.h" />
+    <ClInclude Include="..\..\src\rtm\version.h" />
     <ClInclude Include="..\..\src\SoftwareRender.h" />
     <ClInclude Include="..\..\src\TexrectDrawer.h" />
     <ClInclude Include="..\..\src\TextDrawer.h" />

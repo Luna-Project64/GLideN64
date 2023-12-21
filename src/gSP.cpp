@@ -172,7 +172,8 @@ void gSPMatrix( u32 matrix, u8 param )
 		return;
 	}
 
-	RSP_LoadMatrix( mtx, address );
+	auto rmtx = RSP_LoadMatrix( address );
+	toFloatMatrix(rmtx, mtx);
 
 	if (param & G_MTX_PROJECTION) {
 		if (param & G_MTX_LOAD)
@@ -224,7 +225,8 @@ void gSPDMAMatrix( u32 matrix, u8 index, u8 multiply )
 		return;
 	}
 
-	RSP_LoadMatrix(mtx, address);
+	auto rmtx = RSP_LoadMatrix(address);
+	toFloatMatrix(rmtx, mtx);
 
 	gSP.matrix.modelViewi = index;
 
@@ -296,7 +298,8 @@ void gSPForceMatrix( u32 mptr )
 		return;
 	}
 
-	RSP_LoadMatrix(gSP.matrix.combined, address);
+	auto rmtx = RSP_LoadMatrix(address);
+	toFloatMatrix(rmtx, gSP.matrix.combined);
 
 	gSP.changed &= ~CHANGED_MATRIX;
 
@@ -465,10 +468,10 @@ void gSPTransformVector(float vtx[4], float mtx[4][4])
 	vvtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
 
 	auto rvtx = rtm::vector_set(vtx[0], vtx[1], vtx[2], 1.f);
-	auto rmtx = tortm44(mtx);
+	auto rmtx = toRtmMatrix(mtx);
 	auto res = rtm::matrix_mul_vector(rvtx, rmtx);
 
-	toFloat4(res, vtx);
+	rtm::vector_store(res, vtx);
 	floatVerify(vtx, vvtx, sizeof(vvtx) / sizeof(*vvtx));
 }
 
@@ -484,12 +487,12 @@ void gSPInverseTransformVector(float vec[3], float mtx[4][4])
 	vres[1] = mtx[1][0] * x + mtx[1][1] * y + mtx[1][2] * z;
 	vres[2] = mtx[2][0] * x + mtx[2][1] * y + mtx[2][2] * z;
 
-	auto rvtx = tortm3(vec);
-	auto rmtx = tortm44(mtx);
+	auto rvtx = rtm::vector_load3(vec);
+	auto rmtx = toRtmMatrix(mtx);
 	rtm::matrix3x3f rmtx3 = rtm::matrix_cast(rmtx);
 	auto rmtx3t = rtm::matrix_transpose(rmtx3);
 	auto res = rtm::matrix_mul_vector3(rvtx, rmtx3t);
-	toFloat3(res, vec);
+	rtm::vector_store3(res, vec);
 	floatVerify(vec, vres, sizeof(vres) / sizeof(*vres));
 }
 
@@ -798,10 +801,10 @@ void gSPTransformVertex(u32 v, SPVertex * spVtx, float mtx[4][4])
 		vvtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
 
 		auto rvtx = rtm::vector_set(vtx.x, vtx.y, vtx.z, 1.f);
-		auto rmtx = tortm44(mtx);
+		auto rmtx = toRtmMatrix(mtx);
 		auto res = rtm::matrix_mul_vector(rvtx, rmtx);
 
-		toFloat4(res, &vtx.x);
+		rtm::vector_store(res, &vtx.x);
 		floatVerify(&vtx.x, vvtx, sizeof(vvtx) / sizeof(*vvtx));
 	}
 #else

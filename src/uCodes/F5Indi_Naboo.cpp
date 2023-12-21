@@ -23,6 +23,7 @@
 
 #include "DebugDump.h"
 #include "Log.h"
+#include "3DMath.h"
 
 #define F5INDI_MOVEMEM			0x01
 #define F5INDI_SET_DLIST_ADDR	0x02
@@ -537,7 +538,8 @@ void F5INDI_MoveMem(u32 _w0, u32 _w1)
 			gSPForceMatrix(_w1);
 			break;
 		case 0x010E403F:
-			RSP_LoadMatrix(getIndiData().mtx_vtx_gen, _SHIFTR(_w1, 0, 24));
+			auto rmtx = RSP_LoadMatrix(_SHIFTR(_w1, 0, 24));
+			toFloatMatrix(rmtx, getIndiData().mtx_vtx_gen);
 			F5INDI_LoadSTMatrix();
 			break;
 		}

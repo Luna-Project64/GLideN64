@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "N64.h"
 
+#include "rtm/matrix4x4f.h"
+
 typedef struct
 {
 	u32 PC[18], PCi;
@@ -26,7 +28,7 @@ extern u32 rectDepthBufferCopyFrame;
 
 void RSP_Init();
 void RSP_ProcessDList();
-void RSP_LoadMatrix( f32 mtx[4][4], u32 address );
+rtm::matrix4x4f RSP_LoadMatrix( u32 address );
 void RSP_CheckDLCounter();
 
 #endif

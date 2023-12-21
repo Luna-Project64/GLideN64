@@ -442,17 +442,17 @@ void ZSort_MoveMem( u32 _w0, u32 _w1 )
 	break;
 
 	case GZM_MMTX:  // model matrix
-		RSP_LoadMatrix(gSP.matrix.modelView[gSP.matrix.modelViewi], addr);
+		toFloatMatrix(RSP_LoadMatrix(addr), gSP.matrix.modelView[gSP.matrix.modelViewi]);
 		gSP.changed |= CHANGED_MATRIX;
 	break;
 
 	case GZM_PMTX:  // projection matrix
-		RSP_LoadMatrix(gSP.matrix.projection, addr);
+		toFloatMatrix(RSP_LoadMatrix(addr), gSP.matrix.projection);
 		gSP.changed |= CHANGED_MATRIX;
 	break;
 
 	case GZM_MPMTX:  // combined matrix
-		RSP_LoadMatrix(gSP.matrix.combined, addr);
+		toFloatMatrix(RSP_LoadMatrix(addr), gSP.matrix.combined);
 		gSP.changed &= ~CHANGED_MATRIX;
 	break;
 

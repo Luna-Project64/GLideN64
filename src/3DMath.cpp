@@ -19,13 +19,13 @@ void MultMatrix(float m0[4][4], float m1[4][4], float dest[4][4])
 		vdest[3][i] = m0[3][i] * m1[3][3] + m0[2][i] * m1[3][2] + m0[1][i] * m1[3][1] + m0[0][i] * m1[3][0];
 	}
 
-	toFloat44(rtm::matrix_mul(tortm44(m1), tortm44(m0)), dest);
+	toFloatMatrix(rtm::matrix_mul(toRtmMatrix(m1), toRtmMatrix(m0)), dest);
 	floatVerify((float*)dest, (float*)vdest, sizeof(vdest) / sizeof(*vdest));
 }
 
 void MultMatrix2(float m0[4][4], float m1[4][4])
 {
-	toFloat44(rtm::matrix_mul(tortm44(m1), tortm44(m0)), m0);
+	toFloatMatrix(rtm::matrix_mul(toRtmMatrix(m1), toRtmMatrix(m0)), m0);
 }
 
 void TransformVectorNormalize(float vec[3], float mtx[4][4])
@@ -38,13 +38,13 @@ void TransformVectorNormalize(float vec[3], float mtx[4][4])
 	float vresn[3] = { vres[0], vres[1], vres[2] };
 	Normalize(vresn);
 
-	auto rvec = tortm3(vec);
-	auto rmtx = tortm44(mtx);
+	auto rvec = rtm::vector_load3(vec);
+	auto rmtx = toRtmMatrix(mtx);
 	rtm::matrix3x3f rmtx3 = rtm::matrix_cast(rmtx);
 
 	auto rvres = rtm::matrix_mul_vector3(rvec, rmtx3);
 	auto rvresn = rtm::vector_normalize3(rvres, rvres);
-	toFloat3(rvresn, vec);
+	rtm::vector_store3(rvresn, vec);
 
 	floatVerify(vec, vresn, sizeof(vres) / sizeof(*vres));
 }
@@ -57,14 +57,14 @@ void InverseTransformVectorNormalize(float src[3], float dst[3], float mtx[4][4]
 	vdst[2] = mtx[2][0] * src[0] + mtx[2][1] * src[1] + mtx[2][2] * src[2];
 	Normalize(vdst);
 
-	auto rsrc = tortm3(src);
-	auto rmtx = tortm44(mtx);
+	auto rsrc = rtm::vector_load3(src);
+	auto rmtx = toRtmMatrix(mtx);
 	rtm::matrix3x3f rmtx3 = rtm::matrix_cast(rmtx);
 	auto rmtx3t = rtm::matrix_transpose(rmtx3);
 
 	auto rvres = rtm::matrix_mul_vector3(rsrc, rmtx3t);
 	auto rvresn = rtm::vector_normalize3(rvres, rvres);
-	toFloat3(rvresn, dst);
+	rtm::vector_store3(rvresn, dst);
 
 	floatVerify(vdst, dst, sizeof(vdst) / sizeof(*vdst));
 }
@@ -81,9 +81,9 @@ void Normalize(float v[3])
 		vv[2] /= len;
 	}
 
-	auto rv = tortm3(v);
+	auto rv = rtm::vector_load3(v);
 	rv = rtm::vector_normalize3(rv, rv);
-	toFloat3(rv, v);
+	rtm::vector_store3(rv, v);
 
 	floatVerify(v, vv, sizeof(vv) / sizeof(*vv));
 }

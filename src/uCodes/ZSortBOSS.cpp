@@ -150,7 +150,8 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 	// model matrix
 	if((_w0 & 0xfff) == 0x830) {
 		assert(flag == 0);
-		RSP_LoadMatrix(gSP.matrix.modelView[gSP.matrix.modelViewi], addr);
+		auto rmtx = RSP_LoadMatrix(addr);
+		toFloatMatrix(rmtx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
 		gSP.changed |= CHANGED_MATRIX;
 		return;
 	}
@@ -158,7 +159,8 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 	// projection matrix
 	if((_w0 & 0xfff) == 0x870) {
 		assert(flag == 0);
-		RSP_LoadMatrix(gSP.matrix.projection, addr);
+		auto rmtx = RSP_LoadMatrix(addr);
+		toFloatMatrix(rmtx, gSP.matrix.projection);
 		gSP.changed |= CHANGED_MATRIX;
 		return;
 	}
@@ -166,7 +168,8 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 	// combined matrix
 	if((_w0 & 0xfff) == 0x8b0) {
 		if(flag == 0) {
-			RSP_LoadMatrix(gSP.matrix.combined, addr);
+			auto rmtx = RSP_LoadMatrix(addr);
+			toFloatMatrix(rmtx, gSP.matrix.combined);
 			gSP.changed &= ~CHANGED_MATRIX;
 		} else {
 			StoreMatrix(gSP.matrix.combined, addr);

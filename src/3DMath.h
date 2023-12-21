@@ -18,64 +18,26 @@ void Normalize(float v[3]);
 float DotProduct(const float v0[3], const float v1[3]);
 void CopyMatrix( float m0[4][4], float m1[4][4]);
 
-static inline rtm::vector4f tortm4(const float v[4])
+static inline rtm::matrix4x4f toRtmMatrix(const float m[4][4])
 {
-	return rtm::vector_set(v[0], v[1], v[2], v[3]);
+	return rtm::matrix_set(rtm::vector_load(m[0])
+						 , rtm::vector_load(m[1])
+					     , rtm::vector_load(m[2])
+					     , rtm::vector_load(m[3]));
 }
 
-static inline rtm::vector4f tortm3(const float v[3])
+static inline void toFloatMatrix(rtm::matrix4x4f m, float dest[4][4])
 {
-	return rtm::vector_set(v[0], v[1], v[2]);
-}
-
-static inline rtm::matrix4x4f tortm44(const float m[4][4])
-{
-	return rtm::matrix_set(tortm4(m[0]), tortm4(m[1]), tortm4(m[2]), tortm4(m[3]));
-}
-
-static inline void toFloat44(rtm::matrix4x4f m, float dest[4][4])
-{
-	auto x = m.x_axis;
-	dest[0][0] = rtm::vector_get_x(x);
-	dest[0][1] = rtm::vector_get_y(x);
-	dest[0][2] = rtm::vector_get_z(x);
-	dest[0][3] = rtm::vector_get_w(x);
-	auto y = m.y_axis;
-	dest[1][0] = rtm::vector_get_x(y);
-	dest[1][1] = rtm::vector_get_y(y);
-	dest[1][2] = rtm::vector_get_z(y);
-	dest[1][3] = rtm::vector_get_w(y);
-	auto z = m.z_axis;
-	dest[2][0] = rtm::vector_get_x(z);
-	dest[2][1] = rtm::vector_get_y(z);
-	dest[2][2] = rtm::vector_get_z(z);
-	dest[2][3] = rtm::vector_get_w(z);
-	auto w = m.w_axis;
-	dest[3][0] = rtm::vector_get_x(w);
-	dest[3][1] = rtm::vector_get_y(w);
-	dest[3][2] = rtm::vector_get_z(w);
-	dest[3][3] = rtm::vector_get_w(w);
-}
-
-static inline void toFloat3(rtm::vector4f v, float dest[3])
-{
-	dest[0] = rtm::vector_get_x(v);
-	dest[1] = rtm::vector_get_y(v);
-	dest[2] = rtm::vector_get_z(v);
-}
-
-static inline void toFloat4(rtm::vector4f v, float dest[4])
-{
-	dest[0] = rtm::vector_get_x(v);
-	dest[1] = rtm::vector_get_y(v);
-	dest[2] = rtm::vector_get_z(v);
-	dest[3] = rtm::vector_get_w(v);
+	rtm::vector_store(m.x_axis, dest[0]);
+	rtm::vector_store(m.y_axis, dest[1]);
+	rtm::vector_store(m.z_axis, dest[2]);
+	rtm::vector_store(m.w_axis, dest[3]);
 }
 
 inline float DotProduct(const float v0[3], const float v1[3])
 {
-	auto rv0 = tortm3(v0);
-	auto rv1 = tortm3(v1);
+	auto rv0 = rtm::vector_load3(v0);
+	auto rv1 = rtm::vector_load3(v1);
 	return rtm::vector_dot3(rv0, rv1);
 }
 

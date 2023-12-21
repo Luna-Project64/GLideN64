@@ -72,6 +72,15 @@
     <Filter Include="Header Files\ANGLE">
       <UniqueIdentifier>{2149d262-9324-4b6a-ac8b-a76c26eb6c11}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\rtm">
+      <UniqueIdentifier>{b1b1b04e-d2e2-4a62-8ecd-d20c30914f1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\rtm\packing">
+      <UniqueIdentifier>{5c544fa8-70bc-403f-8fce-9df3412c3350}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\rtm\impl">
+      <UniqueIdentifier>{d3b949b7-de59-460e-abde-d627e60d2384}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Combiner.cpp">
@@ -289,9 +298,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Graphics\ObjectHandle.cpp">
       <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\RSP_LoadMatrixX86.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CRC_OPT.cpp">
       <Filter>Source Files</Filter>
@@ -777,6 +783,168 @@
     </ClInclude>
     <ClInclude Include="..\..\src\ConfigDecl.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\constants.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\fwd.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\macros.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\mask4d.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\mask4f.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\mask4i.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\mask4q.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\math.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\matrix3x3d.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\matrix3x3f.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\matrix3x4d.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\matrix3x4f.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\matrix4x4d.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\matrix4x4f.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\quatd.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\quatf.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\qvd.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\qvf.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\qvsd.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\qvsf.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\qvvd.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\qvvf.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\scalard.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\scalarf.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\type_traits.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\types.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\vector4d.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\vector4f.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\version.h">
+      <Filter>Header Files\rtm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\packing\quatd.h">
+      <Filter>Header Files\rtm\packing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\packing\quatf.h">
+      <Filter>Header Files\rtm\packing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\bit_cast.impl.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\cmath.impl.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\compiler_utils.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\detect_arch.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\detect_compiler.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\detect_cpp_version.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\detect_features.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\error.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\macros.mask4.impl.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\macros.matrix.impl.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\macros.vector4.impl.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\mask_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\matrix_affine_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\matrix_cast.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\matrix_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\memory_utils.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\quat_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\qv_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\qvs_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\qvv_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\scalar_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\type_args.h">
+      <Filter>Header Files\rtm\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rtm\impl\vector_common.h">
+      <Filter>Header Files\rtm\impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
