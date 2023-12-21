@@ -55,7 +55,7 @@ void gSPFlushTriangles()
 static
 void _gSPCombineMatrices()
 {
-	MultMatrix(gSP.matrix.projection, gSP.matrix.modelView[gSP.matrix.modelViewi], gSP.matrix.combined);
+	gSP.matrix.combined = rtm::matrix_mul(gSP.matrix.modelView[gSP.matrix.modelViewi], gSP.matrix.projection);
 	gSP.changed &= ~CHANGED_MATRIX;
 }
 
@@ -120,15 +120,6 @@ void gSP4Triangles(const s32 v00, const s32 v01, const s32 v02,
 
 gSPInfo gSP;
 
-static
-f32 identityMatrix[4][4] =
-{
-	{ 1.0f, 0.0f, 0.0f, 0.0f },
-	{ 0.0f, 1.0f, 0.0f, 0.0f },
-	{ 0.0f, 0.0f, 1.0f, 0.0f },
-	{ 0.0f, 0.0f, 0.0f, 1.0f }
-};
-
 void gSPLoadUcodeEx( u32 uc_start, u32 uc_dstart, u16 uc_dsize )
 {
 	gSP.matrix.modelViewi = 0;
@@ -158,8 +149,6 @@ void gSPNoOp()
 
 void gSPMatrix( u32 matrix, u8 param )
 {
-
-	f32 mtx[4][4];
 	u32 address = RSP_SegmentToPhysical( matrix );
 
 	if (address + 64 > RDRAMSize) {
@@ -172,27 +161,26 @@ void gSPMatrix( u32 matrix, u8 param )
 		return;
 	}
 
-	auto rmtx = RSP_LoadMatrix( address );
-	toFloatMatrix(rmtx, mtx);
+	auto mtx = RSP_LoadMatrix( address );
 
 	if (param & G_MTX_PROJECTION) {
 		if (param & G_MTX_LOAD)
-			CopyMatrix( gSP.matrix.projection, mtx );
+			gSP.matrix.projection = mtx;
 		else
-			MultMatrix2( gSP.matrix.projection, mtx );
+			gSP.matrix.projection = rtm::matrix_mul(mtx, gSP.matrix.projection);
 	} else {
 		if ((param & G_MTX_PUSH)) {
 			if (gSP.matrix.modelViewi < (gSP.matrix.stackSize)) {
-				CopyMatrix(gSP.matrix.modelView[gSP.matrix.modelViewi + 1], gSP.matrix.modelView[gSP.matrix.modelViewi]);
+				gSP.matrix.modelView[gSP.matrix.modelViewi + 1] = gSP.matrix.modelView[gSP.matrix.modelViewi];
 				gSP.matrix.modelViewi++;
 			} else
 				DebugMsg(DEBUG_NORMAL | DEBUG_ERROR, "// Modelview stack overflow\n");
 		}
 
 		if (param & G_MTX_LOAD)
-			CopyMatrix( gSP.matrix.modelView[gSP.matrix.modelViewi], mtx );
+			gSP.matrix.modelView[gSP.matrix.modelViewi] = mtx;
 		else
-			MultMatrix2( gSP.matrix.modelView[gSP.matrix.modelViewi], mtx );
+			gSP.matrix.modelView[gSP.matrix.modelViewi] = rtm::matrix_mul(mtx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
 		gSP.changed |= CHANGED_LIGHT | CHANGED_LOOKAT;
 	}
 
@@ -204,18 +192,17 @@ void gSPMatrix( u32 matrix, u8 param )
 		(param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL",
 		(param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
 	DebugMsg(DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[0][0], mtx[0][1], mtx[0][2], mtx[0][3] );
+		matrixElement(mtx, 0, 0), matrixElement(mtx, 0, 1), matrixElement(mtx, 0, 2), matrixElement(mtx, 0, 3));
 	DebugMsg( DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[1][0], mtx[1][1], mtx[1][2], mtx[1][3] );
+		matrixElement(mtx, 1, 0), matrixElement(mtx, 1, 1), matrixElement(mtx, 1, 2), matrixElement(mtx, 1, 3));
 	DebugMsg( DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[2][0], mtx[2][1], mtx[2][2], mtx[2][3] );
+		matrixElement(mtx, 2, 0), matrixElement(mtx, 2, 1), matrixElement(mtx, 2, 2), matrixElement(mtx, 2, 3));
 	DebugMsg( DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[3][0], mtx[3][1], mtx[3][2], mtx[3][3] );
+		matrixElement(mtx, 3, 0), matrixElement(mtx, 3, 1), matrixElement(mtx, 3, 2), matrixElement(mtx, 3, 3));
 }
 
 void gSPDMAMatrix( u32 matrix, u8 index, u8 multiply )
 {
-	f32 mtx[4][4];
 	u32 address = gSP.DMAOffsets.mtx + RSP_SegmentToPhysical( matrix );
 
 	if (address + 64 > RDRAMSize) {
@@ -225,17 +212,16 @@ void gSPDMAMatrix( u32 matrix, u8 index, u8 multiply )
 		return;
 	}
 
-	auto rmtx = RSP_LoadMatrix(address);
-	toFloatMatrix(rmtx, mtx);
+	auto mtx = RSP_LoadMatrix(address);
 
 	gSP.matrix.modelViewi = index;
 
 	if (multiply)
-		MultMatrix(gSP.matrix.modelView[0], mtx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
+		gSP.matrix.modelView[gSP.matrix.modelViewi] = rtm::matrix_mul(mtx, gSP.matrix.modelView[0]);
 	else
-		CopyMatrix( gSP.matrix.modelView[gSP.matrix.modelViewi], mtx );
+		gSP.matrix.modelView[gSP.matrix.modelViewi] = mtx;
 
-	CopyMatrix( gSP.matrix.projection, identityMatrix );
+	gSP.matrix.projection = rtm::matrix_identity();
 
 
 	gSP.changed |= CHANGED_MATRIX | CHANGED_LIGHT | CHANGED_LOOKAT;
@@ -243,13 +229,13 @@ void gSPDMAMatrix( u32 matrix, u8 index, u8 multiply )
 	DebugMsg(DEBUG_NORMAL, "gSPDMAMatrix( 0x%08X, %i, %s );\n",
 		matrix, index, multiply ? "TRUE" : "FALSE");
 	DebugMsg(DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[0][0], mtx[0][1], mtx[0][2], mtx[0][3] );
+		matrixElement(mtx, 0, 0), matrixElement(mtx, 0, 1), matrixElement(mtx, 0, 2), matrixElement(mtx, 0, 3));
 	DebugMsg( DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[1][0], mtx[1][1], mtx[1][2], mtx[1][3] );
+		matrixElement(mtx, 1, 0), matrixElement(mtx, 1, 1), matrixElement(mtx, 1, 2), matrixElement(mtx, 1, 3));
 	DebugMsg( DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[2][0], mtx[2][1], mtx[2][2], mtx[2][3] );
+		matrixElement(mtx, 2, 0), matrixElement(mtx, 2, 1), matrixElement(mtx, 2, 2), matrixElement(mtx, 2, 3));
 	DebugMsg( DEBUG_DETAIL, "// %12.6f %12.6f %12.6f %12.6f\n",
-		mtx[3][0], mtx[3][1], mtx[3][2], mtx[3][3] );
+		matrixElement(mtx, 3, 0), matrixElement(mtx, 3, 1), matrixElement(mtx, 3, 2), matrixElement(mtx, 3, 3));
 }
 
 void gSPViewport( u32 v )
@@ -298,8 +284,7 @@ void gSPForceMatrix( u32 mptr )
 		return;
 	}
 
-	auto rmtx = RSP_LoadMatrix(address);
-	toFloatMatrix(rmtx, gSP.matrix.combined);
+	gSP.matrix.combined = RSP_LoadMatrix(address);
 
 	gSP.changed &= ~CHANGED_MATRIX;
 
@@ -455,45 +440,24 @@ void gSPUpdateLookatVectors()
 /*---------------------------------Vertex Load------------------------------------*/
 
 static
-void gSPTransformVector(float vtx[4], float mtx[4][4])
+void gSPTransformVector(float vtx[4], rtm::matrix4x4f mtx)
 {
-	const float x = vtx[0];
-	const float y = vtx[1];
-	const float z = vtx[2];
-
-	float vvtx[4];
-	vvtx[0] = x * mtx[0][0] + y * mtx[1][0] + z * mtx[2][0] + mtx[3][0];
-	vvtx[1] = x * mtx[0][1] + y * mtx[1][1] + z * mtx[2][1] + mtx[3][1];
-	vvtx[2] = x * mtx[0][2] + y * mtx[1][2] + z * mtx[2][2] + mtx[3][2];
-	vvtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
-
-	auto rvtx = rtm::vector_set(vtx[0], vtx[1], vtx[2], 1.f);
-	auto rmtx = toRtmMatrix(mtx);
-	auto res = rtm::matrix_mul_vector(rvtx, rmtx);
+	vtx[3] = 1.0f;
+	auto rvtx = rtm::vector_load(vtx);
+	auto res = rtm::matrix_mul_vector(rvtx, mtx);
 
 	rtm::vector_store(res, vtx);
-	floatVerify(vtx, vvtx, sizeof(vvtx) / sizeof(*vvtx));
 }
 
 static
-void gSPInverseTransformVector(float vec[3], float mtx[4][4])
+void gSPInverseTransformVector(float vec[3], rtm::matrix4x4f mtx)
 {
-	const float x = vec[0];
-	const float y = vec[1];
-	const float z = vec[2];
-
-	float vres[4];
-	vres[0] = mtx[0][0] * x + mtx[0][1] * y + mtx[0][2] * z;
-	vres[1] = mtx[1][0] * x + mtx[1][1] * y + mtx[1][2] * z;
-	vres[2] = mtx[2][0] * x + mtx[2][1] * y + mtx[2][2] * z;
-
 	auto rvtx = rtm::vector_load3(vec);
-	auto rmtx = toRtmMatrix(mtx);
-	rtm::matrix3x3f rmtx3 = rtm::matrix_cast(rmtx);
-	auto rmtx3t = rtm::matrix_transpose(rmtx3);
+	rtm::matrix3x3f mtx3 = rtm::matrix_cast(mtx);
+	auto rmtx3t = rtm::matrix_transpose(mtx3);
 	auto res = rtm::matrix_mul_vector3(rvtx, rmtx3t);
+
 	rtm::vector_store3(res, vec);
-	floatVerify(vec, vres, sizeof(vres) / sizeof(*vres));
 }
 
 template <u32 VNUM>
@@ -785,27 +749,16 @@ void gSPClipVertex(u32 v, SPVertex * spVtx)
 }
 
 template <u32 VNUM>
-void gSPTransformVertex(u32 v, SPVertex * spVtx, float mtx[4][4])
+void gSPTransformVertex(u32 v, SPVertex * spVtx, rtm::matrix4x4f mtx)
 {
 #ifndef __NEON_OPT
-	float x, y, z;
 	for (int i = 0; i < VNUM; ++i) {
 		SPVertex & vtx = spVtx[v+i];
-		x = vtx.x;
-		y = vtx.y;
-		z = vtx.z;
-		float vvtx[4];
-		vvtx[0] = x * mtx[0][0] + y * mtx[1][0] + z * mtx[2][0] + mtx[3][0];
-		vvtx[1] = x * mtx[0][1] + y * mtx[1][1] + z * mtx[2][1] + mtx[3][1];
-		vvtx[2] = x * mtx[0][2] + y * mtx[1][2] + z * mtx[2][2] + mtx[3][2];
-		vvtx[3] = x * mtx[0][3] + y * mtx[1][3] + z * mtx[2][3] + mtx[3][3];
-
-		auto rvtx = rtm::vector_set(vtx.x, vtx.y, vtx.z, 1.f);
-		auto rmtx = toRtmMatrix(mtx);
-		auto res = rtm::matrix_mul_vector(rvtx, rmtx);
+		vtx.w = 1.f;
+		auto rvtx = rtm::vector_load(&vtx.x);
+		auto res = rtm::matrix_mul_vector(rvtx, mtx);
 
 		rtm::vector_store(res, &vtx.x);
-		floatVerify(&vtx.x, vvtx, sizeof(vvtx) / sizeof(*vvtx));
 	}
 #else
 	void gSPTransformVector_NEON(float vtx[4], float mtx[4][4]);
@@ -840,7 +793,7 @@ void gSPProcessVertex(u32 v, SPVertex * spVtx)
 		for(int i = 0; i < VNUM; ++i) {
 			SPVertex & vtx = spVtx[v+i];
 			vtx.x *= adjustScale;
-			if (gSP.matrix.projection[3][2] == -1.f)
+			if (matrixElement(gSP.matrix.combined, 3, 2) == -1.f)
 				vtx.w *= adjustScale;
 		}
 	}
@@ -1634,15 +1587,16 @@ void gSPInsertMatrix( u32 where, u32 num )
 	if ((where & 0x3) != 0)
 		return;
 
+	// WARNING: breaks strict aliasing, need to be a bit careful
 	f32 * pMtx = nullptr;
 	u16 addr = (where + 0x80) & 0xFFFF;
 	if (addr < 0x40) {
-		pMtx = reinterpret_cast<f32*>(gSP.matrix.modelView[gSP.matrix.modelViewi]);
+		pMtx = reinterpret_cast<f32*>(&gSP.matrix.modelView[gSP.matrix.modelViewi]);
 	} else if (addr < 0x80) {
-		pMtx = reinterpret_cast<f32*>(gSP.matrix.projection);
+		pMtx = reinterpret_cast<f32*>(&gSP.matrix.projection);
 		addr -= 0x40;
 	} else if (addr < 0xC0) {
-		pMtx = reinterpret_cast<f32*>(gSP.matrix.combined);
+		pMtx = reinterpret_cast<f32*>(&gSP.matrix.combined);
 		addr -= 0x80;
 	} else
 		return;
@@ -1697,7 +1651,7 @@ void gSPModifyVertex( u32 _vtx, u32 _where, u32 _val )
 				if (dwnd().isAdjustScreen()) {
 					const f32 adjustScale = dwnd().getAdjustScale();
 					vtx0.x *= adjustScale;
-					if (gSP.matrix.projection[3][2] == -1.f)
+					if (matrixElement(gSP.matrix.projection, 3, 2) == -1.f)
 						vtx0.w *= adjustScale;
 				}
 

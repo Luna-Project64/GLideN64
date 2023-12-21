@@ -151,7 +151,7 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 	if((_w0 & 0xfff) == 0x830) {
 		assert(flag == 0);
 		auto rmtx = RSP_LoadMatrix(addr);
-		toFloatMatrix(rmtx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
+		gSP.matrix.modelView[gSP.matrix.modelViewi] = RSP_LoadMatrix(addr);
 		gSP.changed |= CHANGED_MATRIX;
 		return;
 	}
@@ -159,8 +159,7 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 	// projection matrix
 	if((_w0 & 0xfff) == 0x870) {
 		assert(flag == 0);
-		auto rmtx = RSP_LoadMatrix(addr);
-		toFloatMatrix(rmtx, gSP.matrix.projection);
+		gSP.matrix.projection = RSP_LoadMatrix(addr);
 		gSP.changed |= CHANGED_MATRIX;
 		return;
 	}
@@ -168,11 +167,11 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 	// combined matrix
 	if((_w0 & 0xfff) == 0x8b0) {
 		if(flag == 0) {
-			auto rmtx = RSP_LoadMatrix(addr);
-			toFloatMatrix(rmtx, gSP.matrix.combined);
+			gSP.matrix.combined = RSP_LoadMatrix(addr);
 			gSP.changed &= ~CHANGED_MATRIX;
 		} else {
-			StoreMatrix(gSP.matrix.combined, addr);
+			f32 mtx[4][4];
+			toFloatMatrix(gSP.matrix.combined, mtx);
 		}
 		return;
 	}
@@ -228,9 +227,9 @@ void ZSortBOSS_MoveMem( u32 _w0, u32 _w1 )
 
 void ZSortBOSS_MTXCAT(u32 _w0, u32 _w1)
 {
-	M44 *s = nullptr;
-	M44 *t = nullptr;
-	M44 *d = nullptr;
+	rtm::matrix4x4f *s = nullptr;
+	rtm::matrix4x4f*t = nullptr;
+	rtm::matrix4x4f*d = nullptr;
 	u32 S = (_w1 >> 16) & 0xfff;
 	u32 T = _w0 & 0xfff;
 	u32 D = _w1 & 0xfff;
@@ -238,60 +237,59 @@ void ZSortBOSS_MTXCAT(u32 _w0, u32 _w1)
 	switch(S) {
 		// model matrix
 		case 0x830:
-			s = (M44*)gSP.matrix.modelView[gSP.matrix.modelViewi];
+			s = &gSP.matrix.modelView[gSP.matrix.modelViewi];
 		break;
 
 		// projection matrix
 		case 0x870:
-			s = (M44*)gSP.matrix.projection;
+			s = &gSP.matrix.projection;
 		break;
 
 		// combined matrix
 		case 0x8b0:
-			s = (M44*)gSP.matrix.combined;
+			s = &gSP.matrix.combined;
 		break;
 	}
 
 	switch(T) {
 		// model matrix
 		case 0x830:
-			t = (M44*)gSP.matrix.modelView[gSP.matrix.modelViewi];
+			t = &gSP.matrix.modelView[gSP.matrix.modelViewi];
 		break;
 
 		// projection matrix
 		case 0x870:
-			t = (M44*)gSP.matrix.projection;
+			t = &gSP.matrix.projection;
 		break;
 
 		// combined matrix
 		case 0x8b0:
-			t = (M44*)gSP.matrix.combined;
+			t = &gSP.matrix.combined;
 		break;
 	}
 
 	assert(s != nullptr && t != nullptr);
-	f32 m[4][4];
-	MultMatrix(*s, *t, m);
+	auto m = rtm::matrix_mul(*t, *s);
 
 	switch(D) {
 		// model matrix
 		case 0x830:
-			d = (M44*)gSP.matrix.modelView[gSP.matrix.modelViewi];
+			d = &gSP.matrix.modelView[gSP.matrix.modelViewi];
 		break;
 
 		// projection matrix
 		case 0x870:
-			d = (M44*)gSP.matrix.projection;
+			d = &gSP.matrix.projection;
 		break;
 
 		// combined matrix
 		case 0x8b0:
-			d = (M44*)gSP.matrix.combined;
+			d = &gSP.matrix.combined;
 		break;
 	}
 
 	assert(d != nullptr);
-	memcpy(*d, m, 64);
+	*d = m;
 
 	LOG(LOG_VERBOSE, "ZSortBOSS_MTXCAT (S: 0x%04x, T: 0x%04x, D: 0x%04x)\n", S, T, D);
 }
@@ -316,10 +314,15 @@ void ZSortBOSS_MultMPMTX( u32 _w0, u32 _w1 )
 		s16 sx = saddr[(idx++)^1];
 		s16 sy = saddr[(idx++)^1];
 		s16 sz = saddr[(idx++)^1];
-		f32 x = sx*gSP.matrix.combined[0][0] + sy*gSP.matrix.combined[1][0] + sz*gSP.matrix.combined[2][0] + gSP.matrix.combined[3][0];
-		f32 y = sx*gSP.matrix.combined[0][1] + sy*gSP.matrix.combined[1][1] + sz*gSP.matrix.combined[2][1] + gSP.matrix.combined[3][1];
-		f32 z = sx*gSP.matrix.combined[0][2] + sy*gSP.matrix.combined[1][2] + sz*gSP.matrix.combined[2][2] + gSP.matrix.combined[3][2];
-		f32 w = sx*gSP.matrix.combined[0][3] + sy*gSP.matrix.combined[1][3] + sz*gSP.matrix.combined[2][3] + gSP.matrix.combined[3][3];
+		// TODO: this is a horrible way to do this
+		auto rvtx = rtm::vector_set(sx, sy, sz, 1.f);
+		auto res = rtm::matrix_mul_vector(rvtx, gSP.matrix.combined);
+		f32 vtx[4];
+		rtm::vector_store(res, vtx);
+		f32 x = vtx[0];
+		f32 y = vtx[1];
+		f32 z = vtx[2];
+		f32 w = vtx[3];
 
 		v.xi = (s16)x;
 		v.yi = (s16)y;
@@ -465,24 +468,23 @@ void ZSortBOSS_Obj( u32 _w0, u32 _w1 )
 
 void ZSortBOSS_TransposeMTX( u32, u32 _w1 )
 {
-	M44 *mtx = nullptr;
-	f32 m[4][4];
+	rtm::matrix4x4f *mtx = nullptr;
 	assert((_w1 & 0xfff) == 0x830); // model matrix
 
 	switch(_w1 & 0xfff) {
 		// model matrix
 		case 0x830:
-			mtx = (M44*)gSP.matrix.modelView[gSP.matrix.modelViewi];
+			mtx = &gSP.matrix.modelView[gSP.matrix.modelViewi];
 		break;
 
 		// projection matrix
 		case 0x870:
-			mtx = (M44*)gSP.matrix.projection;
+			mtx = &gSP.matrix.projection;
 		break;
 
 		// combined matrix
 		case 0x8b0:
-			mtx = (M44*)gSP.matrix.combined;
+			mtx = &gSP.matrix.combined;
 		break;
 
 		default:
@@ -490,13 +492,16 @@ void ZSortBOSS_TransposeMTX( u32, u32 _w1 )
 			return;
 	}
 
-	memcpy(m, mtx, 64);
+	// does not transport properly
+	*mtx = rtm::matrix_transpose(*mtx);
 
+#if 0
 	for(int i = 0; i < 3; i++) {
 		for(int j = 0; j < 3; j++) {
 			(*mtx)[j][i] = m[i][j];
 		}
 	}
+#endif
 
 	LOG(LOG_VERBOSE, "ZSortBOSS_TransposeMTX (MTX: 0x%04x)\n", (_w1 & 0xfff));
 }
@@ -552,15 +557,16 @@ void ZSortBOSS_Lighting( u32 _w0, u32 _w1 )
 }
 
 static
-void ZSortBOSS_TransformVectorNormalize(float vec[3], float mtx[4][4])
+void ZSortBOSS_TransformVectorNormalize(float vec[3], rtm::matrix4x4f mtx)
 {
+	rtm::matrix3x3f mtx3 = rtm::matrix_cast(mtx);
 	float vres[3];
 	float len;
 	float recip = 256.f;
 
-	vres[0] = mtx[0][0] * vec[0] + mtx[1][0] * vec[1] + mtx[2][0] * vec[2];
-	vres[1] = mtx[0][1] * vec[0] + mtx[1][1] * vec[1] + mtx[2][1] * vec[2];
-	vres[2] = mtx[0][2] * vec[0] + mtx[1][2] * vec[1] + mtx[2][2] * vec[2];
+	auto rvec = rtm::vector_load3(vec);
+	auto rvres = rtm::matrix_mul_vector3(rvec, mtx3);
+	rtm::vector_store3(rvres, vres);
 
 	len = vres[0]*vres[0] + vres[1]*vres[1] + vres[2]*vres[2];
 

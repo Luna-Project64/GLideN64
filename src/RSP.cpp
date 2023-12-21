@@ -214,14 +214,7 @@ void RSP_SetDefaultState()
 
 	gSP.objRendermode = 0;
 
-	for (int i = 0; i < 4; i++)
-	for (int j = 0; j < 4; j++)
-		gSP.matrix.modelView[0][i][j] = 0.0f;
-
-	gSP.matrix.modelView[0][0][0] = 1.0f;
-	gSP.matrix.modelView[0][1][1] = 1.0f;
-	gSP.matrix.modelView[0][2][2] = 1.0f;
-	gSP.matrix.modelView[0][3][3] = 1.0f;
+	gSP.matrix.modelView[0] = rtm::matrix_identity();
 
 	gSP.clipRatio = 2U;
 

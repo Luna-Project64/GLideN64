@@ -47,7 +47,7 @@ static u32 G_SET_DLIST_ADDR, G_BE, G_JUMPDL, G_INDI_TEXRECT;
 
 struct IndiData {
 	s32 mtx_st_adjust[16];
-	f32 mtx_vtx_gen[4][4];
+	rtm::matrix4x4f mtx_vtx_gen;
 };
 
 IndiData & getIndiData()
@@ -538,8 +538,7 @@ void F5INDI_MoveMem(u32 _w0, u32 _w1)
 			gSPForceMatrix(_w1);
 			break;
 		case 0x010E403F:
-			auto rmtx = RSP_LoadMatrix(_SHIFTR(_w1, 0, 24));
-			toFloatMatrix(rmtx, getIndiData().mtx_vtx_gen);
+			getIndiData().mtx_vtx_gen = RSP_LoadMatrix(_SHIFTR(_w1, 0, 24));
 			F5INDI_LoadSTMatrix();
 			break;
 		}
@@ -821,10 +820,9 @@ void F5INDI_Tri(u32 _w0, u32 _w1)
 
 void F5INDI_GenVertices(u32 _w0, u32 _w1)
 {
-	f32 combined[4][4];
-	memcpy(combined, gSP.matrix.combined, sizeof(combined));
-	memcpy(gSP.matrix.combined, getIndiData().mtx_vtx_gen, sizeof(gSP.matrix.combined));
-
+	auto combined = gSP.matrix.combined;
+	gSP.matrix.combined = getIndiData().mtx_vtx_gen;
+	
 	const SWVertex * vertex = CAST_DMEM(const SWVertex*, 0x170);
 	bool verticesToProcess[32];
 
@@ -843,7 +841,7 @@ void F5INDI_GenVertices(u32 _w0, u32 _w1)
 
 	gSPSWVertex(vertex, count, verticesToProcess);
 
-	memcpy(gSP.matrix.combined, combined, sizeof(gSP.matrix.combined));
+	gSP.matrix.combined = combined;
 }
 
 void F5INDI_GenParticlesVertices()
@@ -1242,9 +1240,9 @@ void F5Naboo_TexrectGen()
 	u32 param4X = params[4] & 0xFFFF0000;
 	u32 param4Y = _SHIFTL(params[4], 16, 16);
 	float intpart;
-	const f32 frac_x_f = fabs(modff(gSP.matrix.combined[0][0], &intpart));
+	const f32 frac_x_f = fabs(modff(matrixElement(gSP.matrix.combined, 0, 0), &intpart));
 	const u32 combMatrixFracX = u32(frac_x_f*65536.0f);
-	const f32 frac_y_f = fabs(modff(gSP.matrix.combined[0][1], &intpart));
+	const f32 frac_y_f = fabs(modff(matrixElement(gSP.matrix.combined, 0, 1), &intpart));
 	const u32 combMatrixFracY = u32(frac_y_f*65536.0f);
 	param4X |= combMatrixFracX;
 	param4Y |= combMatrixFracY;

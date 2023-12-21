@@ -9,14 +9,11 @@
 #include "rtm/scalarf.h"
 #include "rtm/matrix4x4f.h"
 
-void MultMatrix(float m0[4][4], float m1[4][4], float dest[4][4]);
-void MultMatrix2(float m0[4][4], float m1[4][4]);
-void TransformVectorNormalize(float vec[3], float mtx[4][4]);
-void InverseTransformVectorNormalize(float src[3], float dst[3], float mtx[4][4]);
-void InverseTransformVectorNormalizeN(float src[][3], float dst[][3], float mtx[4][4], u32 count);
+void TransformVectorNormalize(float vec[3], rtm::matrix4x4f mtx);
+void InverseTransformVectorNormalize(float src[3], float dst[3], rtm::matrix4x4f mtx);
+void InverseTransformVectorNormalizeN(float src[][3], float dst[][3], rtm::matrix4x4f mtx, u32 count);
 void Normalize(float v[3]);
 float DotProduct(const float v0[3], const float v1[3]);
-void CopyMatrix( float m0[4][4], float m1[4][4]);
 
 static inline rtm::matrix4x4f toRtmMatrix(const float m[4][4])
 {
@@ -32,6 +29,13 @@ static inline void toFloatMatrix(rtm::matrix4x4f m, float dest[4][4])
 	rtm::vector_store(m.y_axis, dest[1]);
 	rtm::vector_store(m.z_axis, dest[2]);
 	rtm::vector_store(m.w_axis, dest[3]);
+}
+
+// WARNING: Slow function, use for debugging only
+static inline float matrixElement(const rtm::matrix4x4f& m, int i, int j)
+{
+	rtm::vector4f v = rtm::matrix_get_axis(m, (rtm::axis4) i);
+	return rtm::vector_get_component(v, (rtm::mix4) j);
 }
 
 inline float DotProduct(const float v0[3], const float v1[3])

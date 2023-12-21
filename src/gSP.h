@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "GBI.h"
 #include "gDP.h"
+#include "rtm/matrix4x4f.h"
 
 #define CHANGED_VIEWPORT		0x01
 #define CHANGED_MATRIX			0x02
@@ -53,9 +54,9 @@ struct gSPInfo
 	struct
 	{
 		u32 modelViewi, stackSize, billboard;
-		f32 modelView[32][4][4];
-		f32 projection[4][4];
-		f32 combined[4][4];
+		rtm::matrix4x4f modelView[32];
+		rtm::matrix4x4f projection;
+		rtm::matrix4x4f combined;
 	} matrix;
 
 	u32 objRendermode;
