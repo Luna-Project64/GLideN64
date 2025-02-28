@@ -948,129 +948,97 @@ void gDPSetScissor(u32 mode, s16 xh, s16 yh, s16 xl, s16 yl)
 #endif
 }
 
-template<typename T>
-class BackupRestore
-{
-public:
-	BackupRestore(T& _value) : value(_value), backup(_value) {}
-	~BackupRestore() { value = backup; };
-
-private:
-	T& value;
-	T backup;
-};
-
 // This performs the same thing action as gDPFillRectangle but explicitly specifying what to overwrite
 void gDPMemset(u32 value, u32 addr, u32 length)
 {
-	// TODO: Can this be different?
-	u32 screenWidth = VI.width;
-	u32 screenHeight = VI.height;
+	u32 uly = 0U, lry = 0U;
+	u32 fillColor = value;
+
+	auto calculateParams = [&](u32 imageAddr, u32 imageSize, u32 imageWidth)
+		{
+			if (imageSize == G_IM_SIZ_16b)
+				fillColor |= value << 16;
+			else if (imageSize == G_IM_SIZ_8b)
+				fillColor |= (value << 24) | (value << 16) | (value << 8);
+			getFillColor(fillColor, &gDP.rectColor.r);
+
+			// Deduce ulx, uly, lrx, lry from addr, size, and colorImageStart
+			// Currently I am assuming a simple letterbox case - top and bottom are not cleared
+			// ulx = 0;
+			// lrx = screenWidth;
+			const u32 lineSize = imageWidth << imageSize >> 1;
+			uly = (addr - imageAddr) / lineSize;
+			lry = uly + length / lineSize;
+		};
 
 	GraphicsDrawer& drawer = dwnd().getDrawer();
-	u32 fillColor = value | (value << 16);
-	u32 depthImageStart = gDP.depthImageAddress;
-	u32 depthImageEnd = gDP.depthImageAddress + 320 * 240 * 2;
-	if (depthImageStart <= addr && addr < depthImageEnd)
-	{
-		// ZB clear
-		gDP.rectColor.r = _FIXED2FLOATCOLOR(_SHIFTR(fillColor, 11, 5), 5);
-		gDP.rectColor.g = _FIXED2FLOATCOLOR(_SHIFTR(fillColor, 6, 5), 5);
-		gDP.rectColor.b = _FIXED2FLOATCOLOR(_SHIFTR(fillColor, 1, 5), 5);
-		gDP.rectColor.a = (f32)_SHIFTR(fillColor, 0, 1);
+
+	u32 imageWidth = VI.width;
+	u32 imageHeight = VI.height;
+	const u32 depthImageStart = gDP.depthImageAddress;
+	const u32 depthImageEnd = gDP.depthImageAddress + imageWidth * imageHeight * 2;
+	if (depthImageStart <= addr && addr < depthImageEnd) {
+		ValueKeeper<u32> backupColorImageSize(gDP.colorImage.size, G_IM_SIZ_16b);
+		calculateParams(gDP.depthImageAddress, G_IM_SIZ_16b, imageWidth);
 
 		// HACK: this usually replaces gDPSetColorImage for zb so save zb
-		frameBufferList().saveBuffer(gDP.depthImageAddress, (u16)G_IM_FMT_RGBA, (u16)G_IM_SIZ_16b, (u16)screenWidth, false);
+		frameBufferList().saveBuffer(gDP.depthImageAddress, (u16)G_IM_FMT_RGBA, (u16)G_IM_SIZ_16b, (u16)imageWidth, false);
 
 		if (config.generalEmulation.enableFragmentDepthWrite == 0)
 			drawer.clearDepthBuffer();
 		else
 			depthBufferList().setCleared(true);
 
-		// Deduce ulx, uly, lrx, lry from addr, size, and colorImageStart
-		// Currently I am assuming a simple letterbox case - top and bottom are not cleared
-		u32 lineSize = screenWidth * 2;
-		u32 ulx = 0;
-		u32 uly = (addr - depthImageStart) / lineSize;
-		u32 lrx = 320;
-		u32 lry = uly + length / lineSize;
-
-		if (config.generalEmulation.enableFragmentDepthWrite != 0)
-		{
+		if (config.generalEmulation.enableFragmentDepthWrite != 0) {
 			// Pretend that we are drawing the rectangle over ZB with fill mode
-			BackupRestore backupColorImageAddress(gDP.colorImage.address);
-			BackupRestore backupWidth(gDP.colorImage.width);
-			unsigned int backupDepthSource = gDP.otherMode.depthSource;
-			unsigned int backupCycleType = gDP.otherMode.cycleType;
-
-			gDP.colorImage.address = gDP.depthImageAddress;
-			gDP.colorImage.width = screenWidth;
-			gDP.otherMode.cycleType = G_CYC_FILL;
-
-			drawer.drawRect(ulx, uly, lrx, lry);
+			ValueKeeper<u32> backupColorImageAddress(gDP.colorImage.address, gDP.depthImageAddress);
+			ValueKeeper<u32> backupWidth(gDP.colorImage.width, imageWidth);
+			gDPInfo::OtherMode otherMode = gDP.otherMode;
+			otherMode.cycleType = G_CYC_FILL;
+			ValueKeeper<gDPInfo::OtherMode> backupOtherMode(gDP.otherMode, otherMode);
+			drawer.drawRect(0, uly, imageWidth, lry);
 			frameBufferList().setBufferChanged(f32(lry));
-
-			gDP.otherMode.depthSource = backupDepthSource;
-			gDP.otherMode.cycleType = backupCycleType;
 		}
-
-		// TODO: Following the same logic and not filling in zb values in RDRAM, why?
-		return;
 	}
-
-	// Either RGBA16 or RGBA32. This heavily assume "niceness" of developers to bind color buffer before memset...
-	u32 colorSize = gDP.colorImage.size < 3 ? 2 : 4;
-	u32 colorImageStart = gDP.colorImage.address;
-	u32 colorImageEnd = gDP.colorImage.address + screenWidth * screenHeight * colorSize;
-	if (colorImageStart <= addr && addr < colorImageEnd)
-	{
+	else if (0 == config.frameBufferEmulation.enable) {
 		// FB clear
-		f32 fillColor32[4];
-		getFillColor(fillColor, fillColor32);
-		gDP.rectColor.r = fillColor32[0];
-		gDP.rectColor.g = fillColor32[1];
-		gDP.rectColor.b = fillColor32[2];
-		gDP.rectColor.a = fillColor32[3];
-
-		u32 lineSize = colorSize * screenWidth;
-		u32 ulx = 0;
-		u32 uly = (addr - colorImageStart) / lineSize;
-		u32 lrx = 320;
-		u32 lry = uly + length / lineSize;
-
-		{
-			BackupRestore backupFillColor(gDP.fillColor.color);
-			unsigned int backupDepthSource = gDP.otherMode.depthSource;
-			unsigned int backupCycleType = gDP.otherMode.cycleType;
-
-			gDP.fillColor.color = fillColor;
-			gDP.otherMode.cycleType = G_CYC_FILL;
-
-			drawer.drawRect(ulx, uly, lrx, lry);
-			if (auto cur = frameBufferList().getCurrent())
-				cur->setBufferClearParams(gDP.fillColor.color, ulx, uly, lrx, lry);
-
-			frameBufferList().setBufferChanged(f32(lry));
-
-			gDP.otherMode.depthSource = backupDepthSource;
-			gDP.otherMode.cycleType = backupCycleType;
-		}
-
-		if (config.frameBufferEmulation.copyFromRDRAM != 0)
-		{
-			for (int i = 0; i < length / 4; i++)
-			{
-				*(u32*)(RDRAM + addr + i * 4) = fillColor;
-			}
+		// This heavily assume "niceness" of developers to bind color buffer before memset...
+		imageWidth = gDP.colorImage.width;
+		const u32 colorImageStart = gDP.colorImage.address;
+		const u32 colorImageEnd = gDP.colorImage.address + ((imageWidth * imageHeight) << gDP.colorImage.size >> 1);
+		if (colorImageStart <= addr && addr < colorImageEnd) {
+			calculateParams(gDP.colorImage.address, gDP.colorImage.size, imageWidth);
+			ValueKeeper<u32> backupFillColor(gDP.fillColor.color, fillColor);
+			gDPInfo::OtherMode otherMode = gDP.otherMode;
+			otherMode.cycleType = G_CYC_FILL;
+			ValueKeeper<gDPInfo::OtherMode> backupOtherMode(gDP.otherMode, otherMode);
+			drawer.drawRect(0, uly, imageWidth, lry);
 		}
 	}
-	else
-	{
-		// TODO: It is something we do not know about... I hope it is not a big deal to just memset it?
-		for (int i = 0; i < length / 4; i++)
+	else if (const auto pBuffer = frameBufferList().findBuffer(addr)) {
+		imageWidth = pBuffer->m_width;
+		calculateParams(pBuffer->m_startAddress, pBuffer->m_size, imageWidth);
 		{
-			*(u32*)(RDRAM + addr + i * 4) = fillColor;
+			ValueKeeper<u32> backupFillColor(gDP.fillColor.color, fillColor);
+			gDPInfo::OtherMode otherMode = gDP.otherMode;
+			otherMode.cycleType = G_CYC_FILL;
+			ValueKeeper<gDPInfo::OtherMode> backupOtherMode(gDP.otherMode, otherMode);
+			const auto backupCurr = frameBufferList().getCurrent();
+			frameBufferList().setCurrent(pBuffer);
+
+			drawer.drawRect(0, uly, imageWidth, lry);
+
+			pBuffer->setBufferClearParams(gDP.fillColor.color, 0, uly, imageWidth, lry);
+			frameBufferList().setBufferChanged(f32(lry));
+			frameBufferList().setCurrent(backupCurr);
 		}
+	}
+
+	// Memset
+	u32* pDest = reinterpret_cast<u32*>(RDRAM + addr);
+	u32 lengthInDwords = length >> 2;
+	for (u32 i = 0; i < lengthInDwords; i++) {
+		pDest[i] = fillColor;
 	}
 }
 
