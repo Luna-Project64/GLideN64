@@ -184,24 +184,33 @@ struct Vertices7
 	u8 v[7];
 
 	inline bool valid(u8 i) const
-	{ return v[i] < 64; }
+	{
+		return v[i] < 64;
+	}
 };
 
 static inline Vertices7 unpackVertices7(u32 w0, u32 w1)
 {
-	Vertices7 v;
-	v.v[0] = _SHIFTR(w0, 16, 8) / 2;
-	v.v[1] = _SHIFTR(w0, 8, 8) / 2;
-	v.v[2] = _SHIFTR(w0, 0, 8) / 2;
-	v.v[3] = _SHIFTR(w1, 24, 8) / 2;
-	v.v[4] = _SHIFTR(w1, 16, 8) / 2;
-	v.v[5] = _SHIFTR(w1, 8, 8) / 2;
-	v.v[6] = _SHIFTR(w1, 0, 8) / 2;
+	Vertices7 v; 
+	v.v[0] = _SHIFTR(w0, 17, 7);
+	v.v[1] = _SHIFTR(w0, 9, 7);
+	v.v[2] = _SHIFTR(w0, 1, 7);
+	v.v[3] = _SHIFTR(w1, 25, 7);
+	v.v[4] = _SHIFTR(w1, 17, 7);
+	v.v[5] = _SHIFTR(w1, 9, 7);
+	v.v[6] = _SHIFTR(w1, 1, 7);
 	return v;
 }
 
+struct DeferFlush
+{
+	~DeferFlush()
+	{ gSPFlushTriangles(); }
+};
+
 static void F3DEX3_TriStrip(u32 w0, u32 w1)
 {
+	DeferFlush flush;
 	Vertices7 vertices = unpackVertices7(w0, w1);
 	// *v1 - v2 - v3, v3 - v2 - v4, v3 - v4 - v5, v5 - v4 - v6, v5 - v6 - v7
 	if (!vertices.valid(0) || !vertices.valid(1) || !vertices.valid(2)) return;
@@ -222,6 +231,7 @@ static void F3DEX3_TriStrip(u32 w0, u32 w1)
 
 static void F3DEX3_TriFan(u32 w0, u32 w1)
 {
+	DeferFlush flush;
 	Vertices7 vertices = unpackVertices7(w0, w1);
 	// *v1 - v2 - v3, v1 - v3 - v4, v1 - v4 - v5, v1 - v5 - v6, v1 - v6 - v7
 	if (!vertices.valid(0) || !vertices.valid(1) || !vertices.valid(2)) return;
@@ -234,7 +244,7 @@ static void F3DEX3_TriFan(u32 w0, u32 w1)
 	gSPTriangle(vertices.v[0], vertices.v[3], vertices.v[4]);
 
 	if (!vertices.valid(5)) return;
-	gSPTriangle(vertices.v[0], vertices.v[3], vertices.v[5]);
+	gSPTriangle(vertices.v[0], vertices.v[4], vertices.v[5]);
 
 	if (!vertices.valid(6)) return;
 	gSPTriangle(vertices.v[0], vertices.v[5], vertices.v[6]);
