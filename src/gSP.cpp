@@ -32,6 +32,10 @@ using namespace graphics;
 
 static bool g_ConkerUcode;
 
+static u32 gVtxLastLoadedAddress;
+static u8 gVtxLastLoadedAmount;
+static u8 gVtxLastLoadedOffset;
+
 void gSPFlushTriangles()
 {
 	if ((gSP.geometryMode & G_SHADING_SMOOTH) == 0) {
@@ -136,6 +140,7 @@ void gSPLoadUcodeEx( u32 uc_start, u32 uc_dstart, u16 uc_dsize )
 	gSP.fog.multiplierf = gSP.fog.offsetf = 0.0f;
 	gSP.geometryMode = 0U;
 	gSP.changed |= CHANGED_MATRIX | CHANGED_LIGHT | CHANGED_LOOKAT | CHANGED_GEOMETRYMODE;
+	gVtxLastLoadedAddress = -1;
 
 	if ((((uc_start & 0x1FFFFFFF) + 4096) > RDRAMSize) || (((uc_dstart & 0x1FFFFFFF) + uc_dsize) > RDRAMSize)) {
 		DebugMsg(DEBUG_NORMAL|DEBUG_ERROR, "gSPLoadUcodeEx out of RDRAM\n");
@@ -157,6 +162,7 @@ void gSPNoOp()
 
 void gSPMatrix( u32 matrix, u8 param )
 {
+	gVtxLastLoadedAddress = -1;
 	u32 address = RSP_SegmentToPhysical( matrix );
 
 	if (address + 64 > RDRAMSize) {
@@ -211,6 +217,7 @@ void gSPMatrix( u32 matrix, u8 param )
 
 void gSPDMAMatrix( u32 matrix, u8 index, u8 multiply )
 {
+	gVtxLastLoadedAddress = -1;
 	u32 address = gSP.DMAOffsets.mtx + RSP_SegmentToPhysical( matrix );
 
 	if (address + 64 > RDRAMSize) {
@@ -313,6 +320,7 @@ void gSPForceMatrix( u32 mptr )
 
 void gSPLight( u32 l, s32 n )
 {
+	gVtxLastLoadedAddress = -1;
 	--n;
 	u32 addrByte = RSP_SegmentToPhysical( l );
 
@@ -357,6 +365,7 @@ void gSPLight( u32 l, s32 n )
 
 void gSPLightCBFD( u32 l, s32 n )
 {
+	gVtxLastLoadedAddress = -1;
 	u32 addrByte = RSP_SegmentToPhysical( l );
 
 	if ((addrByte + sizeof( Light )) > RDRAMSize) {
@@ -396,6 +405,7 @@ void gSPLightCBFD( u32 l, s32 n )
 
 void gSPLightAcclaim(u32 l, s32 n)
 {
+	gVtxLastLoadedAddress = -1;
 	u32 addrByte = RSP_SegmentToPhysical(l);
 
 	if (n < 10) {
@@ -418,6 +428,7 @@ void gSPLightAcclaim(u32 l, s32 n)
 
 void gSPLookAt( u32 _l, u32 _n )
 {
+	gVtxLastLoadedAddress = -1;
 	u32 address = RSP_SegmentToPhysical(_l);
 
 	if ((address + sizeof(Light)) > RDRAMSize) {
@@ -1126,11 +1137,18 @@ void gSPVertex(u32 a, u32 n, u32 v0)
 			gSPUpdateLookatVectors();
 	}
 
+	if (address == gVtxLastLoadedAddress && n == gVtxLastLoadedAmount && v0 == gVtxLastLoadedOffset)
+		return;
+
 	const Vertex *vertex = (Vertex*)&RDRAM[address];
 	SPVertex * spVtx = dwnd().getDrawer().getVertexPtr(0);
 	u32 i = gSPLoadVertexData<VEC_OPT>(vertex, spVtx, v0, v0, n);
 	if (i < n + v0)
 		gSPLoadVertexData<1>(vertex + (i - v0), spVtx, v0, i, n);
+
+	gVtxLastLoadedAddress = address;
+	gVtxLastLoadedAmount = n;
+	gVtxLastLoadedOffset = v0;
 }
 
 template <u32 VNUM>
@@ -1723,6 +1741,7 @@ void gSPCullDisplayList( u32 v0, u32 vn )
 
 void gSPPopMatrixN(u32 param, u32 num)
 {
+	gVtxLastLoadedAddress = -1;
 	if (gSP.matrix.modelViewi > num - 1) {
 		gSP.matrix.modelViewi -= num;
 		gSP.changed |= CHANGED_MATRIX | CHANGED_LIGHT | CHANGED_LOOKAT;
@@ -1736,6 +1755,7 @@ void gSPPopMatrixN(u32 param, u32 num)
 
 void gSPPopMatrix( u32 param )
 {
+	gVtxLastLoadedAddress = -1;
 	switch (param) {
 	case 0: // modelview
 		if (gSP.matrix.modelViewi > 0) {
@@ -1879,6 +1899,7 @@ void gSPModifyVertex( u32 _vtx, u32 _where, u32 _val )
 
 void gSPNumLights( s32 n )
 {
+	gVtxLastLoadedAddress = -1;
 	if (n < 12) {
 		gSP.numLights = n;
 		gSP.changed |= CHANGED_LIGHT;
