@@ -221,7 +221,13 @@ copy /Y "$(OutDir)$(TargetName).*" "$(Mupen64PluginsDir_x64)")</Command>
       <FloatingPointModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/Gw -fmerge-all-constants -flto=thin -fsplit-lto-unit -fwhole-program-vtables -fforce-emit-vtables -fstrict-vtable-pointers -mssse3 -Ofast %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/Gw -fmerge-all-constants -flto=thin -fsplit-lto-unit -fwhole-program-vtables -mssse3 -Ofast /clang:-fno-math-errno %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug_mupenplus|Win32'">stdcpp20</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release_mupenplus|Win32'">stdcpp20</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug_mupenplus|x64'">stdcpp20</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp20</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release_mupenplus|x64'">stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/opt:lldltojobs=all -mllvm:-disable-auto-upgrade-debug-info /call-graph-profile-sort /opt:lldlto=3 %(AdditionalOptions)</AdditionalOptions>

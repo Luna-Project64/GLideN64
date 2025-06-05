@@ -21,8 +21,10 @@ void DisplayWindow::start()
 
 void DisplayWindow::stop()
 {
+	enterContext();
 	m_drawer._destroyData();
 	gfxContext.destroy();
+	// '_stop' will perform leaveContext
 	_stop();
 }
 

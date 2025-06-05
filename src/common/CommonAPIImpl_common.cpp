@@ -25,11 +25,33 @@ PluginAPI & PluginAPI::get()
 	return api;
 }
 
+#ifdef RSPTHREAD
+class GLContextGuard
+{
+public:
+	GLContextGuard()
+	{
+		_hasFlushControl = dwnd().hasFlushControl();
+		if (_hasFlushControl)
+			dwnd().enterContext();
+	}
+
+	~GLContextGuard()
+	{
+		if (_hasFlushControl)
+			dwnd().leaveContext();
+	}
+
+private:
+	bool _hasFlushControl;
+};
+#endif
+
 void PluginAPI::ProcessDList()
 {
 	LOG(LOG_APIFUNC, "ProcessDList\n");
 #ifdef RSPTHREAD
-	if (__builtin_expect(!m_executor.sync(RSP_ProcessDList), false))
+	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; RSP_ProcessDList(); }), false))
 	{
 		RSP_ProcessDList_Trivial();
 	}
@@ -42,7 +64,7 @@ void PluginAPI::ProcessRDPList()
 {
 	LOG(LOG_APIFUNC, "ProcessRDPList\n");
 #ifdef RSPTHREAD
-	if (__builtin_expect(!m_executor.sync(RDP_ProcessRDPList), false))
+	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; RDP_ProcessRDPList(); }), false))
 	{
 		RDP_ProcessRDPList_Trivial();
 	}
@@ -57,7 +79,7 @@ void PluginAPI::RomClosed()
 	m_bRomOpen = false;
 #ifdef RSPTHREAD
 	std::lock_guard<std::mutex> lck(m_initMutex);
-#if WIN32
+#if 1
 	bool main = GetCurrentThreadId() == hWndThread;
 	bool running = m_executor.stopAsync([&]()
 	{
@@ -110,12 +132,13 @@ void PluginAPI::RomOpen()
 	LOG(LOG_APIFUNC, "RomOpen\n");
 #ifdef RSPTHREAD
 	std::lock_guard<std::mutex> lck(m_initMutex);
-	m_executor.start(false /*allowSameThreadExec*/, []()
+	m_executor.start([]()
 	{
 		RSP_Init();
 		GBI.init();
 		Config_LoadConfig();
 		dwnd().start();
+		return dwnd().hasFlushControl();
 	});
 #else
 	RSP_Init();
@@ -160,12 +183,13 @@ void PluginAPI::Restart()
 		}
 
 		m_executor.stopWait();
-		m_executor.start(false /*allowSameThreadExec*/, []()
+		m_executor.start([]()
 		{
 			RSP_Init();
 			GBI.init();
 			Config_LoadConfig();
 			dwnd().start();
+			return dwnd().hasFlushControl();
 		});
 	}
 #else
@@ -183,7 +207,11 @@ void PluginAPI::UpdateScreen()
 {
 	LOG(LOG_APIFUNC, "UpdateScreen\n");
 #ifdef RSPTHREAD
-	m_executor.async(VI_UpdateScreen);
+	m_executor.async([]()
+	{
+		GLContextGuard lck;
+		VI_UpdateScreen();
+	});
 #else
 	VI_UpdateScreen();
 #endif
@@ -238,6 +266,7 @@ void PluginAPI::FBWrite(unsigned int _addr, unsigned int _size)
 #ifdef RSPTHREAD
 	m_executor.sync([=]()
 	{
+		GLContextGuard lck;
 		FBInfo::fbInfo.Write(_addr, _size);
 	});
 #else
@@ -250,6 +279,7 @@ void PluginAPI::FBRead(unsigned int _addr)
 #ifdef RSPTHREAD
 	m_executor.sync([=]()
 	{
+		GLContextGuard lck;
 		FBInfo::fbInfo.Read(_addr);
 	});
 #else
@@ -262,6 +292,7 @@ void PluginAPI::FBGetFrameBufferInfo(void * _pinfo)
 #ifdef RSPTHREAD
 	m_executor.sync([=]()
 	{
+		GLContextGuard lck;
 		FBInfo::fbInfo.GetInfo(_pinfo);
 	});
 #else
@@ -272,7 +303,15 @@ void PluginAPI::FBGetFrameBufferInfo(void * _pinfo)
 #ifndef MUPENPLUSAPI
 void PluginAPI::FBWList(FrameBufferModifyEntry * _plist, unsigned int _size)
 {
+#ifdef RSPTHREAD
+	m_executor.sync([=]()
+	{
+		GLContextGuard lck;
+		FBInfo::fbInfo.WriteList(reinterpret_cast<FBInfo::FrameBufferModifyEntry*>(_plist), _size);
+	});
+#else
 	FBInfo::fbInfo.WriteList(reinterpret_cast<FBInfo::FrameBufferModifyEntry*>(_plist), _size);
+#endif
 }
 
 void PluginAPI::ReadScreen(void **_dest, long *_width, long *_height)
@@ -280,6 +319,7 @@ void PluginAPI::ReadScreen(void **_dest, long *_width, long *_height)
 #ifdef RSPTHREAD
 	m_executor.sync([=]()
 	{
+		GLContextGuard lck;
 		dwnd().readScreen(_dest, _width, _height);
 	});
 #else

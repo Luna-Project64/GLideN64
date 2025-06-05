@@ -12,16 +12,18 @@ public:
 	void restart();
 	void swapBuffers();
 	void saveScreenshot();
-	void saveBufferContent(FrameBuffer * _pBuffer);
-	void saveBufferContent(graphics::ObjectHandle _fbo, CachedTexture *_pTexture);
+	void saveBufferContent(FrameBuffer* _pBuffer);
+	void saveBufferContent(graphics::ObjectHandle _fbo, CachedTexture* _pTexture);
 	bool changeWindow();
 	bool resizeWindow();
 	void closeWindow();
 	void setWindowSize(u32 _width, u32 _height);
-	void setCaptureScreen(const char * const _strDirectory);
+	void setCaptureScreen(const char* const _strDirectory);
 	void setToggleFullscreen() { m_bToggleFullscreen = true; }
-	void readScreen(void **_pDest, long *_pWidth, long *_pHeight);
-	void readScreen2(void * _dest, int * _width, int * _height, int _front);
+	void readScreen(void** _pDest, long* _pWidth, long* _pHeight);
+	void readScreen2(void* _dest, int* _width, int* _height, int _front);
+	virtual void enterContext() = 0;
+	virtual void leaveContext() = 0;
 
 	void updateScale();
 	f32 getScaleX() const { return m_scaleX; }
@@ -36,6 +38,7 @@ public:
 	bool isFullscreen() const { return m_bFullscreen; }
 	bool isAdjustScreen() const { return m_bAdjustScreen; }
 	bool isResizeWindow() const { return m_bResizeWindow; }
+	bool hasFlushControl() const { return m_bHasFlushControl; }
 
 	GraphicsDrawer & getDrawer() { return m_drawer; }
 
@@ -52,6 +55,7 @@ protected:
 	bool m_bResizeWindow = false;
 	bool m_bFullscreen = false;
 	bool m_bAdjustScreen = false;
+	bool m_bHasFlushControl = false;
 
 	u32 m_buffersSwapCount = 0;
 	u32 m_width = 0;

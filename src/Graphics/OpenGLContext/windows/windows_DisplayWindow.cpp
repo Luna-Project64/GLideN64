@@ -39,7 +39,7 @@ protected:
 	HDC		hDC;
 };
 
-class DisplayWindowEGL : public DisplayWindowWindows
+class DisplayWindowEGL final : public DisplayWindowWindows
 {
 public:
 	DisplayWindowEGL() : eglDisplay(NULL), eglSurface(NULL) {}
@@ -48,13 +48,15 @@ private:
 	bool _start() override;
 	void _stop() override;
 	void _swapBuffers() override;
+	void enterContext() override;
+	void leaveContext() override;
 
 	EGLDisplay eglDisplay;
 	EGLSurface eglSurface;
 	EGLContext eglContext;
 };
 
-class DisplayWindowWGL : public DisplayWindowWindows
+class DisplayWindowWGL final : public DisplayWindowWindows
 {
 public:
 	DisplayWindowWGL() : hRC(NULL) {}
@@ -63,6 +65,8 @@ private:
 	bool _start() override;
 	void _stop() override;
 	void _swapBuffers() override;
+	void enterContext() override;
+	void leaveContext() override;
 
 	HGLRC	hRC;
 };
@@ -131,6 +135,7 @@ void DisplayWindowWindows::_stop()
 bool DisplayWindowWGL::_start()
 {
 	DisplayWindowWindows::_start();
+	m_bHasFlushControl = false;
 
 	int pixelFormat;
 
@@ -241,6 +246,16 @@ void DisplayWindowWGL::_swapBuffers()
 		SwapBuffers(hDC);
 }
 
+void DisplayWindowWGL::enterContext()
+{
+	wglMakeCurrent(hDC, hRC);
+}
+
+void DisplayWindowWGL::leaveContext()
+{
+	wglMakeCurrent(NULL, NULL);
+}
+
 #define EGL_PLATFORM_ANGLE_ANGLE          0x3202
 #define EGL_PLATFORM_ANGLE_TYPE_ANGLE     0x3203
 
@@ -274,6 +289,7 @@ bool DisplayWindowEGL::_start()
 {
 	DisplayWindowWindows::_start();
 
+	m_bHasFlushControl = true;
 	egl::InitializeProcess();
 
 	EGLint renderer = EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE;
@@ -433,6 +449,16 @@ void DisplayWindowEGL::_stop()
 void DisplayWindowEGL::_swapBuffers()
 {
 	eglSwapBuffers(eglDisplay, eglSurface);
+}
+
+void DisplayWindowEGL::enterContext()
+{
+	eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
+}
+
+void DisplayWindowEGL::leaveContext()
+{
+	eglMakeCurrent(eglDisplay, NULL, NULL, NULL);
 }
 
 void DisplayWindowWindows::_saveScreenshot()

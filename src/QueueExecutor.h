@@ -15,9 +15,10 @@
 class QueueExecutor {
 public:
     using Task = std::function<void()>;
+    using TaskStart = std::function<bool()>;
     QueueExecutor() = default;
 
-    void start(bool allowSameThreadExec, Task fn = {});
+    void start(TaskStart fn);
     template<typename Fn>
     bool sync(Fn fn)
     {

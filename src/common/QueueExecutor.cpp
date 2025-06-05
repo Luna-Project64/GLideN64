@@ -1,14 +1,21 @@
 #include "QueueExecutor.h"
-void QueueExecutor::start(bool allowSameThreadExec, Task fn) {
+void QueueExecutor::start(TaskStart fn) {
     if (running_)
         return;
 
     running_ = true;
     canSubmit_ = true;
-    allowSameThreadExec_ = allowSameThreadExec;
+    allowSameThreadExec_ = false;
     tasks_.clear();
     executor_ = std::thread{ &QueueExecutor::loop, this };
-    async(std::move(fn));
+    async([fn, this]()
+    {
+        bool allowSameThreadExec = fn();
+        {
+            std::lock_guard lck(mutex_);
+            allowSameThreadExec_ = allowSameThreadExec;
+        }
+    });
 }
 
 bool QueueExecutor::async(Task task) {
