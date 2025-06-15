@@ -95,7 +95,7 @@ void F3D_DList( u32 w0, u32 w1 )
 			break;
 		default:
 			if (LegacySm64ToolsHacks)
-				gSPBranchList(w1);
+				gSPDisplayList(w1);
 
 			break;
 	}
