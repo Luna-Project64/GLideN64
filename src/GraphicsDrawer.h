@@ -194,7 +194,7 @@ private:
 	TexturedRectParams m_texrectParams;
 
 	struct {
-		std::array<SPVertex, VERTBUFF_SIZE> vertices;
+		alignas(16) std::array<SPVertex, VERTBUFF_SIZE> vertices;
 		std::array<u16, ELEMBUFF_SIZE> elements;
 		u32 num = 0;
 		int maxElement = 0;
