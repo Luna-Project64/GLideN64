@@ -195,10 +195,9 @@ struct Config
 	} debug;
 
 	enum AngleRenderer {
-		arAdaptive = 0,
+		arDirectX11 = 0,
 		arVulkan = 1,
 		arOpenGL = 2,
-		arDirectX11 = 3,
 	};
 
 	struct {

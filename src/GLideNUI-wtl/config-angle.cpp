@@ -20,7 +20,9 @@ LRESULT CAngleTab::OnColorStatic(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 }
 
 void CAngleTab::LoadSettings(bool /*blockCustomSettings*/) {
+#if notyet
 	CButton(GetDlgItem(IDC_RADIO_RENDER_AUTOMATIC)).SetCheck(config.angle.renderer == Config::arAdaptive ? BST_CHECKED : BST_UNCHECKED);
+#endif
 	CButton(GetDlgItem(IDC_RADIO_VULKAN)).SetCheck(config.angle.renderer == Config::arVulkan ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_RADIO_OPENGL)).SetCheck(config.angle.renderer == Config::arOpenGL ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_RADIO_DIRECT3D)).SetCheck(config.angle.renderer == Config::arDirectX11 ? BST_CHECKED : BST_UNCHECKED);
@@ -32,6 +34,12 @@ void CAngleTab::LoadSettings(bool /*blockCustomSettings*/) {
 }
 
 void CAngleTab::SaveSettings() {
+#if notyet
+	if (CButton(GetDlgItem(IDC_RADIO_RENDER_AUTOMATIC)).GetCheck() == BST_CHECKED)
+	{
+		config.angle.renderer = Config::arAdaptive;
+	}
+#endif
 	if (CButton(GetDlgItem(IDC_RADIO_DIRECT3D)).GetCheck() == BST_CHECKED)
 	{
 		config.angle.renderer = Config::arDirectX11;

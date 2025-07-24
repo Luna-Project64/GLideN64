@@ -120,7 +120,11 @@ void Config::resetToDefaults()
 
 	debug.dumpMode = 0;
 
+#if notyet
 	angle.renderer = arAdaptive;
+#else
+	angle.renderer = arDirectX11;
+#endif
 	angle.directComposition = 0;
 	angle.shadowDelimiter = 120;
 }
@@ -176,6 +180,9 @@ void Config::validate()
 		// TODO: Figure out MSAA on DX11
 		video.multisampling = 0;
 	}
+
+	if (!config.frameBufferEmulation.enable)
+		config.frameBufferEmulation.N64DepthCompare = 0;
 
 	if (config.angle.shadowDelimiter < 10)
 		config.angle.shadowDelimiter = 10;

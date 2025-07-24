@@ -296,7 +296,6 @@ bool DisplayWindowEGL::_start()
 	uint64_t gpuOverride = 0;
 	switch (config.angle.renderer)
 	{
-	default:
 	case Config::arDirectX11:
 		renderer = EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE;
 		gpuOverride = angle::GetDedicatedDualGPU();
@@ -313,6 +312,8 @@ bool DisplayWindowEGL::_start()
 
 	std::vector<EGLint> dispOptions;
 	dispOptions.reserve(10);
+	dispOptions.push_back(EGL_CONTEXT_OPENGL_NO_ERROR_KHR);
+	dispOptions.push_back(EGL_TRUE);
 	dispOptions.push_back(EGL_PLATFORM_ANGLE_TYPE_ANGLE);
 	dispOptions.push_back(renderer);
 
