@@ -93,7 +93,7 @@ void GLInfo::init() {
 	imageTextures = imageTextures && (fragment_interlock || fragment_interlockNV || fragment_ordering);
 
 	if (isGLES2)
-		config.generalEmulation.enableFragmentDepthWrite = 0;
+		config.generalEmulation.enableFragmentDepthWrite = Config::FragDepthWriteMode::disabled;
 
 	bufferStorage = (!isGLESX && (numericVersion >= 44)) || Utils::isExtensionSupported(*this, "GL_ARB_buffer_storage") ||
 			Utils::isExtensionSupported(*this, "GL_EXT_buffer_storage");

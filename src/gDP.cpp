@@ -984,12 +984,12 @@ void gDPMemset(u32 value, u32 addr, u32 length)
 		// HACK: this usually replaces gDPSetColorImage for zb so save zb
 		frameBufferList().saveBuffer(gDP.depthImageAddress, (u16)G_IM_FMT_RGBA, (u16)G_IM_SIZ_16b, (u16)imageWidth, false);
 
-		if (config.generalEmulation.enableFragmentDepthWrite == 0)
+		if (!DepthFragmentWrite)
 			drawer.clearDepthBuffer();
 		else
 			depthBufferList().setCleared(true);
 
-		if (config.generalEmulation.enableFragmentDepthWrite != 0) {
+		if (DepthFragmentWrite) {
 			// Pretend that we are drawing the rectangle over ZB with fill mode
 			ValueKeeper<u32> backupColorImageAddress(gDP.colorImage.address, gDP.depthImageAddress);
 			ValueKeeper<u32> backupWidth(gDP.colorImage.width, imageWidth);
@@ -1061,7 +1061,7 @@ void gDPFillRectangle( s32 ulx, s32 uly, s32 lrx, s32 lry )
 		// If color is not depth clear color, that is most likely the case
 		if (gDP.fillColor.color == DepthClearColor) {
 			depthBuffer = dbFound;
-			if (config.generalEmulation.enableFragmentDepthWrite == 0) {
+			if (!DepthFragmentWrite) {
 				drawer.clearDepthBuffer();
 				depthBuffer = dbCleared;
 			} else
@@ -1070,7 +1070,7 @@ void gDPFillRectangle( s32 ulx, s32 uly, s32 lrx, s32 lry )
 	} else if (gDP.fillColor.color == DepthClearColor && gDP.otherMode.cycleType == G_CYC_FILL) {
 		depthBuffer = dbFound;
 		depthBufferList().saveBuffer(gDP.colorImage.address);
-		if (config.generalEmulation.enableFragmentDepthWrite == 0 ||
+		if (!DepthFragmentWrite ||
 			(config.generalEmulation.hacks & hack_Snap) != 0) {
 			drawer.clearDepthBuffer();
 			depthBuffer = dbCleared;

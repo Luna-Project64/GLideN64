@@ -45,7 +45,7 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.generalEmulation.enableNoise = settings.value("enableNoise", config.generalEmulation.enableNoise).toInt();
 	config.generalEmulation.enableShadersStorage = settings.value("enableShadersStorage", config.generalEmulation.enableShadersStorage).toInt();
 	config.generalEmulation.enableLegacyBlending = settings.value("enableLegacyBlending", config.generalEmulation.enableLegacyBlending).toInt();			 //ini only
-	config.generalEmulation.enableFragmentDepthWrite = settings.value("enableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite).toInt(); //ini only
+	config.generalEmulation.enableFragmentDepthWrite = (Config::FragDepthWriteMode) settings.value("enableFragmentDepthWrite", (int) config.generalEmulation.enableFragmentDepthWrite).toInt(); //ini only
 	config.generalEmulation.enableCustomSettings = settings.value("enableCustomSettings", config.generalEmulation.enableCustomSettings).toInt();
 	settings.endGroup();
 
@@ -132,7 +132,7 @@ void _loadSettings(Config& config, GlSettings & settings)
 	settings.endGroup();
 
 	settings.beginGroup("angle");
-	config.angle.renderer = settings.value("renderer", config.angle.renderer).toInt();
+	config.angle.renderer = (Config::AngleRenderer) settings.value("renderer", (int32_t) config.angle.renderer).toInt();
 	config.angle.directComposition = settings.value("directComposition", config.angle.directComposition).toInt();
 	config.angle.shadowDelimiter = settings.value("shadowDelimiter", config.angle.shadowDelimiter).toInt();
 	settings.endGroup();
@@ -224,7 +224,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("enableNoise", config.generalEmulation.enableNoise);
 		settings.setValue("enableShadersStorage", config.generalEmulation.enableShadersStorage);
 		settings.setValue("enableLegacyBlending", config.generalEmulation.enableLegacyBlending);		 //ini only
-		settings.setValue("enableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite); //ini only
+		settings.setValue("enableFragmentDepthWrite", (int) config.generalEmulation.enableFragmentDepthWrite); //ini only
 		settings.setValue("enableCustomSettings", config.generalEmulation.enableCustomSettings);
 		settings.endGroup();
 

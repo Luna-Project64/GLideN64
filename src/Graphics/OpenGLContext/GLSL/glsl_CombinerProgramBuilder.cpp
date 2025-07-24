@@ -7,6 +7,7 @@
 #include "glsl_CombinerProgramImpl.h"
 #include "glsl_CombinerProgramBuilder.h"
 #include "glsl_CombinerProgramUniformFactory.h"
+#include "N64.h"
 
 using namespace glsl;
 
@@ -248,7 +249,7 @@ public:
 class VertexShaderTexturedTriangle : public ShaderPart
 {
 public:
-	VertexShaderTexturedTriangle(const opengl::GLInfo & _glinfo)
+	VertexShaderTexturedTriangle(const opengl::GLInfo& _glinfo)
 	{
 		m_part =
 			"IN highp vec4 aPosition;							\n"
@@ -257,7 +258,13 @@ public:
 			"IN lowp float aNumLights;							\n"
 			"IN highp vec4 aModify;								\n"
 			"													\n"
-			"uniform int uTexturePersp;							\n"
+			"uniform int uTexturePersp;							\n";
+
+		if (!LegacySm64ToolsHacks) {
+			m_part += "uniform lowp int uTextureFilterMode;		\n";
+		}
+
+		m_part +=
 			"													\n"
 			"uniform lowp int uFogUsage;						\n"
 			"uniform mediump vec2 uFogScale;					\n"
@@ -278,8 +285,16 @@ public:
 			"mediump vec2 calcTexCoord(in vec2 texCoord, in int idx)		\n"
 			"{																\n"
 			"    vec2 texCoordOut = texCoord*uCacheShiftScale[idx];			\n"
-			"    texCoordOut -= uTexOffset[idx];							\n"
+			"    texCoordOut -= uTexOffset[idx];							\n";
+
+		m_part += (LegacySm64ToolsHacks) ?
 			"    return (uCacheOffset[idx] + texCoordOut)* uCacheScale[idx];\n"
+			:
+			"    texCoordOut += uCacheOffset[idx];							\n"
+			"    if (uTextureFilterMode != 0) texCoordOut += vec2(0.5);		\n"
+			"    return texCoordOut* uCacheScale[idx];						\n";
+
+		m_part +=
 			"}																\n"
 			"																\n"
 			"void main()													\n"
@@ -421,7 +436,7 @@ public:
 			m_part =
 				"  gl_ClipDistance[0] = gl_Position.w - gl_Position.z;	\n"
 				;
-		} else if (config.generalEmulation.enableFragmentDepthWrite != 0 && _glinfo.noPerspective) {
+		} else if (DepthFragmentWrite && _glinfo.noPerspective) {
 				m_part =
 					"  vZCoord = gl_Position.z / gl_Position.w;	\n"
 					"  if (uClampMode > 0)	\n"
@@ -1637,7 +1652,7 @@ class ShaderFragmentRenderTarget : public ShaderPart
 public:
 	ShaderFragmentRenderTarget(const opengl::GLInfo & _glinfo)
 	{
-		if (config.generalEmulation.enableFragmentDepthWrite != 0) {
+		if (DepthFragmentWrite) {
 			m_part =
 				"  if (uRenderTarget != 0) {					\n"
 				"    if (uRenderTarget > 1) {					\n"
@@ -1742,7 +1757,7 @@ public:
 	ShaderWriteDepth(const opengl::GLInfo & _glinfo)
 	{
 		if (!_glinfo.isGLES2) {
-			if (config.generalEmulation.enableFragmentDepthWrite == 0 &&
+			if (!DepthFragmentWrite &&
 				config.frameBufferEmulation.N64DepthCompare == 0) {
 				// Dummy write depth
 				m_part =

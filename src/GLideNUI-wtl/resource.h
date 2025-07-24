@@ -221,14 +221,17 @@
 #define IDC_TXT_AUTHOR_GLES2N64         1187
 #define IDC_RENDERER                    1187
 #define IDC_TXT_AUTHOR_GLIDEHQ          1188
-#define IDC_CHECK_ENABLE_FRAGMENT_DEPTH_WRITE 1188
 #define IDC_TXT_AUTHOR_Z64              1189
 #define IDC_RADIO_VULKAN                1189
 #define IDC_CHECK_DIRECT_COMPOSITION    1190
 #define IDC_RADIO_OPENGL                1191
 #define IDC_STATIC_SHADOW_DELIM         1192
-#define IDC_EDIT1                       1193
 #define IDC_EDIT_SHADOW_DELIMITER       1193
+#define IDC_RADIO_RENDER_AUTOMATIC      1194
+#define IDC_DEPTH_WRITE                 1195
+#define IDC_RADIO_DEPTH_WRITE_ADAPTIVE  1196
+#define IDC_RADIO_DEPTH_WRITE_ENABLED   1197
+#define IDC_RADIO_DEPTH_WRITE_DISABLED  1198
 
 // Next default values for new objects
 // 

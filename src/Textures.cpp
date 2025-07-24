@@ -1004,7 +1004,7 @@ bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & 
 
 void TextureCache::_loadDepthTexture(CachedTexture * _pTexture, u16* _pDest)
 {
-	if (!config.generalEmulation.enableFragmentDepthWrite)
+	if (!DepthFragmentWrite)
 		return;
 
 	u32 size = _pTexture->realWidth * _pTexture->realHeight;
@@ -1495,8 +1495,14 @@ void TextureCache::_updateBackground()
 	pCurrent->shiftScaleS = 1.0f;
 	pCurrent->shiftScaleT = 1.0f;
 
-	pCurrent->offsetS = 0.5f;
-	pCurrent->offsetT = 0.5f;
+	if (LegacySm64ToolsHacks) {
+		pCurrent->offsetS = 0.5f;
+		pCurrent->offsetT = 0.5f;
+	}
+	else {
+		pCurrent->offsetS = 0.f;
+		pCurrent->offsetT = 0.f;
+	}
 
 	_loadBackground(pCurrent);
 	activateTexture(0, pCurrent);
@@ -1649,8 +1655,14 @@ void TextureCache::update(u32 _t)
 	pCurrent->scaleS = 1.0f / (f32)(pCurrent->realWidth);
 	pCurrent->scaleT = 1.0f / (f32)(pCurrent->realHeight);
 
-	pCurrent->offsetS = 0.5f;
-	pCurrent->offsetT = 0.5f;
+	if (LegacySm64ToolsHacks) {
+		pCurrent->offsetS = 0.5f;
+		pCurrent->offsetT = 0.5f;
+	}
+	else {
+		pCurrent->offsetS = 0.f;
+		pCurrent->offsetT = 0.f;
+	}
 
 	_load(_t, pCurrent);
 	activateTexture( _t, pCurrent );

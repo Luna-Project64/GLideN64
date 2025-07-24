@@ -39,20 +39,20 @@ void Config::resetToDefaults()
 	generalEmulation.enableLegacyBlending = 0;
 	generalEmulation.hacks = 0;
 #if defined(OS_ANDROID) || defined(OS_IOS)
-	generalEmulation.enableFragmentDepthWrite = 0;
+	generalEmulation.enableFragmentDepthWrite = FragDepthWriteMode::adaptive;
 	generalEmulation.enableBlitScreenWorkaround = 0;
 	generalEmulation.forcePolygonOffset = 0;
 	generalEmulation.polygonOffsetFactor = 0.0f;
 	generalEmulation.polygonOffsetUnits = 0.0f;
 #else
-	generalEmulation.enableFragmentDepthWrite = 0;
+	generalEmulation.enableFragmentDepthWrite = FragDepthWriteMode::adaptive;
 #endif
 
 	graphics2D.correctTexrectCoords = tcDisable;
 	graphics2D.enableNativeResTexrects = 0;
 	graphics2D.bgMode = BGMode::bgStripped;
 
-	frameBufferEmulation.enable = 1;
+	frameBufferEmulation.enable = 0;
 	frameBufferEmulation.copyDepthToRDRAM = cdSoftwareRender;
 	frameBufferEmulation.copyFromRDRAM = 0;
 	frameBufferEmulation.copyAuxToRDRAM = 0;
@@ -120,7 +120,7 @@ void Config::resetToDefaults()
 
 	debug.dumpMode = 0;
 
-	angle.renderer = arDirectX11;
+	angle.renderer = arAdaptive;
 	angle.directComposition = 0;
 	angle.shadowDelimiter = 120;
 }

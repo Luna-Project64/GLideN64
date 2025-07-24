@@ -82,7 +82,6 @@ void F3D_Reserved1( u32 w0, u32 w1 )
 {
 }
 
-extern "C" u32 LegacySm64ToolsHacks;
 void F3D_DList( u32 w0, u32 w1 )
 {
 	switch (_SHIFTR( w0, 16, 8 ))
@@ -90,13 +89,8 @@ void F3D_DList( u32 w0, u32 w1 )
 		case G_DL_PUSH:
 			gSPDisplayList(w1);
 			break;
-		case G_DL_NOPUSH:
-			gSPBranchList(w1);
-			break;
 		default:
-			if (LegacySm64ToolsHacks)
-				gSPDisplayList(w1);
-
+			gSPBranchList(w1);
 			break;
 	}
 }

@@ -313,7 +313,7 @@ namespace glsl {
 					"  TEX_FILTER(fragColor, uTex0, vTexCoord0);								\n"
 					;
 				if (!_glinfo.isGLES2 &&
-					config.generalEmulation.enableFragmentDepthWrite != 0 &&
+					DepthFragmentWrite &&
 					config.frameBufferEmulation.N64DepthCompare == 0) {
 					m_part +=
 						"  gl_FragDepth = uPrimDepth;											\n"

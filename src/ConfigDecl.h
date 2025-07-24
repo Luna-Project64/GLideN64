@@ -45,6 +45,12 @@ struct Config
 		tcForce
 	};
 
+	enum class FragDepthWriteMode {
+		adaptive = 0,
+		enabled,
+		disabled,
+	};
+
 	struct {
 		u32 enableNoise;
 		u32 enableLOD;
@@ -52,7 +58,7 @@ struct Config
 		u32 enableCustomSettings;
 		u32 enableShadersStorage;
 		u32 enableLegacyBlending;
-		u32 enableFragmentDepthWrite;
+		FragDepthWriteMode enableFragmentDepthWrite;
 		u32 enableBlitScreenWorkaround;
 		u32 hacks;
 #if defined(OS_ANDROID) || defined(OS_IOS)
@@ -189,13 +195,14 @@ struct Config
 	} debug;
 
 	enum AngleRenderer {
-		arDirectX11 = 0,
+		arAdaptive = 0,
 		arVulkan = 1,
 		arOpenGL = 2,
+		arDirectX11 = 3,
 	};
 
 	struct {
-		u32 renderer;
+		AngleRenderer renderer;
 		u32 directComposition;
 		u32 shadowDelimiter;
 	} angle;

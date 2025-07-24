@@ -1,6 +1,7 @@
 #include <vector>
 #include "CombinerProgram.h"
 #include <Config.h>
+#include "N64.h"
 
 namespace graphics {
 
@@ -16,7 +17,8 @@ namespace graphics {
 		vecOptions.push_back(config.generalEmulation.enableLOD);
 		vecOptions.push_back(config.frameBufferEmulation.N64DepthCompare);
 		vecOptions.push_back(config.generalEmulation.enableLegacyBlending);
-		vecOptions.push_back(config.generalEmulation.enableFragmentDepthWrite);
+		vecOptions.push_back(DepthFragmentWrite);
+		vecOptions.push_back(LegacySm64ToolsHacks);
 		vecOptions.push_back(config.angle.renderer);
 		u32 optionsSet = 0;
 		for (u32 i = 0; i < vecOptions.size(); ++i)

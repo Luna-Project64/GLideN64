@@ -19,6 +19,7 @@
 #include "glsl_CombinerProgramImpl.h"
 #include "glsl_CombinerProgramUniformFactory.h"
 
+#include "N64.h"
 #include "Config.h"
 
 using namespace glsl;
@@ -68,7 +69,7 @@ std::string getStorageFileName(const opengl::GLInfo & _glinfo, const char * _fil
 	}
 
 	const unsigned globalKeys =
-		(config.generalEmulation.enableFragmentDepthWrite != 0) |
+		(DepthFragmentWrite) |
 		((config.generalEmulation.enableLOD != 0) << 1) |
 		((config.generalEmulation.enableNoise != 0) << 2) |
 		((config.generalEmulation.enableLegacyBlending != 0) << 3) |
@@ -87,7 +88,8 @@ std::string getStorageFileName(const opengl::GLInfo & _glinfo, const char * _fil
 		(((unsigned)_glinfo.ext_fetch) << 17);
 
 
-	path << "/GLideN64." << std::hex << globalKeys << "." << strOpenGLType << "." << _fileExtension;
+	const char* prefix = LegacySm64ToolsHacks ? "/OGRE." : "/GLideN64.";
+	path << prefix << std::hex << globalKeys << "." << strOpenGLType << "." << _fileExtension;
 
 	return path.str();
 }

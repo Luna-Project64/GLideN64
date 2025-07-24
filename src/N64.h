@@ -2,6 +2,7 @@
 #define N64_H
 
 #include "Types.h"
+#include <stdint.h>
 
 #define MI_INTR_DP		0x20		// Bit 5: DP intr
 
@@ -71,6 +72,12 @@ static inline const u32* tmemCacheHashTryGet(u32 off, u32 size)
 		return &TMEMCacheHash.hash;
 	else
 		return nullptr;
+}
+
+extern "C"
+{
+	extern uint32_t LegacySm64ToolsHacks;
+	extern uint32_t DepthFragmentWrite;
 }
 
 #endif

@@ -20,11 +20,14 @@ LRESULT CAngleTab::OnColorStatic(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 }
 
 void CAngleTab::LoadSettings(bool /*blockCustomSettings*/) {
-	CButton(GetDlgItem(IDC_RADIO_DIRECT3D)).SetCheck(config.angle.renderer == Config::arDirectX11 ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_RADIO_RENDER_AUTOMATIC)).SetCheck(config.angle.renderer == Config::arAdaptive ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_RADIO_VULKAN)).SetCheck(config.angle.renderer == Config::arVulkan ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_RADIO_OPENGL)).SetCheck(config.angle.renderer == Config::arOpenGL ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_RADIO_DIRECT3D)).SetCheck(config.angle.renderer == Config::arDirectX11 ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_CHECK_DIRECT_COMPOSITION)).SetCheck((config.angle.directComposition) != 0 ? BST_CHECKED : BST_UNCHECKED);
-	CButton(GetDlgItem(IDC_CHECK_ENABLE_FRAGMENT_DEPTH_WRITE)).SetCheck((config.generalEmulation.enableFragmentDepthWrite) != 0 ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_RADIO_DEPTH_WRITE_ADAPTIVE)).SetCheck(config.generalEmulation.enableFragmentDepthWrite == Config::FragDepthWriteMode::adaptive ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_RADIO_DEPTH_WRITE_ENABLED)).SetCheck(config.generalEmulation.enableFragmentDepthWrite == Config::FragDepthWriteMode::enabled ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_RADIO_DEPTH_WRITE_DISABLED)).SetCheck(config.generalEmulation.enableFragmentDepthWrite == Config::FragDepthWriteMode::disabled ? BST_CHECKED : BST_UNCHECKED);
 	CEdit(GetDlgItem(IDC_EDIT_SHADOW_DELIMITER)).SetWindowText(std::to_wstring(config.angle.shadowDelimiter).c_str());
 }
 
@@ -42,7 +45,18 @@ void CAngleTab::SaveSettings() {
 		config.angle.renderer = Config::arOpenGL;
 	}
 	config.angle.directComposition = CButton(GetDlgItem(IDC_CHECK_DIRECT_COMPOSITION)).GetCheck() == BST_CHECKED;
-	config.generalEmulation.enableFragmentDepthWrite = CButton(GetDlgItem(IDC_CHECK_ENABLE_FRAGMENT_DEPTH_WRITE)).GetCheck() == BST_CHECKED;
+	if (CButton(GetDlgItem(IDC_RADIO_DEPTH_WRITE_ADAPTIVE)).GetCheck() == BST_CHECKED)
+	{
+		config.generalEmulation.enableFragmentDepthWrite = Config::FragDepthWriteMode::adaptive;
+	}
+	if (CButton(GetDlgItem(IDC_RADIO_DEPTH_WRITE_ENABLED)).GetCheck() == BST_CHECKED)
+	{
+		config.generalEmulation.enableFragmentDepthWrite = Config::FragDepthWriteMode::enabled;
+	}
+	if (CButton(GetDlgItem(IDC_RADIO_DEPTH_WRITE_DISABLED)).GetCheck() == BST_CHECKED)
+	{
+		config.generalEmulation.enableFragmentDepthWrite = Config::FragDepthWriteMode::disabled;
+	}
 
 	int maxLen = 5;
 	std::wstring path;

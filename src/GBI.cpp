@@ -39,6 +39,7 @@
 #include "DebugDump.h"
 #include "Graphics/Context.h"
 #include "Graphics/Parameters.h"
+#include "Config.h"
 
 #include <set>
 #include <sstream>
@@ -47,6 +48,7 @@ u32 last_good_ucode = (u32) -1;
 extern "C"
 {
 	uint32_t LegacySm64ToolsHacks = false;
+	uint32_t DepthFragmentWrite = false;
 }
 
 struct SpecialMicrocodeInfo
@@ -193,7 +195,25 @@ void GBIInfo::_flushCommands()
 
 void GBIInfo::_makeCurrent(MicrocodeInfo * _pCurrent)
 {
-	LegacySm64ToolsHacks = false;
+	if (!m_pCurrent)
+	{
+		LegacySm64ToolsHacks = _pCurrent->type == F3D && _pCurrent->sm64;
+		switch (config.generalEmulation.enableFragmentDepthWrite)
+		{
+			case Config::FragDepthWriteMode::adaptive:
+				DepthFragmentWrite = !LegacySm64ToolsHacks;
+				break;
+			case Config::FragDepthWriteMode::enabled:
+				DepthFragmentWrite = true;
+				break;
+			case Config::FragDepthWriteMode::disabled:
+				DepthFragmentWrite = false;
+				break;
+		}
+
+		Combiner_Init();
+	}
+
 	if (_pCurrent->type == NONE) {
 		LOG(LOG_ERROR, "[GLideN64]: error - unknown ucode!!!\n");
 		return;
@@ -213,9 +233,6 @@ void GBIInfo::_makeCurrent(MicrocodeInfo * _pCurrent)
 
 		switch (m_pCurrent->type) {
 			case F3D:
-				if (m_pCurrent->sm64)
-					LegacySm64ToolsHacks = true;
-
 				F3D_Init();
 				m_hwlSupported = true;
 			break;

@@ -671,11 +671,11 @@ void GraphicsDrawer::_updateStates(DrawingState _drawingState) const
 
 	cmbInfo.updateParameters();
 
-	if (!config.generalEmulation.enableFragmentDepthWrite)
+	if (!DepthFragmentWrite)
 		return;
 
 	if (isCurrentColorImageDepthImage() &&
-		config.generalEmulation.enableFragmentDepthWrite != 0 &&
+		DepthFragmentWrite &&
 		config.frameBufferEmulation.N64DepthCompare == 0) {
 		// Current render target is depth buffer.
 		// Shader will set gl_FragDepth to shader color, see ShaderCombiner ctor
@@ -1777,7 +1777,6 @@ void GraphicsDrawer::_initData()
 	g_textDrawer.init();
 	DepthBuffer_Init();
 	FrameBuffer_Init();
-	Combiner_Init();
 	TFH.init();
 	PostProcessor::get().init();
 	g_zlutTexture.init();

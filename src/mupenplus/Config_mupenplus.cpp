@@ -74,7 +74,7 @@ bool Config_SetDefault()
 	assert(res == M64ERR_SUCCESS);
 	res = ConfigSetDefaultBool(g_configVideoGliden64, "EnableLegacyBlending", config.generalEmulation.enableLegacyBlending, "Do not use shaders to emulate N64 blending modes. Works faster on slow GPU. Can cause glitches.");
 	assert(res == M64ERR_SUCCESS);
-	res = ConfigSetDefaultBool(g_configVideoGliden64, "EnableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite, "Enable writing of fragment depth. Some mobile GPUs do not support it, thus it made optional. Leave enabled.");
+	res = ConfigSetDefaultBool(g_configVideoGliden64, "EnableFragmentDepthWrite", (u32) config.generalEmulation.enableFragmentDepthWrite, "Enable writing of fragment depth. Some mobile GPUs do not support it, thus it made optional. Leave enabled.");
 	assert(res == M64ERR_SUCCESS);
 	res = ConfigSetDefaultBool(g_configVideoGliden64, "EnableCustomSettings", config.generalEmulation.enableCustomSettings, "Use GLideN64 per-game settings.");
 	assert(res == M64ERR_SUCCESS);
@@ -268,7 +268,7 @@ void Config_LoadCustomConfig()
 	result = ConfigExternalGetParameter(fileHandle, sectionName, "generalEmulation\\enableLegacyBlending", value, sizeof(value));
 	if (result == M64ERR_SUCCESS) config.generalEmulation.enableLegacyBlending = atoi(value);
 	result = ConfigExternalGetParameter(fileHandle, sectionName, "generalEmulation\\enableFragmentDepthWrite", value, sizeof(value));
-	if (result == M64ERR_SUCCESS) config.generalEmulation.enableFragmentDepthWrite = atoi(value);
+	if (result == M64ERR_SUCCESS) config.generalEmulation.enableFragmentDepthWrite = (Config::FragDepthWriteMode) atoi(value);
 
 	result = ConfigExternalGetParameter(fileHandle, sectionName, "graphics2D\\correctTexrectCoords", value, sizeof(value));
 	if (result == M64ERR_SUCCESS) config.graphics2D.correctTexrectCoords = atoi(value);
@@ -378,7 +378,7 @@ void Config_LoadConfig()
 	config.generalEmulation.enableHWLighting = ConfigGetParamBool(g_configVideoGliden64, "EnableHWLighting");
 	config.generalEmulation.enableShadersStorage = ConfigGetParamBool(g_configVideoGliden64, "EnableShadersStorage");
 	config.generalEmulation.enableLegacyBlending = ConfigGetParamBool(g_configVideoGliden64, "EnableLegacyBlending");
-	config.generalEmulation.enableFragmentDepthWrite = ConfigGetParamBool(g_configVideoGliden64, "EnableFragmentDepthWrite");
+	config.generalEmulation.enableFragmentDepthWrite = (Config::FragDepthWriteMode)ConfigGetParamInt(g_configVideoGliden64, "EnableFragmentDepthWrite");
 	config.generalEmulation.enableCustomSettings = ConfigGetParamBool(g_configVideoGliden64, "EnableCustomSettings");
 #if defined(OS_ANDROID) || defined(OS_IOS)
 	config.generalEmulation.enableBlitScreenWorkaround = ConfigGetParamBool(g_configVideoGliden64, "EnableBlitScreenWorkaround");
