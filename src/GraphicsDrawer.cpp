@@ -45,6 +45,9 @@ GraphicsDrawer::~GraphicsDrawer()
 
 void GraphicsDrawer::addTriangle(int _v0, int _v1, int _v2)
 {
+	if (__builtin_expect(triangles.num > VERTBUFF_SIZE - 16, false))
+		drawTriangles();
+
 	const u32 firstIndex = triangles.num;
 	triangles.elements[triangles.num++] = _v0;
 	triangles.elements[triangles.num++] = _v1;

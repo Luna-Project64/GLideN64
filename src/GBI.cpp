@@ -435,24 +435,33 @@ void GBIInfo::loadMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
 			current.fast3DPersp = false;
 			current.combineMatrices = false;
 
+			uint8_t version = 0;
 			std::set<std::string> features;
 			{
 				// 0x180 is absolutely an overkill but it is ok for now
 				const char* name_end = (const char*)memchr(probe, ' ', 0x180);
 				size_t name_len = name_end - probe;
-				// It will look like F3DEX3_LVP_BrW_NOC
+				// It will look like F3DEX3_LVP_BrW_NOC_B
 				std::string feature;
 				std::string name = std::string(probe, name_len);
 				std::stringstream name_stream(name);
 				while (std::getline(name_stream, feature, '_'))
 				{
-					features.emplace(std::move(feature));
+					if (feature.size() == 1)
+					{
+						version = feature[0] - 'A';
+					}
+					else
+					{
+						features.emplace(std::move(feature));
+					}
 				}
 			}
 
 			current.f3dex3.legacyVertexPipeline = features.find("LVP") != features.end();
 			current.f3dex3.noOcclusionPlane = features.find("NOC") != features.end();
 			current.f3dex3.branchOnZ = features.find("BrZ") != features.end();
+			current.f3dex3.version = version;
 
 			LOG(LOG_VERBOSE, "Load microcode (%s) type: %d crc: 0x%08x romname: %s\n", uc_str, current.type, uc_crc, RSP.romname);
 			_makeCurrent(&current);
