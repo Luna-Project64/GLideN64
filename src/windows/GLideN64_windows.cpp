@@ -11,6 +11,11 @@ void ConfigInit(void* hinst);
 void ConfigCleanup(void);
 #endif
 
+extern "C" {
+    __declspec(dllexport) DWORD NvOptimusEnablement = 1;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 namespace egl
 {
     // extern void AllocateCurrentThread();
