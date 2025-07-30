@@ -325,7 +325,7 @@ static void F3DEX3_Memset(u32 w0, u32 w1)
 
 static void F3DEX3_Mtx(u32 w0, u32 w1)
 {
-	gSPMatrix(w1, _SHIFTR(w0, 0, 8) ^ G_MTX_LOAD ^ G_MTX_MUL);
+	gSPMatrix(w1, _SHIFTR(w0, 0, 8) ^ G_MTX_PUSH ^ G_MTX_LOAD);
 }
 
 void F3DEX3_Init()
