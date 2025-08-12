@@ -2449,9 +2449,9 @@ bool needClampColor(const gDPCombine& _combine) {
 	if (!colorTrivial)
 		return true;
 
-	bool Aa0 = _combine.saA0 == 15;
-	bool Ab0 = _combine.sbA0 == 15;
-	bool Ac0 = _combine.mA0 == 31;
+	bool Aa0 = _combine.saA0 == 7;
+	bool Ab0 = _combine.sbA0 == 7;
+	bool Ac0 = _combine.mA0 == 7;
 	bool Ad0 = _combine.aA0 == 7;
 
 	bool alphaTrivial = Ac0 || (Aa0 && Ab0) || (_combine.saA0 == _combine.sbA0) || (Ab0 && Ad0) || (_combine.sbA0 == _combine.aA0);
@@ -2470,9 +2470,9 @@ bool needClampColor(const gDPCombine& _combine) {
 	if (!colorTrivial2)
 		return true;
 
-	bool Aa1 = _combine.saA1 == 15;
-	bool Ab1 = _combine.sbA1 == 15;
-	bool Ac1 = _combine.mA1 == 31;
+	bool Aa1 = _combine.saA1 == 7;
+	bool Ab1 = _combine.sbA1 == 7;
+	bool Ac1 = _combine.mA1 == 7;
 	bool Ad1 = _combine.aA1 == 7;
 
 	bool alphaTrivial2 = Ac1 || (Aa1 && Ab1) || (_combine.saA1 == _combine.sbA1) || (Ab1 && Ad1) || (_combine.sbA1 == _combine.aA1);
@@ -2583,7 +2583,7 @@ CombinerInputs CombinerProgramBuilder::compileCombiner(const CombinerKey & _key,
 	if (needClampColor(combine)) 
 		m_clamp->write(ssShader);
 	else
-		ssShader << "  lowp vec4 clampedColor = clamp(cmbRes, 0.0, 1.0);" << std::endl;
+		ssShader << "  lowp vec4 clampedColor = cmbRes;" << std::endl;
 
 	if (g_cycleType <= G_CYC_2CYCLE)
 		m_callDither->write(ssShader);
