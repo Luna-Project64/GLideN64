@@ -310,42 +310,6 @@ void writeSettings(Config& config, const char * _strIniFolder)
 	}
 }
 
-static
-std::string _getRomName(const char * _strRomName)
-{
-	std::string RomName;
-
-	enum { CP_SHIFT_JIS = 932 };
-	int utf16size = MultiByteToWideChar(CP_SHIFT_JIS, MB_ERR_INVALID_CHARS, _strRomName, -1, 0, 0);
-	if (utf16size != 0)
-	{
-		std::unique_ptr<wchar_t> pUTF16(new WCHAR[utf16size]);
-		if (MultiByteToWideChar(CP_SHIFT_JIS, 0, (LPCCH)_strRomName, -1, pUTF16.get(), utf16size) != 0)
-		{
-			std::wstring wsRomName(pUTF16.get(), utf16size);
-			std::transform(wsRomName.begin(), wsRomName.end(), wsRomName.begin(), (int(*)(int)) toupper);
-			std::string::size_type pos = wsRomName.find(L" ");
-			std::wstring replace = L"%20";
-			while (pos != std::string::npos)
-			{
-				wsRomName.replace(pos, 1, replace);
-				pos = wsRomName.find(L" ", pos + replace.length());
-			}
-
-			int utf8size = ::WideCharToMultiByte(CP_UTF8, 0, wsRomName.c_str(), -1, 0, 0, 0, 0);
-			if (utf8size != 0)
-			{
-				std::unique_ptr<char> pUTF8(new char[utf8size]);
-				if (::WideCharToMultiByte(CP_UTF8, 0, wsRomName.c_str(), -1, pUTF8.get(), utf8size, 0, 0) != 0)
-				{
-					RomName = std::string(pUTF8.get());
-				}
-			}
-		}
-	}
-	return RomName;
-}
-
 void loadCustomRomSettings(Config& config, const char * _strIniFolder, const char * _strRomName)
 {
 	std::string CustomIniFileName = _strIniFolder;
@@ -354,7 +318,7 @@ void loadCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 
 	GlSettings settings(CustomIniFileName.c_str());
 	GlSettings::sections childGroups = settings.childGroups();
-	const std::string romName = _getRomName(_strRomName);
+	const std::string romName{ _strRomName };
 	if (childGroups.find(romName.c_str()) == childGroups.end())
 		return;
 
@@ -377,7 +341,6 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	CustomIniFileName += strCustomSettingsFileName;
 
 	GlSettings settings(CustomIniFileName.c_str());
-	const std::string romName = _getRomName(_strRomName);
 
 #define WriteCustomSetting(G, S) \
 	if (origConfig.G.S  != config.G.S || \
@@ -398,7 +361,7 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 		orig##S != settings.value(#S, new##S.c_str()).toString()) \
 		settings.setValue(#S, new##S.c_str())
 
-	settings.beginGroup(romName.c_str());
+	settings.beginGroup(_strRomName);
 
 	settings.beginGroup("video");
 	WriteCustomSetting(video, fullscreenWidth);
