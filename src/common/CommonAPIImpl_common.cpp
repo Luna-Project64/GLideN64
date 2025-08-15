@@ -66,6 +66,8 @@ void PluginAPI::ProcessRDPList()
 #ifdef RSPTHREAD
 	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; RDP_ProcessRDPList(); }), false))
 	{
+		if (!Combiner_IsInit())
+			Combiner_Init();
 		RDP_ProcessRDPList_Trivial();
 	}
 #else
@@ -257,8 +259,8 @@ void PluginAPI::ChangeWindow()
 {
 	LOG(LOG_APIFUNC, "ChangeWindow\n");
 	dwnd().setToggleFullscreen();
-	if (!m_bRomOpen)
-		dwnd().closeWindow();
+	//if (!m_bRomOpen)
+	//	dwnd().closeWindow();
 }
 
 void PluginAPI::FBWrite(unsigned int _addr, unsigned int _size)

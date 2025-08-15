@@ -82,6 +82,11 @@ void Combiner_Destroy() {
 	CombinerInfo::get().destroy();
 }
 
+bool Combiner_IsInit()
+{
+	return CombinerInfo::get().isInit();
+}
+
 /*---------------CombinerInfo-------------*/
 
 CombinerInfo & CombinerInfo::get()

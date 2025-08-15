@@ -13,6 +13,8 @@
 #include <DisplayWindow.h>
 #include <EGL/eglext.h>
 
+bool DisplayWindow::m_bToggleFullscreen = false;
+
 extern "C"
 {
 	EGLAPI EGLDisplay EGLAPIENTRY eglGetPlatformDisplayEXT(EGLenum platform, void* native_display, const EGLint* attrib_list);

@@ -124,6 +124,7 @@ public:
 	void update();
 	void setCombine(u64 _mux);
 	void updateParameters();
+	bool isInit() const { return !!m_shadowmapProgram; }
 
 	void setDepthFogCombiner();
 	graphics::ShaderProgram * getTexrectCopyProgram();
@@ -169,6 +170,7 @@ graphics::CombinerProgram * currentCombiner() {
 
 void Combiner_Init();
 void Combiner_Destroy();
+bool Combiner_IsInit();
 graphics::CombinerProgram * Combiner_Compile(CombinerKey key);
 
 #endif

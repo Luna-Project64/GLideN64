@@ -51,7 +51,7 @@ protected:
 	void _setBufferSize();
 
 	bool m_bCaptureScreen = false;
-	bool m_bToggleFullscreen = false;
+	static bool m_bToggleFullscreen;
 	bool m_bResizeWindow = false;
 	bool m_bFullscreen = false;
 	bool m_bAdjustScreen = false;
