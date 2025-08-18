@@ -113,6 +113,8 @@ void VI_UpdateScreen()
 
 	if (ConfigOpen)
 		return;
+	if (!Combiner_IsInit())
+		return;
 
 	perf.increaseVICount();
 	DisplayWindow & wnd = dwnd();
