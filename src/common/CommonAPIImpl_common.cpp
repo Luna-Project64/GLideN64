@@ -64,10 +64,8 @@ void PluginAPI::ProcessRDPList()
 {
 	LOG(LOG_APIFUNC, "ProcessRDPList\n");
 #ifdef RSPTHREAD
-	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; RDP_ProcessRDPList(); }), false))
+	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; if (!Combiner_IsInit()) { Combiner_Init(); } RDP_ProcessRDPList(); }), false))
 	{
-		if (!Combiner_IsInit())
-			Combiner_Init();
 		RDP_ProcessRDPList_Trivial();
 	}
 #else

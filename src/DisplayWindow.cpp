@@ -82,6 +82,8 @@ bool DisplayWindow::changeWindow()
 	if (!m_bToggleFullscreen)
 		return false;
 	m_drawer._destroyData();
+	GBI.destroy();
+	RSP.uc_start = RSP.uc_dstart = 0;
 	_changeWindow();
 	updateScale();
 	m_drawer._initData();
