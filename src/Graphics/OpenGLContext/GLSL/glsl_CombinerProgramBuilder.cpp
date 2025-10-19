@@ -1095,12 +1095,9 @@ public:
 				case BILINEAR_ACCELERATED:
 				case BILINEAR_NEAREST:
 					shaderPart +=
-						"#define TEX_OFFSET(off, tex, texCoord) texture(tex, texCoord - (off)/texSize)			\n"
 						"#define TEX_FILTER(name, tex, texCoord)												\\\n"
 						"  {																					\\\n"
-						"  mediump vec2 texSize = vec2(textureSize(tex,0));										\\\n"
-						"  mediump vec2 offset = vec2(0);													    \\\n"
-						"  name = TEX_OFFSET(offset, tex, texCoord); 											\\\n"
+						"  name = texture(tex, texCoord); 														\\\n"
 						"  }																					\n"
 						;
 					break;
@@ -1185,12 +1182,9 @@ public:
 				case BILINEAR_ACCELERATED+4:
 				case BILINEAR_NEAREST+4:
 					shaderPart +=
-						"#define TEX_OFFSET(off, tex, texCoord) texture(tex, texCoord - (off)/texSize)									\n"
 						"#define TEX_FILTER(name, tex, texCoord)												\\\n"
 						"{																						\\\n"
-						"  mediump vec2 texSize = vec2(textureSize(tex,0));										\\\n"
-						"  mediump vec2 offset = vec2(0);														\\\n"
-						"  lowp vec4 c0 = TEX_OFFSET(offset, tex, texCoord);									\\\n"
+						"  lowp vec4 c0 = texture(tex, texCoord);												\\\n"
 						"																						\\\n"
 						"  if(uEnableAlphaTest == 1 ){															\\\n" // Calculate premultiplied color values
 						"    c0.rgb *= c0.a;																	\\\n"
