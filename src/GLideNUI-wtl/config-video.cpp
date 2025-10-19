@@ -160,6 +160,8 @@ void CVideoTab::ApplyLanguage(void) {
 	TTSetTxt(GetDlgItem(IDC_BILINEAR), tooltip.c_str());
 	TTSetTxt(GetDlgItem(IDC_BILINEAR_STANDARD), tooltip.c_str());
 	TTSetTxt(GetDlgItem(IDC_BILINEAR_3POINT), tooltip.c_str());
+	TTSetTxt(GetDlgItem(IDC_BILINEAR_ACCELERATED), tooltip.c_str());
+	TTSetTxt(GetDlgItem(IDC_BILINEAR_NEAREST), tooltip.c_str());
 
 	CComboBox aspectComboBox(GetDlgItem(IDC_CMB_ASPECT_RATIO));
 	int selectedIndx = aspectComboBox.GetCurSel();
@@ -258,6 +260,8 @@ void CVideoTab::HideMSAADepthWarning(bool hide)
 	IDC_BILINEAR,
 	IDC_BILINEAR_STANDARD,
 	IDC_BILINEAR_3POINT,
+	IDC_BILINEAR_ACCELERATED,
+	IDC_BILINEAR_NEAREST,
 	};
 
 	RECT Rect; RECT groupRect;
@@ -427,6 +431,8 @@ void CVideoTab::LoadSettings(bool /*blockCustomSettings*/) {
 
 	CButton(GetDlgItem(IDC_BILINEAR_3POINT)).SetCheck(config.texture.bilinearMode == BILINEAR_3POINT ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_BILINEAR_STANDARD)).SetCheck(config.texture.bilinearMode == BILINEAR_STANDARD ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_BILINEAR_ACCELERATED)).SetCheck(config.texture.bilinearMode == BILINEAR_ACCELERATED ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_BILINEAR_NEAREST)).SetCheck(config.texture.bilinearMode == BILINEAR_NEAREST ? BST_CHECKED : BST_UNCHECKED);
 
 	CComboBox aspectComboBox(GetDlgItem(IDC_CMB_ASPECT_RATIO));
 	switch (config.frameBufferEmulation.aspect) {
@@ -510,6 +516,10 @@ void CVideoTab::SaveSettings()
 		config.texture.bilinearMode = BILINEAR_3POINT;
 	if (CButton(GetDlgItem(IDC_BILINEAR_STANDARD)).GetCheck() == BST_CHECKED)
 		config.texture.bilinearMode = BILINEAR_STANDARD;
+	if (CButton(GetDlgItem(IDC_BILINEAR_ACCELERATED)).GetCheck() == BST_CHECKED)
+		config.texture.bilinearMode = BILINEAR_ACCELERATED;
+	if (CButton(GetDlgItem(IDC_BILINEAR_NEAREST)).GetCheck() == BST_CHECKED)
+		config.texture.bilinearMode = BILINEAR_NEAREST;
 
 	CComboBox translationsComboBox(GetDlgItem(IDC_CMB_LANGUAGE));
 	config.translationFile = (const char *)translationsComboBox.GetItemDataPtr(translationsComboBox.GetCurSel());

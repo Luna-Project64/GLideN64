@@ -61,6 +61,9 @@
 #define IDC_ANISOTROPIC_LABEL           1025
 #define IDC_BILINEAR_STANDARD           1026
 #define IDC_BILINEAR_3POINT             1027
+#define IDC_BILINEAR_ACCELERATED        1028
+#define IDC_BILINEAR_3POINT2            1029
+#define IDC_BILINEAR_NEAREST            1029
 #define IDC_OVERSCAN_LEFT_TXT           1030
 #define IDC_OVERSCAN_LEFT_SPIN          1031
 #define IDC_OVERSCAN_RIGHT_TXT          1032

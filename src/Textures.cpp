@@ -1365,10 +1365,18 @@ void TextureCache::activateTexture(u32 _t, CachedTexture *_pTexture)
 		params.target = textureTarget::TEXTURE_2D;
 		params.textureUnitIndex = textureIndices::Tex[_t];
 
-		const bool bUseBilinear = gDP.otherMode.textureFilter != G_TF_POINT && config.texture.bilinearMode != BILINEAR_3POINT;
-		const bool bUseLOD = currentCombiner()->usesLOD();
-		const s32 texLevel = bUseLOD ? _pTexture->max_level : 0;
+		bool bUseBilinear = gDP.otherMode.textureFilter != G_TF_POINT && config.texture.bilinearMode != BILINEAR_3POINT;
+		bool bUseLOD = currentCombiner()->usesLOD();
+		s32 texLevel = bUseLOD ? _pTexture->max_level : 0;
 		params.maxMipmapLevel = Parameter(texLevel);
+
+#if 1
+		if (config.texture.bilinearMode == BILINEAR_NEAREST) {
+			bUseBilinear = false;
+		}
+		if (config.texture.bilinearMode == BILINEAR_ACCELERATED) {
+			bUseLOD = true;
+		}
 
 		if (bUseLOD) {
 			if (bUseBilinear) {
@@ -1389,6 +1397,10 @@ void TextureCache::activateTexture(u32 _t, CachedTexture *_pTexture)
 			params.minFilter = textureParameters::FILTER_NEAREST;
 			params.magFilter = textureParameters::FILTER_NEAREST;
 		}
+#else
+		params.minFilter = textureParameters::FILTER_LINEAR;
+		params.magFilter = textureParameters::FILTER_LINEAR;
+#endif
 
 		// Set clamping modes
 		params.wrapS = _pTexture->clampS ? textureParameters::WRAP_CLAMP_TO_EDGE :

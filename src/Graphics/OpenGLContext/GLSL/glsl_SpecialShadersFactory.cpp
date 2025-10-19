@@ -133,6 +133,54 @@ namespace glsl {
 	};
 
 	/*---------------TexrectDrawerShaderPart-------------*/
+	class TexrectDrawerTexNoFiltering : public ShaderPart
+	{
+	public:
+		TexrectDrawerTexNoFiltering(const opengl::GLInfo& _glinfo)
+		{
+			if (_glinfo.isGLES2) {
+				m_part =
+					"#if (__VERSION__ > 120)																						\n"
+					"# define IN in																									\n"
+					"# define OUT out																								\n"
+					"#else																											\n"
+					"# define IN varying																							\n"
+					"# define OUT																									\n"
+					"#endif // __VERSION __																							\n"
+					"lowp vec4 uTestColor = vec4(4.0/255.0, 2.0/255.0, 1.0/255.0, 0.0);												\n"
+					"uniform lowp int uEnableAlphaTest;																				\n"
+					"uniform mediump vec2 uTextureSize;																				\n"
+					"#define TEX_OFFSET(off) texture2D(tex, texCoord - (off)/texSize)												\n"
+					"lowp vec4 texFilter(in sampler2D tex, in mediump vec2 texCoord)												\n"
+					"{																												\n"
+					"  lowp vec4 c = texture2D(tex, texCoord);																		\n"
+					"  if (c == uTestColor) discard;																				\n"
+					"  if (uEnableAlphaTest != 0 && !(c.a > 0.0)) discard;															\n"
+					"  mediump vec2 texSize = uTextureSize;																			\n"
+					"																												\n"
+					"  mediump vec2 offset = vec2(0);																				\n"
+					"  return TEX_OFFSET(offset);																					\n"
+					"}																												\n"
+					"																												\n"
+					;
+			}
+			else {
+				m_part =
+					"#define TEX_OFFSET(off, tex, texCoord, texSize) texture(tex, texCoord - (off)/texSize)							\n"
+					"#define TEX_FILTER(name, tex, texCoord)																		\\\n"
+					"{																												\\\n"
+					"  lowp vec4 c = texture(tex, texCoord);		 																\\\n"
+					"  if (c == uTestColor) discard;																				\\\n"
+					"  if (uEnableAlphaTest == 1 && !(c.a > 0.0)) discard;															\\\n"
+					"  mediump vec2 texSize = vec2(textureSize(tex,0));																\\\n"
+					"  mediump vec2 offset = vec2(0);																				\\\n"
+					"  name = TEX_OFFSET(offset, tex, texCoord, texSize);															\\\n"
+					"}																												\\\n"
+					"																											    \n"
+					;
+			}
+		}
+	};
 
 	class TexrectDrawerTex3PointFilter : public ShaderPart
 	{
@@ -576,8 +624,11 @@ namespace glsl {
 			if (config.texture.bilinearMode == BILINEAR_STANDARD) {
 				TexrectDrawerTexBilinearFilter filter(_glinfo);
 				filter.write(ssFragmentShader);
-			} else {
+			} else if (config.texture.bilinearMode == BILINEAR_3POINT) {
 				TexrectDrawerTex3PointFilter filter(_glinfo);
+				filter.write(ssFragmentShader);
+			} else {
+				TexrectDrawerTexNoFiltering filter(_glinfo);
 				filter.write(ssFragmentShader);
 			}
 

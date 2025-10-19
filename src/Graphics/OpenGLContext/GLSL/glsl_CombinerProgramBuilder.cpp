@@ -1050,7 +1050,7 @@ public:
 
 			if (g_textureConvert.useTextureFiltering()) {
 				shaderPart += "uniform lowp int uTextureFilterMode;								\n";
-				switch (config.texture.bilinearMode + config.texture.enableHalosRemoval * 2) {
+				switch (config.texture.bilinearMode + config.texture.enableHalosRemoval * 4) {
 				case BILINEAR_3POINT:
 					// 3 point texture filtering.
 					// Original author: ArthurCarvalho
@@ -1092,7 +1092,19 @@ public:
 						"}																												\n"
 						;
 				break;
-				case BILINEAR_3POINT_WITH_COLOR_BLEEDING:
+				case BILINEAR_ACCELERATED:
+				case BILINEAR_NEAREST:
+					shaderPart +=
+						"#define TEX_OFFSET(off, tex, texCoord) texture(tex, texCoord - (off)/texSize)			\n"
+						"#define TEX_FILTER(name, tex, texCoord)												\\\n"
+						"  {																					\\\n"
+						"  mediump vec2 texSize = vec2(textureSize(tex,0));										\\\n"
+						"  mediump vec2 offset = vec2(0);													    \\\n"
+						"  name = TEX_OFFSET(offset, tex, texCoord); 											\\\n"
+						"  }																					\n"
+						;
+					break;
+				case BILINEAR_3POINT+4:
 					// 3 point texture filtering.
 					// Original author: ArthurCarvalho
 					// GLSL implementation: twinaphex, mupen64plus-libretro project.
@@ -1118,7 +1130,7 @@ public:
 						"}																						\n"
 						;
 				break;
-				case BILINEAR_STANDARD_WITH_COLOR_BLEEDING_AND_PREMULTIPLIED_ALPHA:
+				case BILINEAR_STANDARD+4:
 					shaderPart +=
 						"#define TEX_OFFSET(off, tex, texCoord) texture(tex, texCoord - (off)/texSize)									\n"
 						"#define TEX_FILTER(name, tex, texCoord)																		\\\n"
@@ -1170,6 +1182,24 @@ public:
 						"}																												\n"
 						;
 				break;
+				case BILINEAR_ACCELERATED+4:
+				case BILINEAR_NEAREST+4:
+					shaderPart +=
+						"#define TEX_OFFSET(off, tex, texCoord) texture(tex, texCoord - (off)/texSize)									\n"
+						"#define TEX_FILTER(name, tex, texCoord)												\\\n"
+						"{																						\\\n"
+						"  mediump vec2 texSize = vec2(textureSize(tex,0));										\\\n"
+						"  mediump vec2 offset = vec2(0);														\\\n"
+						"  lowp vec4 c0 = TEX_OFFSET(offset, tex, texCoord);									\\\n"
+						"																						\\\n"
+						"  if(uEnableAlphaTest == 1 ){															\\\n" // Calculate premultiplied color values
+						"    c0.rgb *= c0.a;																	\\\n"
+						"    name = c0; 																		\\\n"
+						"    name.rgb /= name.a;																\\\n" // Divide alpha to get actual color value
+						"  }																					\\\n"
+						"  else name = c0; 																		\\\n"
+						"}																						\n"
+						;
 				}
 
 				if (!config.frameBufferEmulation.enable)
@@ -2092,7 +2122,7 @@ public:
 						"  return c0 + abs(offset.x)*(c1-c0) + abs(offset.y)*(c2-c0);				\n"
 						"}																			\n"
 						;
-				} else {
+				} else if (config.texture.bilinearMode == BILINEAR_STANDARD) {
 					shaderPart +=
 						// bilinear filtering.
 						"uniform mediump vec2 uTextureSize[2];										\n"
@@ -2118,6 +2148,21 @@ public:
 						"  lowp vec4 pInterp_q0 = mix( p0q0, p1q0, interpolationFactor.x ); 		\n" // Interpolates top row in X direction.
 						"  lowp vec4 pInterp_q1 = mix( p0q1, p1q1, interpolationFactor.x ); 		\n" // Interpolates bottom row in X direction.
 						"  return mix( pInterp_q0, pInterp_q1, interpolationFactor.y ); 			\n" // Interpolate in Y direction.
+						"}																			\n"
+						;
+				} else {
+					shaderPart +=
+						"uniform mediump vec2 uTextureSize[2];										\n"
+						"#define TEX_OFFSET(off) texture2D(tex, texCoord - (off)/texSize)			\n"
+						"lowp vec4 TextureFilter(in sampler2D tex, in highp vec2 texCoord)		\n"
+						"{																			\n"
+						"  mediump vec2 texSize;													\n"
+						"  if (nCurrentTile == 0)													\n"
+						"    texSize = uTextureSize[0];												\n"
+						"  else																		\n"
+						"    texSize = uTextureSize[1];												\n"
+						"  mediump vec2 offset = vec2(0);											\n"
+						"  return TEX_OFFSET(offset);												\n"
 						"}																			\n"
 						;
 				}
