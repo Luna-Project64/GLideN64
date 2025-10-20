@@ -15,8 +15,8 @@ using namespace opengl;
 
 extern "C"
 {
-	void __stdcall GL_Enablei(GLenum target, GLuint index);
-	void __stdcall GL_Disablei(GLenum target, GLuint index);
+	void __stdcall GL_EnableiOES(GLenum target, GLuint index);
+	void __stdcall GL_DisableiOES(GLenum target, GLuint index);
 	void __stdcall GL_ProgramBinaryOES(GLuint program, GLenum binaryFormat, const void* binary, GLint length);
 	void __stdcall GL_GetProgramBinaryOES(GLuint program, GLsizei bufSize, GLsizei* length, GLenum* binaryFormat, void* binary);
 }
@@ -135,8 +135,8 @@ void GLInfo::init() {
 #else
 	if (isGLESX && numericVersion < 32) {
 		if (ext_draw_buffers_indexed) {
-			g_glEnablei = GL_Enablei;
-			g_glDisablei = GL_Disablei;
+			g_glEnablei = GL_EnableiOES;
+			g_glDisablei = GL_DisableiOES;
 		}
 		else {
 			g_glEnablei = nullptr;

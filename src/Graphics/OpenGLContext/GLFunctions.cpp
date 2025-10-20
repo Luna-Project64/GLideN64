@@ -162,7 +162,7 @@ extern "C"
 	void GL_APIENTRY GL_GenBuffers(GLsizei n, GLuint* buffers);
 	void GL_APIENTRY GL_BindBuffer(GLenum target, GLuint buffer);
 	void GL_APIENTRY GL_BufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
-	void* GL_APIENTRY GL_MapBuffer(GLenum target, GLenum access);
+	void* GL_APIENTRY GL_MapBufferOES(GLenum target, GLenum access);
 	void* GL_APIENTRY GL_MapBufferRange(GLenum target,
 		GLintptr offset,
 		GLsizeiptr length,
@@ -181,7 +181,7 @@ extern "C"
 	void GL_APIENTRY GL_InvalidateFramebuffer(GLenum target,
 		GLsizei numAttachments,
 		const GLenum* attachments);
-	void GL_APIENTRY GL_BufferStorage(GLenum target,
+	void GL_APIENTRY GL_BufferStorageEXT(GLenum target,
 		GLsizeiptr size,
 		const void* data,
 		GLbitfield flags);
@@ -257,8 +257,8 @@ extern "C"
 	void GL_APIENTRY GL_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
 	void GL_APIENTRY GL_TextureBarrier();
 	void GL_APIENTRY GL_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat* value);
-	void GL_APIENTRY GL_Enablei(GLenum target, GLuint index);
-	void GL_APIENTRY GL_Disablei(GLenum target, GLuint index);
+	void GL_APIENTRY GL_EnableiOES(GLenum target, GLuint index);
+	void GL_APIENTRY GL_DisableiOES(GLenum target, GLuint index);
 	void GL_APIENTRY GL_EGLImageTargetTexture2DOES(GLenum target, void* image);
 	
 #undef glBlendFunc
@@ -845,7 +845,7 @@ void initGLFunctions()
 		g_glDeleteFramebuffers = GL_DeleteFramebuffers;
 		g_glGenFramebuffers = GL_GenFramebuffers;
 		g_glFramebufferTexture2D = GL_FramebufferTexture2D;
-		g_glTexImage2DMultisample = GL_TexImage2DMultisample;
+		g_glTexImage2DMultisample = nullptr;
 		g_glTexStorage2DMultisample = GL_TexStorage2DMultisample;
 		g_glGenRenderbuffers = GL_GenRenderbuffers;
 		g_glBindRenderbuffer = GL_BindRenderbuffer;
@@ -860,7 +860,7 @@ void initGLFunctions()
 		g_glGenBuffers = GL_GenBuffers;
 		g_glBindBuffer = GL_BindBuffer;
 		g_glBufferData = GL_BufferData;
-		g_glMapBuffer = GL_MapBuffer;
+		g_glMapBuffer = GL_MapBufferOES;
 		g_glMapBufferRange = GL_MapBufferRange;
 		g_glUnmapBuffer = GL_UnmapBuffer;
 		g_glDeleteBuffers = GL_DeleteBuffers;
@@ -868,7 +868,7 @@ void initGLFunctions()
 		g_glMemoryBarrier = GL_MemoryBarrier;
 		g_glGetStringi = GL_GetStringi;
 		g_glInvalidateFramebuffer = GL_InvalidateFramebuffer;
-		g_glBufferStorage = GL_BufferStorage;
+		g_glBufferStorage = GL_BufferStorageEXT;
 		g_glFenceSync = GL_FenceSync;
 		g_glClientWaitSync = GL_ClientWaitSync;
 		g_glDeleteSync = GL_DeleteSync;
@@ -886,23 +886,23 @@ void initGLFunctions()
 		g_glProgramParameteri = GL_ProgramParameteri;
 
 		g_glTexStorage2D = GL_TexStorage2D;
-		g_glTextureStorage2D = GL_TextureStorage2D;
-		g_glTextureSubImage2D = GL_TextureSubImage2D;
+		g_glTextureStorage2D = nullptr;
+		g_glTextureSubImage2D = nullptr;
 		g_glTextureStorage2DMultisample = nullptr; // GL_TextureStorage2DMultisample;
 
-		g_glTextureParameteri = GL_TextureParameteri;
-		g_glTextureParameterf = GL_TextureParameterf;
-		g_glCreateTextures = GL_CreateTextures;
-		g_glCreateBuffers = GL_CreateBuffers;
-		g_glCreateFramebuffers = GL_CreateFramebuffers;
-		g_glNamedFramebufferTexture = GL_NamedFramebufferTexture;
+		g_glTextureParameteri = nullptr;
+		g_glTextureParameterf = nullptr;
+		g_glCreateTextures = nullptr;
+		g_glCreateBuffers = nullptr;
+		g_glCreateFramebuffers = nullptr;
+		g_glNamedFramebufferTexture = nullptr;
 		g_glDrawRangeElementsBaseVertex = GL_DrawRangeElementsBaseVertex;
 		g_glFlushMappedBufferRange = GL_FlushMappedBufferRange;
-		g_glTextureBarrier = GL_TextureBarrier;
+		g_glTextureBarrier = nullptr;
 		g_glTextureBarrierNV = nullptr;
 		g_glClearBufferfv = GL_ClearBufferfv;
-		g_glEnablei = GL_Enablei;
-		g_glDisablei = GL_Disablei;
+		g_glEnablei = GL_EnableiOES;
+		g_glDisablei = GL_DisableiOES;
 		g_glEGLImageTargetTexture2DOES = GL_EGLImageTargetTexture2DOES;
 	}
 }

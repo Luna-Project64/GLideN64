@@ -378,7 +378,7 @@ bool DisplayWindowEGL::_start()
 	};
 
 	EGLint numConfigs;
-	EGLConfig windowConfig;
+	EGLConfig windowConfig = EGL_NO_CONTEXT;
 	if (!eglChooseConfig(eglDisplay, configAttributes, &windowConfig, 1, &numConfigs))
 	{
 		int err = eglGetError();
@@ -404,8 +404,30 @@ bool DisplayWindowEGL::_start()
 		return false;
 	}
 
-	EGLint contextAttributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
-	eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
+	// 3.2
+	{
+		EGLint contextAttributes[] = { EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 2, EGL_NONE };
+		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
+	}
+	// 3.1
+	if (!eglContext)
+	{
+		EGLint contextAttributes[] = { EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 1, EGL_NONE };
+		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
+	}
+	// 3.0
+	if (!eglContext)
+	{
+		EGLint contextAttributes[] = { EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 0, EGL_NONE };
+		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
+	}
+	// 2.0
+	if (!eglContext)
+	{
+		EGLint contextAttributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
+	}
+
 	if (!eglContext)
 	{
 		int err = eglGetError();
