@@ -133,6 +133,8 @@ struct Config
 			s32 top = 0;
 			s32 bottom = 0;
 		} overscanPAL, overscanNTSC;
+
+		u32 instantInput;
 	} frameBufferEmulation;
 
 	struct

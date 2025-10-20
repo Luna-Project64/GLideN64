@@ -1160,6 +1160,11 @@ bool FrameBufferList::RdpUpdate::update(RdpUpdateResult & _result)
 	_result.vi_origin = _SHIFTR(*REG.VI_ORIGIN, 0, 24);
 	_result.vi_fsaa = (*REG.VI_STATUS & 512) == 0;
 	_result.vi_divot = (*REG.VI_STATUS & 16) != 0;
+	if (config.frameBufferEmulation.instantInput)
+	{
+		_result.vi_origin = gDP.colorImage.address;
+	}
+
 	return true;
 
 #if 0

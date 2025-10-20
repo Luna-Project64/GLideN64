@@ -78,6 +78,7 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.frameBufferEmulation.overscanNTSC.right = settings.value("overscanNtscRight", config.frameBufferEmulation.overscanNTSC.right).toInt();
 	config.frameBufferEmulation.overscanNTSC.top = settings.value("overscanNtscTop", config.frameBufferEmulation.overscanNTSC.top).toInt();
 	config.frameBufferEmulation.overscanNTSC.bottom = settings.value("overscanNtscBottom", config.frameBufferEmulation.overscanNTSC.bottom).toInt();
+	config.frameBufferEmulation.instantInput = settings.value("instantInput", config.frameBufferEmulation.instantInput).toInt();
 	settings.endGroup();
 
 	settings.beginGroup("textureFilter");
@@ -257,6 +258,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("overscanNtscRight", config.frameBufferEmulation.overscanNTSC.right);
 		settings.setValue("overscanNtscTop", config.frameBufferEmulation.overscanNTSC.top);
 		settings.setValue("overscanNtscBottom", config.frameBufferEmulation.overscanNTSC.bottom);
+		settings.setValue("instantInput", config.frameBufferEmulation.instantInput);
 		settings.endGroup();
 
 		settings.beginGroup("textureFilter");
@@ -416,6 +418,7 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	WriteCustomSetting2(frameBufferEmulation, overscanNtscRight, overscanNTSC.right);
 	WriteCustomSetting2(frameBufferEmulation, overscanNtscTop, overscanNTSC.top);
 	WriteCustomSetting2(frameBufferEmulation, overscanNtscBottom, overscanNTSC.bottom);
+	WriteCustomSetting(frameBufferEmulation, instantInput);
 	settings.endGroup();
 
 	settings.beginGroup("textureFilter");

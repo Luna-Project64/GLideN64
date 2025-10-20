@@ -150,7 +150,7 @@ void Config::validate()
 	// Only OpenGL is capable of FB emulation
 	if (frameBufferEmulation.enable != 0)
 	{
-		config.angle.renderer = config.arOpenGL;
+		// config.angle.renderer = config.arOpenGL;
 	}
 
 	if (config.angle.renderer == config.arDirectX11 && isWine())
@@ -178,7 +178,7 @@ void Config::validate()
 	if (config.angle.renderer == arDirectX11)
 	{
 		// TODO: Figure out MSAA on DX11
-		video.multisampling = 0;
+		// video.multisampling = 0;
 	}
 
 	if (!config.frameBufferEmulation.enable)

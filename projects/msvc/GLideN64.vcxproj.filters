@@ -778,6 +778,9 @@
     <ClInclude Include="..\..\src\uCodes\F3DEX3.h">
       <Filter>Header Files\uCodes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\GLideNUI-wtl\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\GLideNUI-wtl\GLideNUI.rc" />

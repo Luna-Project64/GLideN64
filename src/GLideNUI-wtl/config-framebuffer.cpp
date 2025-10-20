@@ -141,6 +141,7 @@ LRESULT CFrameBufferTab::OnEnableFramebuffer(UINT /*Code*/, int /*id*/, HWND /*c
 	CButton(GetDlgItem(IDC_CHK_COPY_DEPTH_TO_MAIN_DEPTH_BUFFER)).EnableWindow(fbEmulationEnabled);
 	CButton(GetDlgItem(IDC_CHK_READ_COLOR_CHUNK)).EnableWindow(fbEmulationEnabled && fbInfoEnabled);
 	CButton(GetDlgItem(IDC_CHK_READ_DEPTH_CHUNK)).EnableWindow(fbEmulationEnabled && fbInfoEnabled);
+	CButton(GetDlgItem(IDC_CHK_INSTANT_INPUT)).EnableWindow(fbEmulationEnabled);
 	return 0;
 }
 
@@ -167,6 +168,7 @@ void CFrameBufferTab::LoadSettings(bool /*blockCustomSettings*/)
 	CComboBox(GetDlgItem(IDC_CMB_N64_DEPTH_COMPARE)).SetCurSel(config.frameBufferEmulation.N64DepthCompare);
 	CButton(GetDlgItem(IDC_CHK_FORCE_DEPTH_BUFFER_CLEAR)).SetCheck(config.frameBufferEmulation.forceDepthBufferClear != 0 ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_CHK_RENDER_FRAMEBUFFER)).SetCheck(config.frameBufferEmulation.copyFromRDRAM != 0 ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_CHK_INSTANT_INPUT)).SetCheck(config.frameBufferEmulation.instantInput != 0 ? BST_CHECKED : BST_UNCHECKED);
 
 	OnFbInfoEnable(0, 0, NULL);
 	OnEnableFramebuffer(0, 0, NULL);
@@ -185,4 +187,5 @@ void CFrameBufferTab::SaveSettings()
 	config.frameBufferEmulation.N64DepthCompare = CComboBox(GetDlgItem(IDC_CMB_N64_DEPTH_COMPARE)).GetCurSel();
 	config.frameBufferEmulation.forceDepthBufferClear = CButton(GetDlgItem(IDC_CHK_FORCE_DEPTH_BUFFER_CLEAR)).GetCheck() == BST_CHECKED ? 1 : 0;
 	config.frameBufferEmulation.copyFromRDRAM = CButton(GetDlgItem(IDC_CHK_RENDER_FRAMEBUFFER)).GetCheck() == BST_CHECKED ? 1 : 0;
+	config.frameBufferEmulation.instantInput = CButton(GetDlgItem(IDC_CHK_INSTANT_INPUT)).GetCheck() == BST_CHECKED;
 }

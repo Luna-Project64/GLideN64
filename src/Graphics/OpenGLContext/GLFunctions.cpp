@@ -247,7 +247,7 @@ extern "C"
 		GLenum attachment,
 		GLuint texture,
 		GLint level);
-	void GL_APIENTRY GL_DrawRangeElementsBaseVertex(GLenum mode,
+	void GL_APIENTRY GL_DrawRangeElementsBaseVertexOES(GLenum mode,
 		GLuint start,
 		GLuint end,
 		GLsizei count,
@@ -896,7 +896,7 @@ void initGLFunctions()
 		g_glCreateBuffers = nullptr;
 		g_glCreateFramebuffers = nullptr;
 		g_glNamedFramebufferTexture = nullptr;
-		g_glDrawRangeElementsBaseVertex = GL_DrawRangeElementsBaseVertex;
+		g_glDrawRangeElementsBaseVertex = GL_DrawRangeElementsBaseVertexOES;
 		g_glFlushMappedBufferRange = GL_FlushMappedBufferRange;
 		g_glTextureBarrier = nullptr;
 		g_glTextureBarrierNV = nullptr;
