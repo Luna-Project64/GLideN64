@@ -135,6 +135,7 @@ struct Config
 		} overscanPAL, overscanNTSC;
 
 		u32 instantInput;
+		u32 noForceGL;
 	} frameBufferEmulation;
 
 	struct

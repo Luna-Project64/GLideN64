@@ -82,23 +82,29 @@ DisplayWindow & DisplayWindow::get()
 
 void DisplayWindow::reset()
 {
+	bool justRefreshSize = false;
 	DisplayWindow* cur = TheWindow.get();
 	if (cur)
 	{
 		if (config.angle.renderer == config.arOpenGL)
 		{
 			if (dynamic_cast<DisplayWindowWGL*>(cur))
-				return;
+				justRefreshSize = true;
 			else
 				Sleep(1000);
 		}
 		else
 		{
 			if (dynamic_cast<DisplayWindowEGL*>(cur))
-				return;
+				justRefreshSize = true;
 			else
 				Sleep(1000);
 		}
+	}
+
+	if (justRefreshSize)
+	{
+		return;
 	}
 
 	if (config.angle.renderer == config.arOpenGL)

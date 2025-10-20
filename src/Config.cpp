@@ -70,6 +70,8 @@ void Config::resetToDefaults()
 	frameBufferEmulation.fbInfoDisabled = 1;
 #endif
 	frameBufferEmulation.enableOverscan = 0;
+	frameBufferEmulation.instantInput = 0;
+	frameBufferEmulation.noForceGL = 0;
 
 	textureFilter.txFilterMode = 0;
 	textureFilter.txEnhancementMode = 0;
@@ -150,7 +152,10 @@ void Config::validate()
 	// Only OpenGL is capable of FB emulation
 	if (frameBufferEmulation.enable != 0)
 	{
-		// config.angle.renderer = config.arOpenGL;
+		if (!frameBufferEmulation.noForceGL)
+		{
+			config.angle.renderer = config.arOpenGL;
+		}
 	}
 
 	if (config.angle.renderer == config.arDirectX11 && isWine())
@@ -173,12 +178,6 @@ void Config::validate()
 	{
 		// Does not work currently
 		config.video.fxaa = 0;
-	}
-
-	if (config.angle.renderer == arDirectX11)
-	{
-		// TODO: Figure out MSAA on DX11
-		// video.multisampling = 0;
 	}
 
 	if (!config.frameBufferEmulation.enable)
