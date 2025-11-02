@@ -4,6 +4,7 @@
 #include <Graphics/Parameters.h>
 #include "opengl_ContextImpl.h"
 #include "opengl_BufferedDrawer.h"
+#include "opengl_DynBufferedDrawer.h"
 #include "opengl_UnbufferedDrawer.h"
 #include "opengl_ColorBufferReaderWithPixelBuffer.h"
 #include "opengl_ColorBufferReaderWithBufferStorage.h"
@@ -67,6 +68,9 @@ void ContextImpl::init()
 	}
 
 	{
+		//if (config.angle.renderer == Config::arDirectX11)
+		//	m_graphicsDrawer.reset(new DynBufferedDrawer(m_cachedFunctions->getCachedVertexAttribArray(), m_cachedFunctions->getCachedBindBuffer()));
+		//else
 		if ((m_glInfo.isGLESX && (m_glInfo.bufferStorage && m_glInfo.majorVersion * 10 + m_glInfo.minorVersion >= 32)) || !m_glInfo.isGLESX)
 			m_graphicsDrawer.reset(new BufferedDrawer(m_glInfo, m_cachedFunctions->getCachedVertexAttribArray(), m_cachedFunctions->getCachedBindBuffer()));
 		else
