@@ -124,7 +124,7 @@ public:
 	void update();
 	void setCombine(u64 _mux);
 	void updateParameters();
-	bool isInit() const { return !!m_shadowmapProgram; }
+	bool isInit() const { return !!m_texrectCopyProgram; }
 
 	void setDepthFogCombiner();
 	graphics::ShaderProgram * getTexrectCopyProgram();
