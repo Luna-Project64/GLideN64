@@ -21,6 +21,7 @@ extern "C"
 	void __stdcall GL_GetProgramBinaryOES(GLuint program, GLsizei bufSize, GLsizei* length, GLenum* binaryFormat, void* binary);
 }
 
+int gNumericVersionOverride = 0;
 void GLInfo::init() {
 	const char * strVersion = reinterpret_cast<const char *>(glGetString(GL_VERSION));
 	isGLESX = strstr(strVersion, "OpenGL ES") != nullptr;
@@ -58,6 +59,12 @@ void GLInfo::init() {
 	LOG(LOG_VERBOSE, "OpenGL renderer: %s\n", strRenderer);
 
 	int numericVersion = majorVersion * 10 + minorVersion;
+
+	if (isGLESX)
+	{
+		numericVersion = gNumericVersionOverride;
+	}
+
 	if (isGLES2) {
 		imageTextures = false;
 		msaa = false;

@@ -293,6 +293,8 @@ namespace angle
 	unsigned long long GetDedicatedDualGPUVulkan();
 }
 
+extern int gNumericVersionOverride;
+
 bool DisplayWindowEGL::_start()
 {
 	DisplayWindowWindows::_start();
@@ -410,26 +412,32 @@ bool DisplayWindowEGL::_start()
 		return false;
 	}
 
-	// 3.2
+	eglContext = NULL;
+	// 3.2 - do not try to request on DirectX11 as weird stuff happens if you do
+	if (Config::arVulkan == config.angle.renderer)
 	{
+		gNumericVersionOverride = 32;
 		EGLint contextAttributes[] = { EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 2, EGL_NONE };
 		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
 	}
 	// 3.1
 	if (!eglContext)
 	{
+		gNumericVersionOverride = 31;
 		EGLint contextAttributes[] = { EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 1, EGL_NONE };
 		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
 	}
 	// 3.0
 	if (!eglContext)
 	{
+		gNumericVersionOverride = 30;
 		EGLint contextAttributes[] = { EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 0, EGL_NONE };
 		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
 	}
 	// 2.0
 	if (!eglContext)
 	{
+		gNumericVersionOverride = 20;
 		EGLint contextAttributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
 		eglContext = eglCreateContext(eglDisplay, windowConfig, NULL, contextAttributes);
 	}
