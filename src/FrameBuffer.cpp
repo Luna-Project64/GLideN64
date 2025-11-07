@@ -1359,6 +1359,14 @@ void FrameBufferList::renderBuffer()
 		return;
 	}
 
+	if (config.frameBufferEmulation.removeBlackBars && !rdpRes.vi_ispal)
+	{
+		rdpRes.vi_vres = 240;
+		rdpRes.vi_minhpass = 0;
+		rdpRes.vi_maxhpass = 0;
+		rdpRes.vi_v_start = 0;
+	}
+
 	FrameBuffer *pBuffer = findBuffer(rdpRes.vi_origin);
 	if (pBuffer == nullptr)
 		return;

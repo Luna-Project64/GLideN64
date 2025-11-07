@@ -143,6 +143,7 @@ LRESULT CFrameBufferTab::OnEnableFramebuffer(UINT /*Code*/, int /*id*/, HWND /*c
 	CButton(GetDlgItem(IDC_CHK_READ_DEPTH_CHUNK)).EnableWindow(fbEmulationEnabled && fbInfoEnabled);
 	CButton(GetDlgItem(IDC_CHK_INSTANT_INPUT)).EnableWindow(fbEmulationEnabled);
 	CButton(GetDlgItem(IDC_CHK_NO_FORCE_GL)).EnableWindow(fbEmulationEnabled);
+	CButton(GetDlgItem(IDC_CHK_REMOVE_FB_BARS)).EnableWindow(fbEmulationEnabled);
 	return 0;
 }
 
@@ -171,6 +172,7 @@ void CFrameBufferTab::LoadSettings(bool /*blockCustomSettings*/)
 	CButton(GetDlgItem(IDC_CHK_RENDER_FRAMEBUFFER)).SetCheck(config.frameBufferEmulation.copyFromRDRAM != 0 ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_CHK_INSTANT_INPUT)).SetCheck(config.frameBufferEmulation.instantInput != 0 ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_CHK_NO_FORCE_GL)).SetCheck(config.frameBufferEmulation.noForceGL != 0 ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_CHK_REMOVE_FB_BARS)).SetCheck(config.frameBufferEmulation.removeBlackBars != 0 ? BST_CHECKED : BST_UNCHECKED);
 
 	OnFbInfoEnable(0, 0, NULL);
 	OnEnableFramebuffer(0, 0, NULL);
@@ -191,4 +193,5 @@ void CFrameBufferTab::SaveSettings()
 	config.frameBufferEmulation.copyFromRDRAM = CButton(GetDlgItem(IDC_CHK_RENDER_FRAMEBUFFER)).GetCheck() == BST_CHECKED ? 1 : 0;
 	config.frameBufferEmulation.instantInput = CButton(GetDlgItem(IDC_CHK_INSTANT_INPUT)).GetCheck() == BST_CHECKED;
 	config.frameBufferEmulation.noForceGL = CButton(GetDlgItem(IDC_CHK_NO_FORCE_GL)).GetCheck() == BST_CHECKED;
+	config.frameBufferEmulation.removeBlackBars = CButton(GetDlgItem(IDC_CHK_REMOVE_FB_BARS)).GetCheck() == BST_CHECKED;
 }

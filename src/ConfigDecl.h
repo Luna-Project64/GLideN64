@@ -136,6 +136,7 @@ struct Config
 
 		u32 instantInput;
 		u32 noForceGL;
+		u32 removeBlackBars;
 	} frameBufferEmulation;
 
 	struct

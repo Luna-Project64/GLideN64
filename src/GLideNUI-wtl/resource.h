@@ -110,10 +110,11 @@
 #define IDC_CMB_FILTER                  1073
 #define IDC_CHK_INSTANT_INPUT           1073
 #define IDC_CMB_ENHANCEMENT             1074
-#define IDC_CHK_INSTANT_NO_FORCE_GL     1074
 #define IDC_CHK_NO_FORCE_GL             1074
 #define IDC_CHK_DEPOSTERIZE             1075
 #define IDC_CHK_DECREASE_COLOR          1075
+#define IDC_CHK_NO_FB_BARS              1075
+#define IDC_CHK_REMOVE_FB_BARS          1075
 #define IDC_CHK_IGNORE_BACKGROUNDS      1076
 #define IDC_CHK_ENHANCED_TEX_FILE_STORAGE 1077
 #define IDC_CHK_TEXTURE_PACK            1078

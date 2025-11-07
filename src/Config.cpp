@@ -72,6 +72,7 @@ void Config::resetToDefaults()
 	frameBufferEmulation.enableOverscan = 0;
 	frameBufferEmulation.instantInput = 0;
 	frameBufferEmulation.noForceGL = 0;
+	frameBufferEmulation.removeBlackBars = 0;
 
 	textureFilter.txFilterMode = 0;
 	textureFilter.txEnhancementMode = 0;

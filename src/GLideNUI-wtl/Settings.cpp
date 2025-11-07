@@ -80,6 +80,7 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.frameBufferEmulation.overscanNTSC.bottom = settings.value("overscanNtscBottom", config.frameBufferEmulation.overscanNTSC.bottom).toInt();
 	config.frameBufferEmulation.instantInput = settings.value("instantInput", config.frameBufferEmulation.instantInput).toInt();
 	config.frameBufferEmulation.noForceGL = settings.value("noForceGL", config.frameBufferEmulation.noForceGL).toInt();
+	config.frameBufferEmulation.removeBlackBars = settings.value("removeBlackBars", config.frameBufferEmulation.removeBlackBars).toInt();
 	settings.endGroup();
 
 	settings.beginGroup("textureFilter");
@@ -261,6 +262,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("overscanNtscBottom", config.frameBufferEmulation.overscanNTSC.bottom);
 		settings.setValue("instantInput", config.frameBufferEmulation.instantInput);
 		settings.setValue("noForceGL", config.frameBufferEmulation.noForceGL);
+		settings.setValue("removeBlackBars", config.frameBufferEmulation.removeBlackBars);
 		settings.endGroup();
 
 		settings.beginGroup("textureFilter");
@@ -422,6 +424,7 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	WriteCustomSetting2(frameBufferEmulation, overscanNtscBottom, overscanNTSC.bottom);
 	WriteCustomSetting(frameBufferEmulation, instantInput);
 	WriteCustomSetting(frameBufferEmulation, noForceGL);
+	WriteCustomSetting(frameBufferEmulation, removeBlackBars);
 	settings.endGroup();
 
 	settings.beginGroup("textureFilter");
