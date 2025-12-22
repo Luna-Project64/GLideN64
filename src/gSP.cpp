@@ -122,7 +122,11 @@ void gSP4Triangles(const s32 v00, const s32 v01, const s32 v02,
 	gSPFlushTriangles();
 }
 
-gSPInfo gSP;
+gSPInfo gSP
+{
+	.ao         = { 1.f, 0.625f, 0 },
+	.attrOffset = { 0x0100, -0x0100 },
+};
 
 static const Mtx identityMatrix =
 {
@@ -341,9 +345,15 @@ void gSPLight( u32 l, s32 n )
 		gSP.lights.xyz[n][Y] = light->y;
 		gSP.lights.xyz[n][Z] = light->z;
 
-		gSP.lights.is_point[n] = 0 != light->type;
-
-		Normalize( gSP.lights.xyz[n].vec() );
+		if (GBI.getMicrocodeType() == F3DEX3)
+		{
+			gSP.lights.xyz[n].vec() /= 127.f;
+		}
+		else
+		{
+			// TODO: Why exactly is this needed? i_xyz will be already normalized...
+			Normalize(gSP.lights.xyz[n].vec());
+		}
 		u32 addrShort = addrByte >> 1;
 		gSP.lights.pos_xyzw[n][X] = (float)(((short*)RDRAM)[(addrShort+4)^1]);
 		gSP.lights.pos_xyzw[n][Y] = (float)(((short*)RDRAM)[(addrShort+5)^1]);
@@ -351,6 +361,7 @@ void gSPLight( u32 l, s32 n )
 		gSP.lights.ca[n] = (float)(RDRAM[(addrByte +  3) ^ 3]);
 		gSP.lights.la[n] = (float)(RDRAM[(addrByte +  7) ^ 3]);
 		gSP.lights.qa[n] = (float)(RDRAM[(addrByte + 14) ^ 3]);
+		gSP.lights.specularSize[n] = RDRAM[(addrByte + 15) ^ 3];
 	}
 
 	gSP.changed |= CHANGED_LIGHT;
@@ -451,11 +462,37 @@ void gSPLookAt( u32 _l, u32 _n )
 	DebugMsg(DEBUG_NORMAL, "gSPLookAt( 0x%08X, LOOKAT_%i );\n", _l, _n);
 }
 
+void gSPCameraWorld( u32 _l )
+{
+	u32 address = RSP_SegmentToPhysical(_l);
+
+	if ((address + sizeof(Light)) > RDRAMSize) {
+		DebugMsg(DEBUG_NORMAL | DEBUG_ERROR, "// Attempting to load light from invalid address\n");
+		DebugMsg(DEBUG_NORMAL, "gSPCameraWorld( 0x%08X );\n", _l);
+		return;
+	}
+
+	PlainVtx* light = (PlainVtx*)&RDRAM[address];
+
+	gSP.camWorldPos[X] = light->pos[X];
+	gSP.camWorldPos[Y] = light->pos[Y];
+	gSP.camWorldPos[Z] = light->pos[Z];
+
+	DebugMsg(DEBUG_NORMAL, "gSPCameraWorld( 0x%08X );\n", _l);
+}
+
 static
 void gSPUpdateLightVectors()
 {
 	InverseTransformVectorNormalizeN(&gSP.lights.xyz[0].vec(), &gSP.lights.i_xyz[0].vec(),
 			gSP.matrix.modelView[gSP.matrix.modelViewi], gSP.numLights);
+	gSP.lights.hasPointLight = false;
+	for (u32 i = 0; i < gSP.numLights; ++i) {
+		if (gSP.lights.ca[i] != 0.0f) {
+			gSP.lights.hasPointLight = true;
+			break;
+		}
+	}
 	gSP.changed ^= CHANGED_LIGHT;
 	gSP.changed |= CHANGED_HW_LIGHT;
 }
@@ -694,6 +731,145 @@ static void processPointLight(u32 l, Vec& _vecPos, SPVertex& __restrict vtx)
 	}
 }
 
+static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
+{
+	// pos is already in world space
+	Vec worldSpaceVecPos = _vecPos;
+	worldSpaceVecPos[3] = 0.f;
+
+	// ltadv_after_mtx
+	bool needFres = gSP.geometryMode & (F3DEX3_G_FRESNEL_COLOR | F3DEX3_G_FRESNEL_ALPHA);
+	bool needSpec = gSP.geometryMode & F3DEX3_G_LIGHTING_SPECULAR;
+ 	bool needAO  = gSP.geometryMode & G_AMBOCCLUSION;
+	bool needSpecFres = needFres || needSpec;
+
+	// Compared to 'standard' lighting, 'advanced' lighting transforms the normal to world space keeping the lights untransformed.
+	// This ends up being equivalent to:
+	// TransformVectorNormalize(vtx.normal) * gSP.lights.xyz == vtx.normal * gSP.lights.i_xyz == vtx.normal * InverseTransformVectorNormalize(gSP.lights.xyz)
+	// This approach is pricier than standard lighting (per normal vs per light mtx multiplication), but it allows for correct specular and fresnel effects.
+	Vec worldSpaceNormal = vtx.normal;
+	TransformVectorNormalize(worldSpaceNormal, gSP.matrix.modelView[gSP.matrix.modelViewi]);
+
+	f32 vtxAlpha = vtx.a;
+	f32 offsetAlpha = vtxAlpha - 1.f;
+	f32 ambientOcclusionAmb = needAO ? gSP.ao.amb : 0.f;
+	f32 ambientOcclusionFactor = 1.f + offsetAlpha * ambientOcclusionAmb;
+	vtx.color *= ambientOcclusionFactor;
+	vtx.a = vtxAlpha; // TODO: double check this, likely just need to be flushed in the very end during vcc vmrg
+
+	// ltadv_spec_fres_setup
+	if (needSpecFres)
+	{
+		// Transform the vertex to camera space for specular/fresnel calculations
+		// Use the camera world position to get the view vector
+		Vec camWorldPos = gSP.camWorldPos.vec();
+		Vec camDir = camWorldPos - worldSpaceVecPos;
+		Normalize(camDir);
+
+		f32 fresProd = DotProduct(camDir, worldSpaceNormal);
+		if (needSpec)
+		{
+			// Specular reflects the camDir around the normal vector
+			Vec specFresProjection = worldSpaceNormal * fresProd;
+			worldSpaceNormal = 2 * specFresProjection - camDir;
+		}
+	}
+
+	// aof2 = offsetAlphaFres * gSP.ao.amb;
+
+	// ltadv_loop
+	for (u32 l = 0; l < gSP.numLights; ++l) {
+		f32 intensity = 0.0f;
+		if (gSP.lights.ca[l] != 0.0f) {
+			f32 recip = FIXED2FLOATRECIP16;
+			// Point lighting
+			Vec lvec = { gSP.lights.pos_xyzw[l][X], gSP.lights.pos_xyzw[l][Y], gSP.lights.pos_xyzw[l][Z] };
+			lvec -= worldSpaceVecPos;
+			gSPInverseTransformVector(lvec, gSP.matrix.modelView[gSP.matrix.modelViewi]);
+
+			const f32 K = lvec[0] * lvec[0] + lvec[1] * lvec[1] + lvec[2] * lvec[2] * 2.0f;
+			const f32 KS = sqrtf(K);
+
+			for (u32 i = 0; i < 3; ++i) {
+				lvec[i] = (4.0f * lvec[i] / KS);
+				if (lvec[i] < -1.0f)
+					lvec[i] = -1.0f;
+				if (lvec[i] > 1.0f)
+					lvec[i] = 1.0f;
+			}
+
+			f32 V = lvec[0] * vtx.nx + lvec[1] * vtx.ny + lvec[2] * vtx.nz;
+			if (V < -1.0f)
+				V = -1.0f;
+			if (V > 1.0f)
+				V = 1.0f;
+
+			const f32 KSF = floorf(KS);
+			const f32 D = (KSF * gSP.lights.la[l] * 2.0f + KSF * KSF * gSP.lights.qa[l] / 8.0f) * recip + 1.0f;
+			intensity = V / D;
+		}
+		else
+		{
+			// Standard lighting with respect to world space normal
+			intensity = DotProduct(worldSpaceNormal, gSP.lights.xyz[l].vec());
+			intensity = std::clamp(intensity, -1.f, 1.f);
+
+			if (needSpec)
+			{
+				// Tricky thing! In code we have something that look like this (aDOT = intensity):
+				// vxor    aDOT, aDOT, $v31[7]    // = 0x7FFF - dot product, v31[7] = 0x7FFF
+
+				// We are interpreting intensity as an f32 but in reality it is a fixed point number from -1 to 1.
+				// Here are some of the examples of this mapping and translation to f32s:
+				// 0            = 0x0000 -> 0x7fff = 1.f
+				// 0.2          = 0x1fff -> 0x6000 = 0.8f
+				// 1            = 0x7fff -> 0x0000 = 0.f
+				// 1 / 32767.f  = 0x0001 -> 0x7ffe = 1.f - (1 / 32767.f)
+				// -1 / 32767.f = 0xffff -> 0x8000 = -1.f
+				// -1.f         = 0x8000 -> 0xffff = -(1 / 32767.f)
+				// -1 / 32767.f = 0x8001 -> 0xfffe = -(2 / 32767.f)
+				// -0.2f        = 0x9fff -> 0xe000 = -(0.8f)
+
+				// Hence the aforementioned transform will look like this:
+				auto xorXform = [](f32 value) {
+					if (value >= 0.f)
+						return 1.f - value;
+					else
+						return -1.f - value;
+					};
+
+				f32 dotInvert = xorXform(intensity);
+				f32 dotScaled = dotInvert * gSP.lights.specularSize[l];
+				intensity = xorXform(std::clamp(dotScaled, -1.f, 1.f));
+				// TODO: why is this necessary?
+				intensity = -intensity;
+			}
+		}
+
+		// TODO: ltadv_finish_light portion is missing
+		if (intensity > 0.0f) {
+			vtx.r += gSP.lights.rgb[l][R] * intensity;
+			vtx.g += gSP.lights.rgb[l][G] * intensity;
+			vtx.b += gSP.lights.rgb[l][B] * intensity;
+		}
+	}
+}
+
+static void processF3DEX3LightStandard(Vec& _vecPos, SPVertex& __restrict vtx)
+{
+	// TODO: Add all other missing features here (AO)
+	for (u32 l = 0; l < gSP.numLights; ++l) {
+		f32 intensity = DotProduct(vtx.normal, gSP.lights.i_xyz[l].vec());
+		intensity = std::clamp(intensity, -1.f, 1.f);
+
+		if (intensity > 0.0f) {
+			vtx.r += gSP.lights.rgb[l][R] * intensity;
+			vtx.g += gSP.lights.rgb[l][G] * intensity;
+			vtx.b += gSP.lights.rgb[l][B] * intensity;
+		}
+	}
+}
+
 template <u32 VNUM>
 void gSPPointLightVertexZeldaMM(u32 v, Vec _vecPos[VNUM], SPVertex * __restrict spVtx)
 {
@@ -767,12 +943,15 @@ void gSPLightVertexF3DEX3(u32 v, Vec _vecPos[VNUM], SPVertex* __restrict spVtx)
 		vtx.b = gSP.lights.rgb[gSP.numLights][B];
 		gSPTransformVector(_vecPos[j], gSP.matrix.modelView[gSP.matrix.modelViewi]);
 
-		for (u32 l = 0; l < gSP.numLights; ++l) {
-			if (gSP.lights.is_point[l])
-				processPointLight(l, _vecPos[j], vtx);
-			else
-				processStandardLight(l, vtx);
-		}
+		bool wantAdvancedLighting = GBI.f3dex3Version() == 0 
+							     || (gSP.geometryMode & (F3DEX3_G_LIGHTING_SPECULAR | F3DEX3_G_FRESNEL_COLOR | F3DEX3_G_FRESNEL_ALPHA))
+								 || gSP.lights.hasPointLight;
+
+		if (wantAdvancedLighting)
+			processF3DEX3LightAdvanced(_vecPos[j], vtx);
+		else
+			processF3DEX3LightStandard(_vecPos[j], vtx);
+
 		if (vtx.r > 1.0f) vtx.r = 1.0f;
 		if (vtx.g > 1.0f) vtx.g = 1.0f;
 		if (vtx.b > 1.0f) vtx.b = 1.0f;
@@ -842,126 +1021,10 @@ void gSPTransformVertex(u32 v, SPVertex * __restrict spVtx, Mtx mtx)
 #endif //__NEON_OPT
 }
 
-#define GET_BITS_SP32(x, ux) \
-  { \
-    volatile union {float f; unsigned int i;} _bitsy; \
-    _bitsy.f = (x); \
-    ux = _bitsy.i; \
-  }
-
-#define PUT_BITS_SP32(ux, x) \
-  { \
-    volatile union {float f; unsigned int i;} _bitsy; \
-    _bitsy.i = (ux); \
-     x = _bitsy.f; \
-  }
-
-#define SIGNBIT_SP32      0x80000000
-#define EXPBITS_SP32      0x7f800000
-#define PINFBITPATT_SP32  0x7f800000
-#define EXPSHIFTBITS_SP32 23
-#define EXPBIAS_SP32      127
-
-static float _acosf(float x)
+static bool hasAcclaim()
 {
-	/* Computes arccos(x).
-	   The argument is first reduced by noting that arccos(x)
-	   is invalid for abs(x) > 1. For denormal and small
-	   arguments arccos(x) = pi/2 to machine accuracy.
-	   Remaining argument ranges are handled as follows.
-	   For abs(x) <= 0.5 use
-	   arccos(x) = pi/2 - arcsin(x)
-	   = pi/2 - (x + x^3*R(x^2))
-	   where R(x^2) is a rational minimax approximation to
-	   (arcsin(x) - x)/x^3.
-	   For abs(x) > 0.5 exploit the identity:
-	   arccos(x) = pi - 2*arcsin(sqrt(1-x)/2)
-	   together with the above rational approximation, and
-	   reconstruct the terms carefully.
-	*/
-
-	/* Some constants and split constants. */
-
-	static const float
-		piby2 = 1.5707963705e+00F; /* 0x3fc90fdb */
-	static const double
-		pi = 3.1415926535897933e+00, /* 0x400921fb54442d18 */
-		piby2_head = 1.5707963267948965580e+00, /* 0x3ff921fb54442d18 */
-		piby2_tail = 6.12323399573676603587e-17; /* 0x3c91a62633145c07 */
-
-	float u, y, s = 0.0F, r;
-	int xexp, xnan, transform = 0;
-
-	unsigned int ux, aux, xneg;
-
-	GET_BITS_SP32(x, ux);
-	aux = ux & ~SIGNBIT_SP32;
-	xneg = (ux & SIGNBIT_SP32);
-	xnan = (aux > PINFBITPATT_SP32);
-	xexp = (int)((ux & EXPBITS_SP32) >> EXPSHIFTBITS_SP32) - EXPBIAS_SP32;
-
-	/* Special cases */
-
-	if (xnan)
-	{
-		return 0.f;
-	}
-	else if (xexp < -26)
-		/* y small enough that arccos(x) = pi/2 */
-		return piby2;
-	else if (xexp >= 0)
-	{ /* abs(x) >= 1.0 */
-		if (x == 1.0F)
-			return 0.0F;
-		else if (x == -1.0F)
-			return (float)pi;
-		else
-			return 0.0F;
-	}
-
-	if (xneg) y = -x;
-	else y = x;
-
-	transform = (xexp >= -1); /* abs(x) >= 0.5 */
-
-	if (transform)
-	{ /* Transform y into the range [0,0.5) */
-		r = 0.5F * (1.0F - y);
-		/* VC++ intrinsic call */
-		_mm_store_ss(&s, _mm_sqrt_ss(_mm_load_ss(&r)));
-		y = s;
-	}
-	else
-		r = y * y;
-
-	/* Use a rational approximation for [0.0, 0.5] */
-
-	u = r * (0.184161606965100694821398249421F +
-		(-0.0565298683201845211985026327361F +
-			(-0.0133819288943925804214011424456F -
-				0.00396137437848476485201154797087F * r) * r) * r) /
-		(1.10496961524520294485512696706F -
-			0.836411276854206731913362287293F * r);
-
-	if (transform)
-	{
-		/* Reconstruct acos carefully in transformed region */
-		if (xneg)
-			return (float)(pi - 2.0 * (s + (y * u - piby2_tail)));
-		else
-		{
-			float c, s1;
-			unsigned int us;
-			GET_BITS_SP32(s, us);
-			PUT_BITS_SP32(0xffff0000 & us, s1);
-			c = (r - s1 * s1) / (s + s1);
-			return 2.0F * s1 + (2.0F * c + 2.0F * y * u);
-		}
-	}
-	else
-		return (float)(piby2_head - (x - (piby2_tail - x * u)));
+	return !G_ATTROFFSET_ST_ENABLE && !G_AMBOCCLUSION;
 }
-
 
 template <u32 VNUM>
 void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
@@ -1001,6 +1064,15 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 		}
 	}
 
+	if (gSP.geometryMode & G_ATTROFFSET_ST_ENABLE)
+	{
+		for (int i = 0; i < VNUM; ++i) {
+			SPVertex& vtx = spVtx[v + i];
+			vtx.s += gSP.attrOffset.s / gSP.texture.scales;
+			vtx.t += gSP.attrOffset.t / gSP.texture.scalet;
+		}
+	}
+
 	if (gSP.matrix.billboard)
 		gSPBillboardVertex<VNUM>(v, spVtx);
 
@@ -1016,10 +1088,20 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 		}
 		else
 		{
+			if (gSP.geometryMode & F3DEX3_G_PACKED_NORMALS)
+			{
+
+			}
+
 			gSPLightVertexF3DEX3<VNUM>(v, vPos, spVtx);
+
+			if (gSP.geometryMode & (F3DEX3_G_FRESNEL_COLOR | F3DEX3_G_FRESNEL_ALPHA))
+			{
+
+			}
 		}
 
-		if (gSP.geometryMode & G_ACCLAIM_LIGHTING)
+		if (hasAcclaim() && (gSP.geometryMode & G_ACCLAIM_LIGHTING))
 			gSPPointLightVertexAcclaim<VNUM>(v, spVtx);
 
 		if ((gSP.geometryMode & G_TEXTURE_GEN) != 0) {
@@ -1044,8 +1126,8 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 						if (x > 1.0f) x = 1.0f;
 						if (y < -1.0f) y = -1.0f;
 						if (y > 1.0f) y = 1.0f;
-						vtx.s = _acosf(-x) * 325.94931f;
-						vtx.t = _acosf(-y) * 325.94931f;
+						vtx.s = acosf(-x) * 325.94931f;
+						vtx.t = acosf(-y) * 325.94931f;
 					} else { // G_TEXTURE_GEN
 						vtx.s = (x + 1.0f) * 512.0f;
 						vtx.t = (y + 1.0f) * 512.0f;
@@ -1060,7 +1142,12 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 				}
 			}
 		}
-	} else if (gSP.geometryMode & G_ACCLAIM_LIGHTING) {
+
+		if (gSP.geometryMode & F3DEX3_G_LIGHTTOALPHA)
+		{
+
+		}
+	} else if (hasAcclaim() && (gSP.geometryMode & G_ACCLAIM_LIGHTING)) {
 		gSPPointLightVertexAcclaim<VNUM>(v, spVtx);
 	} else {
 		for(u32 i = 0; i < VNUM; ++i)
@@ -1938,6 +2025,50 @@ void gSPFogFactor( s16 fm, s16 fo )
 void gSPPerspNormalize( u16 scale )
 {
 	DebugMsg(DEBUG_NORMAL| DEBUG_IGNORED, "gSPPerspNormalize( %i );\n", scale);
+}
+
+void gsSPAOAmbient(u16 amb)
+{
+	gSP.ao.amb = amb / 32767.f;
+}
+
+void gsSPAODirectional(u16 dir)
+{
+	gSP.ao.dir = dir / 32767.f;
+}
+
+void gsSPAOPoint(u16 point)
+{
+	gSP.ao.point = point;
+}
+
+void gsSPFresnelScale(u16 scale)
+{
+	gSP.fresnel.scale = scale;
+}
+
+void gsSPFresnelOffset(u16 offset)
+{
+	gSP.fresnel.offset = offset;
+
+}
+
+void gsSPAttrOffsetS(u16 offset)
+{
+	gSP.attrOffset.s = _FIXED2FLOAT((s16)offset, 5);
+}
+
+void gsSPAttrOffsetT(u16 offset)
+{
+	gSP.attrOffset.t = _FIXED2FLOAT((s16)offset, 5);
+}
+
+void gsSPAlphaCompareCull(u16 cfg)
+{
+	u8 mode = (cfg >> 8) & 0xff;
+	u8 thresh = cfg & 0xFF;
+	gSP.alphaCompareCull.mode = mode;
+	gSP.alphaCompareCull.thresh = thresh;
 }
 
 extern "C" uint32_t LegacySm64ToolsHacks;
