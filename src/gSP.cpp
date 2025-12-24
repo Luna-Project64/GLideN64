@@ -752,7 +752,11 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 
 	f32 vtxAlpha = vtx.a;
 	f32 offsetAlpha = vtxAlpha - 1.f;
-	f32 ambientOcclusionAmb = needAO ? gSP.ao.amb : 0.f;
+
+	f32 ambientOcclusionAmb   = needAO ? gSP.ao.amb   : 0.f;
+	f32 ambientOcclusionDir   = needAO ? gSP.ao.dir   : 0.f;
+	u16 ambientOcclusionPoint = needAO ? gSP.ao.point : 0;
+
 	f32 ambientOcclusionFactor = 1.f + offsetAlpha * ambientOcclusionAmb;
 	vtx.color *= ambientOcclusionFactor;
 	vtx.a = vtxAlpha; // TODO: double check this, likely just need to be flushed in the very end during vcc vmrg
@@ -777,36 +781,62 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 
 	// aof2 = offsetAlphaFres * gSP.ao.amb;
 
+	auto specXform = [](f32 intensity) {
+		// Tricky thing! In code we have something that look like this (aDOT = intensity):
+		// vxor    aDOT, aDOT, $v31[7]    // = 0x7FFF - dot product, v31[7] = 0x7FFF
+
+		// We are interpreting intensity as an f32 but in reality it is a fixed point number from -1 to 1.
+		// Here are some of the examples of this mapping and translation to f32s:
+		// 0            = 0x0000 -> 0x7fff = 1.f
+		// 0.2          = 0x1fff -> 0x6000 = 0.8f
+		// 1            = 0x7fff -> 0x0000 = 0.f
+		// 1 / 32767.f  = 0x0001 -> 0x7ffe = 1.f - (1 / 32767.f)
+		// -1 / 32767.f = 0xffff -> 0x8000 = -1.f
+		// -1.f         = 0x8000 -> 0xffff = -(1 / 32767.f)
+		// -1 / 32767.f = 0x8001 -> 0xfffe = -(2 / 32767.f)
+		// -0.2f        = 0x9fff -> 0xe000 = -(0.8f)
+
+		// Hence the aforementioned transform will look like this:
+		auto xorXform = [](f32 value) {
+			if (value >= 0.f)
+				return 1.f - value;
+			else
+				return -1.f - value;
+			};
+
+		f32 dotInvert = xorXform(intensity);
+		f32 dotScaled = dotInvert * gSP.lights.specularSize[l];
+		intensity = xorXform(std::clamp(dotScaled, -1.f, 1.f));
+		return intensity;
+	};
+
 	// ltadv_loop
 	for (u32 l = 0; l < gSP.numLights; ++l) {
 		f32 intensity = 0.0f;
 		if (gSP.lights.ca[l] != 0.0f) {
 			f32 recip = FIXED2FLOATRECIP16;
 			// Point lighting
+			// Note that this piece of code is reused from 'needSpecFres' part above
 			Vec lvec = { gSP.lights.pos_xyzw[l][X], gSP.lights.pos_xyzw[l][Y], gSP.lights.pos_xyzw[l][Z] };
 			lvec -= worldSpaceVecPos;
-			gSPInverseTransformVector(lvec, gSP.matrix.modelView[gSP.matrix.modelViewi]);
 
-			const f32 K = lvec[0] * lvec[0] + lvec[1] * lvec[1] + lvec[2] * lvec[2] * 2.0f;
+			const f32 K = lvec[0] * lvec[0] + lvec[1] * lvec[1] + lvec[2] * lvec[2];
 			const f32 KS = sqrtf(K);
+			lvec /= KS;
 
-			for (u32 i = 0; i < 3; ++i) {
-				lvec[i] = (4.0f * lvec[i] / KS);
-				if (lvec[i] < -1.0f)
-					lvec[i] = -1.0f;
-				if (lvec[i] > 1.0f)
-					lvec[i] = 1.0f;
+			f32 V = DotProduct(lvec, worldSpaceNormal);
+			if (needSpec)
+			{
+				V = -specXform(V);
 			}
 
-			f32 V = lvec[0] * vtx.nx + lvec[1] * vtx.ny + lvec[2] * vtx.nz;
-			if (V < -1.0f)
-				V = -1.0f;
-			if (V > 1.0f)
-				V = 1.0f;
-
 			const f32 KSF = floorf(KS);
-			const f32 D = (KSF * gSP.lights.la[l] * 2.0f + KSF * KSF * gSP.lights.qa[l] / 8.0f) * recip + 1.0f;
+			// TODO: verify these constants, they might be different
+			const f32 D = (gSP.lights.ca[l] + KSF * gSP.lights.la[l] * 2.0f + KSF * KSF * gSP.lights.qa[l] / 8.0f) * recip + 1.0f;
 			intensity = V / D;
+
+			f32 aof = 1.f + offsetAlpha * ambientOcclusionPoint;
+			intensity *= aof;
 		}
 		else
 		{
@@ -816,34 +846,11 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 
 			if (needSpec)
 			{
-				// Tricky thing! In code we have something that look like this (aDOT = intensity):
-				// vxor    aDOT, aDOT, $v31[7]    // = 0x7FFF - dot product, v31[7] = 0x7FFF
-
-				// We are interpreting intensity as an f32 but in reality it is a fixed point number from -1 to 1.
-				// Here are some of the examples of this mapping and translation to f32s:
-				// 0            = 0x0000 -> 0x7fff = 1.f
-				// 0.2          = 0x1fff -> 0x6000 = 0.8f
-				// 1            = 0x7fff -> 0x0000 = 0.f
-				// 1 / 32767.f  = 0x0001 -> 0x7ffe = 1.f - (1 / 32767.f)
-				// -1 / 32767.f = 0xffff -> 0x8000 = -1.f
-				// -1.f         = 0x8000 -> 0xffff = -(1 / 32767.f)
-				// -1 / 32767.f = 0x8001 -> 0xfffe = -(2 / 32767.f)
-				// -0.2f        = 0x9fff -> 0xe000 = -(0.8f)
-
-				// Hence the aforementioned transform will look like this:
-				auto xorXform = [](f32 value) {
-					if (value >= 0.f)
-						return 1.f - value;
-					else
-						return -1.f - value;
-					};
-
-				f32 dotInvert = xorXform(intensity);
-				f32 dotScaled = dotInvert * gSP.lights.specularSize[l];
-				intensity = xorXform(std::clamp(dotScaled, -1.f, 1.f));
-				// TODO: why is this necessary?
-				intensity = -intensity;
+				intensity = -specXform(intensity);
 			}
+
+			f32 aof = 1.f + offsetAlpha * ambientOcclusionDir;
+			intensity *= aof;
 		}
 
 		// TODO: ltadv_finish_light portion is missing
