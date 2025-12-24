@@ -759,7 +759,7 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 
 	f32 ambientOcclusionFactor = 1.f + offsetAlpha * ambientOcclusionAmb;
 	vtx.color *= ambientOcclusionFactor;
-	vtx.a = vtxAlpha; // TODO: double check this, likely just need to be flushed in the very end during vcc vmrg
+	f32 fresProd;
 
 	// ltadv_spec_fres_setup
 	if (needSpecFres)
@@ -770,7 +770,7 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 		Vec camDir = camWorldPos - worldSpaceVecPos;
 		Normalize(camDir);
 
-		f32 fresProd = DotProduct(camDir, worldSpaceNormal);
+		fresProd = DotProduct(camDir, worldSpaceNormal);
 		if (needSpec)
 		{
 			// Specular reflects the camDir around the normal vector
@@ -781,7 +781,7 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 
 	// aof2 = offsetAlphaFres * gSP.ao.amb;
 
-	auto specXform = [](f32 intensity) {
+	auto specXform = [](f32 intensity, int l) {
 		// Tricky thing! In code we have something that look like this (aDOT = intensity):
 		// vxor    aDOT, aDOT, $v31[7]    // = 0x7FFF - dot product, v31[7] = 0x7FFF
 
@@ -827,7 +827,7 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 			f32 V = DotProduct(lvec, worldSpaceNormal);
 			if (needSpec)
 			{
-				V = -specXform(V);
+				V = -specXform(V, l);
 			}
 
 			const f32 KSF = floorf(KS);
@@ -846,18 +846,41 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 
 			if (needSpec)
 			{
-				intensity = -specXform(intensity);
+				intensity = -specXform(intensity, l);
 			}
 
 			f32 aof = 1.f + offsetAlpha * ambientOcclusionDir;
 			intensity *= aof;
 		}
 
-		// TODO: ltadv_finish_light portion is missing
 		if (intensity > 0.0f) {
 			vtx.r += gSP.lights.rgb[l][R] * intensity;
 			vtx.g += gSP.lights.rgb[l][G] * intensity;
 			vtx.b += gSP.lights.rgb[l][B] * intensity;
+		}
+	}
+
+	if (gSP.geometryMode & F3DEX3_G_LIGHTTOALPHA)
+	{
+		vtx.a = std::max(vtx.r, std::max(vtx.g, vtx.b));
+	}
+	else
+	{
+		vtx.a = vtxAlpha;
+	}
+
+	// TODO: apply packed normals here
+
+	if (needFres)
+	{
+		f32 fresnel = gSP.fresnel.offset + gSP.fresnel.scale * fabsf(fresProd);
+		if (!(gSP.geometryMode & F3DEX3_G_FRESNEL_COLOR))
+		{
+			vtx.a = fresnel;
+		}
+		else
+		{
+			vtx.r = vtx.g = vtx.b = fresnel;
 		}
 	}
 }
@@ -1101,11 +1124,6 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 			}
 
 			gSPLightVertexF3DEX3<VNUM>(v, vPos, spVtx);
-
-			if (gSP.geometryMode & (F3DEX3_G_FRESNEL_COLOR | F3DEX3_G_FRESNEL_ALPHA))
-			{
-
-			}
 		}
 
 		if (hasAcclaim() && (gSP.geometryMode & G_ACCLAIM_LIGHTING))
@@ -2036,27 +2054,27 @@ void gSPPerspNormalize( u16 scale )
 
 void gsSPAOAmbient(u16 amb)
 {
-	gSP.ao.amb = amb / 32767.f;
+	gSP.ao.amb = amb / 65536.f;
 }
 
 void gsSPAODirectional(u16 dir)
 {
-	gSP.ao.dir = dir / 32767.f;
+	gSP.ao.dir = dir / 65536.f;
 }
 
 void gsSPAOPoint(u16 point)
 {
-	gSP.ao.point = point;
+	gSP.ao.point = point / 65536.f;
 }
 
-void gsSPFresnelScale(u16 scale)
+void gsSPFresnelScale(s16 scale)
 {
-	gSP.fresnel.scale = scale;
+	gSP.fresnel.scale = scale / 32767.f;
 }
 
-void gsSPFresnelOffset(u16 offset)
+void gsSPFresnelOffset(s16 offset)
 {
-	gSP.fresnel.offset = offset;
+	gSP.fresnel.offset = offset / 32767.f;
 
 }
 

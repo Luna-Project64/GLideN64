@@ -201,13 +201,13 @@ struct gSPInfo
 	{
 		f32 amb;
 		f32 dir;
-		u16 point;
+		f32 point;
 	} ao;
 
 	struct
 	{
-		u16 scale;
-		u16 offset;
+		f32 scale;
+		f32 offset;
 	} fresnel;
 
 	struct
@@ -270,8 +270,8 @@ void gSPPerspNormalize( u16 scale );
 void gsSPAOAmbient(u16 amb);
 void gsSPAODirectional(u16 dir);
 void gsSPAOPoint(u16 point);
-void gsSPFresnelScale(u16 scale);
-void gsSPFresnelOffset(u16 offset);
+void gsSPFresnelScale(s16 scale);
+void gsSPFresnelOffset(s16 offset);
 void gsSPAttrOffsetS(u16 offset);
 void gsSPAttrOffsetT(u16 offset);
 void gsSPAlphaCompareCull(u16 cfg);
