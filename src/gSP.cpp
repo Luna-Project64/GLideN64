@@ -731,7 +731,53 @@ static void processPointLight(u32 l, Vec& _vecPos, SPVertex& __restrict vtx)
 	}
 }
 
-static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
+static Vec unpackNormal(u16 packedNormal)
+{
+	Vec result{};
+	if (GBI.f3dex3Version() != 0)
+	{
+		// simple unpacking of 5-6-5 format
+		u16 x = packedNormal & 0xF800;
+		u16 y = (packedNormal & 0x07E0) << 5;
+		u16 z = (packedNormal & 0x001F) << 11;
+
+		result[0] = (s16)x;
+		result[1] = (s16)y;
+		result[2] = (s16)z;
+
+		result /= 32767.f;
+	}
+	else
+	{
+		// octohedral encoding
+		u8 xo = packedNormal >> 8;
+		u8 yo = packedNormal & 0xFF;
+
+		u8 x = xo & 0x7F;
+		u8 y = yo & 0x7F;
+		s8 z = (s8)(x + y);
+
+		bool zNeg = z & 0x80;
+		u8 x2 = 0x7f - x;
+		u8 y2 = 0x7f - y;
+		z = 0x7F - z;
+		if (zNeg)
+		{
+			x = x2;
+			y = y2;
+		}
+
+		result[0] = (xo & 0x80) ? -(s8)x : x;
+		result[1] = (yo & 0x80) ? -(s8)y : y;
+		result[2] = z;
+
+		result /= 127.f;
+	}
+
+	return result;
+}
+
+static void processF3DEX3LightAdvanced(Vec color, const Vec& _vecPos, SPVertex& __restrict vtx)
 {
 	// pos is already in world space
 	Vec worldSpaceVecPos = _vecPos;
@@ -742,49 +788,8 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 	bool needSpec = gSP.geometryMode & F3DEX3_G_LIGHTING_SPECULAR;
  	bool needAO  = gSP.geometryMode & G_AMBOCCLUSION;
 	bool needSpecFres = needFres || needSpec;
-	bool needPackedNormals = gSP.geometryMode & F3DEX3_G_PACKED_NORMALS;
 
 	Vec worldSpaceNormal = vtx.normal;
-
-	if (needPackedNormals)
-	{
-		u16 packedNormal = vtx.flag;
-		if (GBI.f3dex3Version() != 0)
-		{
-			// simple unpacking of 5-6-5 format
-			u16 x = packedNormal & 0xF800;
-			u16 y = (packedNormal & 0x07E0) << 5;
-			u16 z = (packedNormal & 0x001F) << 11;
-
-			worldSpaceNormal[0] = (s16)x;
-			worldSpaceNormal[1] = (s16)y;
-			worldSpaceNormal[2] = (s16)z;
-		}
-		else
-		{
-			// octohedral encoding
-			u8 xo = packedNormal >> 8;
-			u8 yo = packedNormal & 0xFF;
-
-			u8 x = xo & 0x7F;
-			u8 y = yo & 0x7F;
-			s8 z = (s8) (x + y);
-
-			bool zNeg = z & 0x80;
-			u8 x2 = 0x7f - x;
-			u8 y2 = 0x7f - y;
-			z = 0x7F - z;
-			if (zNeg)
-			{
-				x = x2;
-				y = y2;
-			}
-
-			worldSpaceNormal[0] = (xo & 0x80) ? -(s8)x : x;
-			worldSpaceNormal[1] = (yo & 0x80) ? -(s8)y : y;
-			worldSpaceNormal[2] = z;
-		}
-	}
 
 	// Compared to 'standard' lighting, 'advanced' lighting transforms the normal to world space keeping the lights untransformed.
 	// This ends up being equivalent to:
@@ -906,6 +911,11 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 	if (vtx.g > 1.0f) vtx.g = 1.0f;
 	if (vtx.b > 1.0f) vtx.b = 1.0f;
 
+	if (gSP.geometryMode & F3DEX3_G_PACKED_NORMALS)
+	{
+		vtx.color *= color;
+	}
+
 	if (gSP.geometryMode & F3DEX3_G_LIGHTTOALPHA)
 	{
 		vtx.a = std::max(vtx.r, std::max(vtx.g, vtx.b));
@@ -931,12 +941,27 @@ static void processF3DEX3LightAdvanced(Vec& _vecPos, SPVertex& __restrict vtx)
 	}
 }
 
-static void processF3DEX3LightStandard(Vec& _vecPos, SPVertex& __restrict vtx)
+static void processF3DEX3LightBasic(Vec color, SPVertex& __restrict vtx)
 {
-	// TODO: Add all other missing features here (AO)
+	bool needAO = gSP.geometryMode & G_AMBOCCLUSION;
+
+	Vec normal = vtx.normal;
+
+	f32 vtxAlpha = vtx.a;
+	f32 offsetAlpha = vtxAlpha - 1.f;
+
+	f32 ambientOcclusionAmb = needAO ? gSP.ao.amb : 0.f;
+	f32 ambientOcclusionDir = needAO ? gSP.ao.dir : 0.f;
+
+	f32 ambientOcclusionFactor = 1.f + offsetAlpha * ambientOcclusionAmb;
+	vtx.color *= ambientOcclusionFactor;
+
 	for (u32 l = 0; l < gSP.numLights; ++l) {
-		f32 intensity = DotProduct(vtx.normal, gSP.lights.i_xyz[l].vec());
+		f32 intensity = DotProduct(normal, gSP.lights.i_xyz[l].vec());
 		intensity = std::clamp(intensity, -1.f, 1.f);
+
+		f32 aof = 1.f + offsetAlpha * ambientOcclusionDir;
+		intensity *= aof;
 
 		if (intensity > 0.0f) {
 			vtx.r += gSP.lights.rgb[l][R] * intensity;
@@ -944,6 +969,25 @@ static void processF3DEX3LightStandard(Vec& _vecPos, SPVertex& __restrict vtx)
 			vtx.b += gSP.lights.rgb[l][B] * intensity;
 		}
 	}
+
+	if (vtx.r > 1.0f) vtx.r = 1.0f;
+	if (vtx.g > 1.0f) vtx.g = 1.0f;
+	if (vtx.b > 1.0f) vtx.b = 1.0f;
+
+	if (gSP.geometryMode & F3DEX3_G_PACKED_NORMALS)
+	{
+		vtx.color *= color;
+	}
+
+	if (gSP.geometryMode & F3DEX3_G_LIGHTTOALPHA)
+	{
+		vtx.a = std::max(vtx.r, std::max(vtx.g, vtx.b));
+	}
+	else
+	{
+		vtx.a = vtxAlpha;
+	}
+
 }
 
 template <u32 VNUM>
@@ -1014,6 +1058,7 @@ void gSPLightVertexF3DEX3(u32 v, Vec _vecPos[VNUM], SPVertex* __restrict spVtx)
 	for (int j = 0; j < VNUM; ++j) {
 		SPVertex& vtx = spVtx[v + j];
 		vtx.HWLight = 0;
+		Vec color = vtx.color;
 		vtx.r = gSP.lights.rgb[gSP.numLights][R];
 		vtx.g = gSP.lights.rgb[gSP.numLights][G];
 		vtx.b = gSP.lights.rgb[gSP.numLights][B];
@@ -1024,9 +1069,9 @@ void gSPLightVertexF3DEX3(u32 v, Vec _vecPos[VNUM], SPVertex* __restrict spVtx)
 								 || gSP.lights.hasPointLight;
 
 		if (wantAdvancedLighting)
-			processF3DEX3LightAdvanced(_vecPos[j], vtx);
+			processF3DEX3LightAdvanced(color, _vecPos[j], vtx);
 		else
-			processF3DEX3LightStandard(_vecPos[j], vtx);
+			processF3DEX3LightBasic(color, vtx);
 	}
 }
 
@@ -1233,15 +1278,27 @@ u32 gSPLoadVertexData(const Vertex * __restrict orgVtx, SPVertex * __restrict sp
 			vtx.t = _FIXED2FLOAT( orgVtx->t, 5 );
 
 			if (gSP.geometryMode & G_LIGHTING) {
-				vtx.nx = _FIXED2FLOATCOLOR(orgVtx->normal.x, 7);
-				vtx.ny = _FIXED2FLOATCOLOR(orgVtx->normal.y, 7);
-				vtx.nz = _FIXED2FLOATCOLOR(orgVtx->normal.z, 7);
-				if (isHWLightingAllowed()) {
-					vtx.r = orgVtx->normal.x;
-					vtx.g = orgVtx->normal.y;
-					vtx.b = orgVtx->normal.z;
+				if (gSP.geometryMode & F3DEX3_G_PACKED_NORMALS)
+				{
+					vtx.normal = unpackNormal(orgVtx->flag);
+					// RGB will be set in the if condition below
 				}
-			} else {
+				else
+				{
+					vtx.nx = _FIXED2FLOATCOLOR(orgVtx->normal.x, 7);
+					vtx.ny = _FIXED2FLOATCOLOR(orgVtx->normal.y, 7);
+					vtx.nz = _FIXED2FLOATCOLOR(orgVtx->normal.z, 7);
+					if (isHWLightingAllowed()) {
+						vtx.r = orgVtx->normal.x;
+						vtx.g = orgVtx->normal.y;
+						vtx.b = orgVtx->normal.z;
+					}
+				}
+			}
+
+			if (!(gSP.geometryMode & G_LIGHTING)
+			 || ((gSP.geometryMode & G_LIGHTING) && (gSP.geometryMode & F3DEX3_G_PACKED_NORMALS)))
+			{
 				vtx.r = _FIXED2FLOATCOLOR(orgVtx->color.r, 8);
 				vtx.g = _FIXED2FLOATCOLOR(orgVtx->color.g, 8);
 				vtx.b = _FIXED2FLOATCOLOR(orgVtx->color.b, 8);
