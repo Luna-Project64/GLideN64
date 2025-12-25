@@ -486,11 +486,6 @@ struct Light
 	s8 pad2, z, y, x;
 };
 
-struct PlainVtx
-{
-	s16 pos[3];
-};
-
 // GBI commands
 typedef void (*GBIFunc)( u32 w0, u32 w1 );
 

@@ -472,11 +472,11 @@ void gSPCameraWorld( u32 _l )
 		return;
 	}
 
-	PlainVtx* light = (PlainVtx*)&RDRAM[address];
+	SWVertex* light = (SWVertex*)&RDRAM[address];
 
-	gSP.camWorldPos[X] = light->pos[X];
-	gSP.camWorldPos[Y] = light->pos[Y];
-	gSP.camWorldPos[Z] = light->pos[Z];
+	gSP.camWorldPos[X] = light->x;
+	gSP.camWorldPos[Y] = light->y;
+	gSP.camWorldPos[Z] = light->z;
 
 	DebugMsg(DEBUG_NORMAL, "gSPCameraWorld( 0x%08X );\n", _l);
 }
@@ -925,11 +925,11 @@ static void processF3DEX3LightAdvanced(Vec color, const Vec& _vecPos, SPVertex& 
 		vtx.a = vtxAlpha;
 	}
 
-	// TODO: apply packed normals here
-
 	if (needFres)
 	{
-		f32 fresnel = gSP.fresnel.offset + gSP.fresnel.scale * fabsf(fresProd);
+		f32 factor = gSP.fresnel.scale * fabsf(fresProd) + gSP.fresnel.offset;
+		f32 fresnel = std::clamp(factor * 256.f, 0.f, 1.f);
+
 		if (!(gSP.geometryMode & F3DEX3_G_FRESNEL_COLOR))
 		{
 			vtx.a = fresnel;

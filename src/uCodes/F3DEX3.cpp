@@ -132,6 +132,50 @@ void F3DEX3_MoveMem(u32 w0, u32 w1)
 	}
 }
 
+static void handleFX(u32 mwo, u16 what)
+{
+	switch (mwo)
+	{
+	case F3DEX3_G_MWO_AO_AMBIENT:
+		gsSPAOAmbient(what);
+		break;
+	case F3DEX3_G_MWO_AO_DIRECTIONAL:
+		gsSPAODirectional(what);
+		break;
+	case F3DEX3_G_MWO_AO_POINT:
+		gsSPAOPoint(what);
+		break;
+	case F3DEX3_G_MWO_PERSPNORM:
+		gSPPerspNormalize(what);
+		break;
+	case F3DEX3_G_MWO_FRESNEL_SCALE:
+		gsSPFresnelScale(what);
+		break;
+	case F3DEX3_G_MWO_FRESNEL_OFFSET:
+		gsSPFresnelOffset(what);
+		break;
+	case F3DEX3_G_MWO_ATTR_OFFSET_S:
+		gsSPAttrOffsetS(what);
+		break;
+	case F3DEX3_G_MWO_ATTR_OFFSET_T:
+		gsSPAttrOffsetT(what);
+		break;
+	case F3DEX3_A_G_MWO_ATTR_OFFSET_Z:
+		// Not supported and likely unneeded. F3DEX3 B removed this featurw.
+		break;
+	case F3DEX3_A_G_MWO_ALPHA_COMPARE_CULL:
+		gsSPAlphaCompareCull(what);
+		break;
+	case F3DEX3_A_G_MWO_NORMALS_MODE:
+		// Not supported and likely unneeded. F3DEX3 B removed this featurw.
+		break;
+	case F3DEX3_A_G_MWO_LAST_MAT_DL_ADDR:
+		// TODO: Not supported. This feature removes RDP texture uploads which is a slight optimization.
+		//		 For GLideN64 this is not really needed although it might cause inaccurate output, if cmd list is incorrect.
+		break;
+	}
+}
+
 void F3DEX3_MoveWord(u32 w0, u32 w1)
 {
 	switch (_SHIFTR(w0, 16, 8))
@@ -140,64 +184,31 @@ void F3DEX3_MoveWord(u32 w0, u32 w1)
 	{
 		const u32 value = _SHIFTR(w0, 0, 16);
 		u32 what = w1;
-		if (value & F3DEX3_G_MW_HALFWORD_FLAG)
-			what &= 0xffff;
-
-		u32 convValue = value & ~F3DEX3_G_MW_HALFWORD_FLAG;
+		bool half = value & F3DEX3_G_MW_HALFWORD_FLAG;
+		u32 mwo = value & ~F3DEX3_G_MW_HALFWORD_FLAG;
 		if (GBI.f3dex3Version() > 0)
 		{
-			switch (convValue)
+			switch (mwo)
 			{
 				case F3DEX3_B_G_MWO_ALPHA_COMPARE_CULL:
-					convValue = F3DEX3_A_G_MWO_ALPHA_COMPARE_CULL;
+					mwo = F3DEX3_A_G_MWO_ALPHA_COMPARE_CULL;
 					break;
 				case F3DEX3_B_G_MWO_LAST_MAT_DL_ADDR:
-					convValue = F3DEX3_A_G_MWO_LAST_MAT_DL_ADDR;
+					mwo = F3DEX3_A_G_MWO_LAST_MAT_DL_ADDR;
 					break;
 			}
 		}
 
-		switch (convValue)
+		if (half)
 		{
-			case F3DEX3_G_MWO_AO_AMBIENT:
-				gsSPAOAmbient(what);
-				break;
-			case F3DEX3_G_MWO_AO_DIRECTIONAL:
-				gsSPAODirectional(what);
-				break;
-			case F3DEX3_G_MWO_AO_POINT:
-				gsSPAOPoint(what);
-				break;
-			case F3DEX3_G_MWO_PERSPNORM:
-				gSPPerspNormalize(what);
-				break;
-			case F3DEX3_G_MWO_FRESNEL_SCALE:
-				gsSPFresnelScale(what);
-				break;
-			case F3DEX3_G_MWO_FRESNEL_OFFSET:
-				gsSPFresnelOffset(what);
-				break;
-			case F3DEX3_G_MWO_ATTR_OFFSET_S:
-				gsSPAttrOffsetS(what);
-				break;
-			case F3DEX3_G_MWO_ATTR_OFFSET_T:
-				gsSPAttrOffsetT(what);
-				break;
-			case F3DEX3_A_G_MWO_ATTR_OFFSET_Z:
-				// Not supported and likely unneeded. F3DEX3 B removed this featurw.
-				break;
-			case F3DEX3_A_G_MWO_ALPHA_COMPARE_CULL:
-				gsSPAlphaCompareCull(what);
-				break;
-			case F3DEX3_A_G_MWO_NORMALS_MODE:
-				// Not supported and likely unneeded. F3DEX3 B removed this featurw.
-				break;
-			case F3DEX3_A_G_MWO_LAST_MAT_DL_ADDR:
-				// TODO: Not supported. This feature removes RDP texture uploads which is a slight optimization.
-				//		 For GLideN64 this is not really needed although it might cause inaccurate output, if cmd list is incorrect.
-				break;
-			}
+			handleFX(mwo, what & 0xffff);
 		}
+		else
+		{
+			handleFX(mwo + 0, (what >> 16) & 0xffff);
+			handleFX(mwo + 2, what & 0xffff);
+		}
+	}
 		break;
 	case G_MW_NUMLIGHT:
 		gSPNumLights(w1 / 0x10);
