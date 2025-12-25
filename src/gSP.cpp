@@ -874,7 +874,7 @@ static void processF3DEX3LightAdvanced(Vec color, const Vec& _vecPos, SPVertex& 
 			f32 V = DotProduct(lvec, worldSpaceNormal);
 			if (needSpec)
 			{
-				V = -specXform(V, l);
+				V = specXform(V, l);
 			}
 
 			const f32 KSF = floorf(KS);
@@ -893,7 +893,7 @@ static void processF3DEX3LightAdvanced(Vec color, const Vec& _vecPos, SPVertex& 
 
 			if (needSpec)
 			{
-				intensity = -specXform(intensity, l);
+				intensity = specXform(intensity, l);
 			}
 
 			f32 aof = 1.f + offsetAlpha * ambientOcclusionDir;
@@ -928,7 +928,7 @@ static void processF3DEX3LightAdvanced(Vec color, const Vec& _vecPos, SPVertex& 
 	if (needFres)
 	{
 		f32 factor = gSP.fresnel.scale * fabsf(fresProd) + gSP.fresnel.offset;
-		f32 fresnel = std::clamp(factor * 256.f, 0.f, 1.f);
+		f32 fresnel = std::clamp(factor, 0.f, 1.f);
 
 		if (!(gSP.geometryMode & F3DEX3_G_FRESNEL_COLOR))
 		{
@@ -2158,12 +2158,12 @@ void gsSPAOPoint(u16 point)
 
 void gsSPFresnelScale(s16 scale)
 {
-	gSP.fresnel.scale = scale / 32767.f;
+	gSP.fresnel.scale = scale / 32767.f * 256.f;
 }
 
 void gsSPFresnelOffset(s16 offset)
 {
-	gSP.fresnel.offset = offset / 32767.f;
+	gSP.fresnel.offset = offset / 32767.f * 256.f;
 
 }
 
