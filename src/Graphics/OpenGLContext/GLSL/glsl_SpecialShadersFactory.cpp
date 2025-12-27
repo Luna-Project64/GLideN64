@@ -15,6 +15,9 @@
 #include "glsl_FXAA.h"
 #include "glsl_Utils.h"
 
+// TODO: This is a hack but this is the easiest way to pass proper VIOrigin...
+uint32_t FXAA_ViOrigin;
+
 namespace glsl {
 
 	/*---------------VertexShaderPart-------------*/
@@ -578,7 +581,7 @@ namespace glsl {
 
 		void activate() override {
 			FXAAShaderBase::activate();
-			FrameBuffer * pBuffer = frameBufferList().findBuffer(*REG.VI_ORIGIN);
+			FrameBuffer * pBuffer = frameBufferList().findBuffer(FXAA_ViOrigin);
 			if (pBuffer != nullptr && pBuffer->m_pTexture != nullptr &&
 				(m_width != pBuffer->m_pTexture->realWidth || m_height != pBuffer->m_pTexture->realHeight)) {
 				m_width = pBuffer->m_pTexture->realWidth;

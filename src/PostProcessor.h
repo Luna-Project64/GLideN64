@@ -12,6 +12,7 @@ namespace graphics {
 	class ShaderProgram;
 }
 
+struct VIRegsSample;
 struct FrameBuffer;
 
 class PostProcessor {
@@ -19,7 +20,7 @@ public:
 	void init();
 	void destroy();
 
-	using PostprocessingFunc = std::function<FrameBuffer*(PostProcessor&, FrameBuffer*)>;
+	using PostprocessingFunc = std::function<FrameBuffer*(PostProcessor&, const VIRegsSample&, FrameBuffer*)>;
 	using PostprocessingList = std::list<PostprocessingFunc>;
 	const PostprocessingList & getPostprocessingList() const;
 
@@ -29,9 +30,9 @@ private:
 	PostProcessor();
 	PostProcessor(const PostProcessor & _other) = delete;
 
-	FrameBuffer * _doGammaCorrection(FrameBuffer * _pBuffer);
-	FrameBuffer * _doOrientationCorrection(FrameBuffer * _pBuffer);
-	FrameBuffer * _doFXAA(FrameBuffer * _pBuffer);
+	FrameBuffer * _doGammaCorrection(const VIRegsSample& regs, FrameBuffer * _pBuffer);
+	FrameBuffer * _doOrientationCorrection(const VIRegsSample& regs, FrameBuffer * _pBuffer);
+	FrameBuffer * _doFXAA(const VIRegsSample& regs, FrameBuffer * _pBuffer);
 
 	void _createResultBuffer(const FrameBuffer * _pMainBuffer);
 	void _preDraw(FrameBuffer * _pBuffer);

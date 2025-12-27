@@ -151,18 +151,18 @@ FrameBuffer * PostProcessor::_doPostProcessing(FrameBuffer * _pBuffer, graphics:
 	return m_pResultBuffer.get();
 }
 
-FrameBuffer * PostProcessor::_doGammaCorrection(FrameBuffer * _pBuffer)
+FrameBuffer * PostProcessor::_doGammaCorrection(const VIRegsSample& regs, FrameBuffer * _pBuffer)
 {
 	if (_pBuffer == nullptr)
 		return nullptr;
 
-	if (((*REG.VI_STATUS & 8) | config.gammaCorrection.force) == 0)
+	if (((regs.VI_STATUS & 8) | config.gammaCorrection.force) == 0)
 		return _pBuffer;
 
 	return _doPostProcessing(_pBuffer, m_gammaCorrectionProgram.get());
 }
 
-FrameBuffer * PostProcessor::_doOrientationCorrection(FrameBuffer * _pBuffer)
+FrameBuffer * PostProcessor::_doOrientationCorrection(const VIRegsSample& regs, FrameBuffer * _pBuffer)
 {
 	if (_pBuffer == nullptr)
 		return nullptr;
@@ -173,7 +173,8 @@ FrameBuffer * PostProcessor::_doOrientationCorrection(FrameBuffer * _pBuffer)
 	return _doPostProcessing(_pBuffer, m_orientationCorrectionProgram.get());
 }
 
-FrameBuffer * PostProcessor::_doFXAA(FrameBuffer * _pBuffer)
+extern uint32_t FXAA_ViOrigin;
+FrameBuffer * PostProcessor::_doFXAA(const VIRegsSample& regs, FrameBuffer * _pBuffer)
 {
 	if (_pBuffer == nullptr)
 		return nullptr;
@@ -181,5 +182,6 @@ FrameBuffer * PostProcessor::_doFXAA(FrameBuffer * _pBuffer)
 	if (config.video.fxaa == 0)
 		return _pBuffer;
 
+	FXAA_ViOrigin = regs.VI_ORIGIN;
 	return _doPostProcessing(_pBuffer, m_FXAAProgram.get());
 }

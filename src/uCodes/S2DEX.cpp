@@ -482,7 +482,7 @@ struct ObjCoordinates
 		//		const f32 imageH = (f32)gSP.bgImage.height;
 
 		if (u32(imageW) == 512 && (config.generalEmulation.hacks & hack_RE2) != 0) {
-			const f32 width = f32(*REG.VI_WIDTH);
+			const f32 width = f32(*REG._VI_WIDTH);
 			const f32 scale = imageW / width;
 			imageW = width;
 			frameW = width;
@@ -890,7 +890,7 @@ void _loadBGImage(const uObjScaleBg * _pBgInfo, bool _loadScale, bool _fbImage)
 	const u32 imageW = _pBgInfo->imageW >> 2;
 	const u32 imageH = _pBgInfo->imageH >> 2;
 	if (imageW == 512 && (config.generalEmulation.hacks & hack_RE2) != 0) {
-		gSP.bgImage.width = *REG.VI_WIDTH;
+		gSP.bgImage.width = *REG._VI_WIDTH;
 		gSP.bgImage.height = (imageH * imageW) / gSP.bgImage.width;
 	}
 	else {

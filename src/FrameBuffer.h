@@ -92,6 +92,7 @@ private:
 	mutable u32 m_validityChecked;
 };
 
+struct VIRegsSample;
 class FrameBufferList
 {
 public:
@@ -110,9 +111,9 @@ public:
 	FrameBuffer * getCurrent() const {return m_pCurrent;}
 	void setCurrent(FrameBuffer * _pCurrent) { m_pCurrent = _pCurrent; }
 	void updateCurrentBufferEndAddress();
-	void renderBuffer();
+	void renderBuffer(const VIRegsSample& regs);
 	void setBufferChanged(f32 _maxY);
-	void clearBuffersChanged();
+	void clearBuffersChanged(const VIRegsSample& regs);
 	void setCurrentDrawBuffer() const;
 	void fillRDRAM(s32 ulx, s32 uly, s32 lrx, s32 lry);
 
@@ -131,7 +132,7 @@ private:
 	void removeIntersections();
 
 	void _createScreenSizeBuffer();
-	void _renderScreenSizeBuffer();
+	void _renderScreenSizeBuffer(const VIRegsSample& regs);
 
 	class OverscanBuffer
 	{
@@ -194,7 +195,7 @@ private:
 	{
 	public:
 		void init();
-		bool update(RdpUpdateResult & _result);
+		bool update(const VIRegsSample& regs, RdpUpdateResult & _result);
 
 	private:
 		s32 oldvstart = 0;

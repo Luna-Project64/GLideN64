@@ -124,8 +124,8 @@ void RSP_ProcessDList()
 		RSP.infloop = false;
 		RSP.halt = false;
 	} else {
-		if (*REG.VI_ORIGIN != VI.lastOrigin) {
-			VI_UpdateSize();
+		if (*REG._VI_ORIGIN != VI.lastOrigin) {
+			VI_UpdateSize(sampleVI());
 			dwnd().updateScale();
 		}
 

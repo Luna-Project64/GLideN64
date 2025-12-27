@@ -18,8 +18,9 @@ struct VIInfo
 
 extern VIInfo VI;
 
-void VI_UpdateSize();
-void VI_UpdateScreen();
+struct VIRegsSample;
+void VI_UpdateSize(const VIRegsSample& regs);
+void VI_UpdateScreen(const VIRegsSample& regs);
 u16 VI_GetMaxBufferHeight(u16 _width);
 
 #endif

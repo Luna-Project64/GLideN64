@@ -205,12 +205,19 @@ void PluginAPI::ShowCFB()
 
 void PluginAPI::UpdateScreen()
 {
+	if (LegacySm64ToolsHacks)
+	{
+		if (*REG._VI_V_SYNC == 0x0627) *REG._VI_V_SYNC = 0x0834;
+	}
+
+	VIRegsSample regs = sampleVI();
+
 	LOG(LOG_APIFUNC, "UpdateScreen\n");
 #ifdef RSPTHREAD
-	m_executor.async([]()
+	m_executor.async([regs]()
 	{
 		GLContextGuard lck;
-		VI_UpdateScreen();
+		VI_UpdateScreen(regs);
 	});
 #else
 	VI_UpdateScreen();
@@ -233,20 +240,20 @@ void PluginAPI::_initiateGFX(const GFX_INFO & _gfxInfo) const {
 	REG.DPC_PIPEBUSY = _gfxInfo.DPC_PIPEBUSY_REG;
 	REG.DPC_TMEM = _gfxInfo.DPC_TMEM_REG;
 
-	REG.VI_STATUS = _gfxInfo.VI_STATUS_REG;
-	REG.VI_ORIGIN = _gfxInfo.VI_ORIGIN_REG;
-	REG.VI_WIDTH = _gfxInfo.VI_WIDTH_REG;
-	REG.VI_INTR = _gfxInfo.VI_INTR_REG;
-	REG.VI_V_CURRENT_LINE = _gfxInfo.VI_V_CURRENT_LINE_REG;
-	REG.VI_TIMING = _gfxInfo.VI_TIMING_REG;
-	REG.VI_V_SYNC = _gfxInfo.VI_V_SYNC_REG;
-	REG.VI_H_SYNC = _gfxInfo.VI_H_SYNC_REG;
-	REG.VI_LEAP = _gfxInfo.VI_LEAP_REG;
-	REG.VI_H_START = _gfxInfo.VI_H_START_REG;
-	REG.VI_V_START = _gfxInfo.VI_V_START_REG;
-	REG.VI_V_BURST = _gfxInfo.VI_V_BURST_REG;
-	REG.VI_X_SCALE = _gfxInfo.VI_X_SCALE_REG;
-	REG.VI_Y_SCALE = _gfxInfo.VI_Y_SCALE_REG;
+	REG._VI_STATUS = _gfxInfo.VI_STATUS_REG;
+	REG._VI_ORIGIN = _gfxInfo.VI_ORIGIN_REG;
+	REG._VI_WIDTH = _gfxInfo.VI_WIDTH_REG;
+	REG._VI_INTR = _gfxInfo.VI_INTR_REG;
+	REG._VI_V_CURRENT_LINE = _gfxInfo.VI_V_CURRENT_LINE_REG;
+	REG._VI_TIMING = _gfxInfo.VI_TIMING_REG;
+	REG._VI_V_SYNC = _gfxInfo.VI_V_SYNC_REG;
+	REG._VI_H_SYNC = _gfxInfo.VI_H_SYNC_REG;
+	REG._VI_LEAP = _gfxInfo.VI_LEAP_REG;
+	REG._VI_H_START = _gfxInfo.VI_H_START_REG;
+	REG._VI_V_START = _gfxInfo.VI_V_START_REG;
+	REG._VI_V_BURST = _gfxInfo.VI_V_BURST_REG;
+	REG._VI_X_SCALE = _gfxInfo.VI_X_SCALE_REG;
+	REG._VI_Y_SCALE = _gfxInfo.VI_Y_SCALE_REG;
 
 	CheckInterrupts = _gfxInfo.CheckInterrupts;
 

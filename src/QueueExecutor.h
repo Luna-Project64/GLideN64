@@ -78,7 +78,6 @@ public:
             }
 
             finished.wait(false);
-            int a = 0;
         }
 
         return true;

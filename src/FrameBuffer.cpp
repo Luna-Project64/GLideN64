@@ -576,10 +576,10 @@ void FrameBufferList::setBufferChanged(f32 _maxY)
 	}
 }
 
-void FrameBufferList::clearBuffersChanged()
+void FrameBufferList::clearBuffersChanged(const VIRegsSample& regs)
 {
 	gDP.colorImage.changed = FALSE;
-	FrameBuffer * pBuffer = frameBufferList().findBuffer(*REG.VI_ORIGIN);
+	FrameBuffer * pBuffer = frameBufferList().findBuffer(regs.VI_ORIGIN);
 	if (pBuffer != nullptr)
 		pBuffer->m_changed = false;
 }
@@ -680,7 +680,7 @@ void FrameBufferList::saveBuffer(u32 _address, u16 _format, u16 _size, u16 _widt
 		return;
 
 	if (_width == 512 && (config.generalEmulation.hacks & hack_RE2) != 0)
-		_width = *REG.VI_WIDTH;
+		_width = *REG._VI_WIDTH;
 
 	if (config.frameBufferEmulation.enable == 0) {
 		if (m_list.empty())
@@ -968,7 +968,7 @@ void FrameBuffer_Destroy()
 	frameBufferList().destroy();
 }
 
-void FrameBufferList::_renderScreenSizeBuffer()
+void FrameBufferList::_renderScreenSizeBuffer(const VIRegsSample& regs)
 {
 	if (m_list.empty())
 		return;
@@ -979,7 +979,7 @@ void FrameBufferList::_renderScreenSizeBuffer()
 	PostProcessor & postProcessor = PostProcessor::get();
 	FrameBuffer * pFilteredBuffer = pBuffer;
 	for (const auto & f : postProcessor.getPostprocessingList())
-		pFilteredBuffer = f(postProcessor, pFilteredBuffer);
+		pFilteredBuffer = f(postProcessor, regs, pFilteredBuffer);
 	CachedTexture * pBufferTexture = pFilteredBuffer->m_pTexture;
 
 	const u32 wndWidth = wnd.getWidth();
@@ -1051,33 +1051,33 @@ void FrameBufferList::RdpUpdate::init()
 }
 
 /* This function was taken from angrylion's code and adopted for my needs */
-bool FrameBufferList::RdpUpdate::update(RdpUpdateResult & _result)
+bool FrameBufferList::RdpUpdate::update(const VIRegsSample& regs, RdpUpdateResult & _result)
 {
 	static const s32 PRESCALE_WIDTH = 640U;
 	static const s32 PRESCALE_HEIGHT = 625U;
 
-	const s32 x_add = _SHIFTR(*REG.VI_X_SCALE, 0, 12);
-	const s32 y_add = _SHIFTR(*REG.VI_Y_SCALE, 0, 12);
-	const u32 v_sync = _SHIFTR(*REG.VI_V_SYNC, 0, 10);
+	const s32 x_add = _SHIFTR(regs.VI_X_SCALE, 0, 12);
+	const s32 y_add = _SHIFTR(regs.VI_Y_SCALE, 0, 12);
+	const u32 v_sync = _SHIFTR(regs.VI_V_SYNC, 0, 10);
 	const bool ispal = (v_sync > 550);
-	const s32 x1 = _SHIFTR( *REG.VI_H_START, 16, 10 );
-	const s32 y1 = _SHIFTR( *REG.VI_V_START, 16, 10 );
-	const s32 x2 = _SHIFTR( *REG.VI_H_START, 0, 10 );
-	const s32 y2 = _SHIFTR( *REG.VI_V_START, 0, 10 );
+	const s32 x1 = _SHIFTR(regs.VI_H_START, 16, 10 );
+	const s32 y1 = _SHIFTR(regs.VI_V_START, 16, 10 );
+	const s32 x2 = _SHIFTR(regs.VI_H_START, 0, 10 );
+	const s32 y2 = _SHIFTR(regs.VI_V_START, 0, 10 );
 
 	const s32 delta_x = x2 - x1;
 	const s32 delta_y = y2 - y1;
-	const u32 vitype = _SHIFTR( *REG.VI_STATUS, 0, 2 );
+	const u32 vitype = _SHIFTR(regs.VI_STATUS, 0, 2 );
 
-	const bool serration_pulses = (*REG.VI_STATUS & 0x40) != 0;
+	const bool serration_pulses = (regs.VI_STATUS & 0x40) != 0;
 	const bool validinterlace = ((vitype & 2) != 0 ) && serration_pulses;
 	if (validinterlace && prevserrate && emucontrolsvicurrent < 0)
-		emucontrolsvicurrent = (*REG.VI_V_CURRENT_LINE & 1) != prevvicurrent ? 1 : 0;
+		emucontrolsvicurrent = (regs.VI_V_CURRENT_LINE & 1) != prevvicurrent ? 1 : 0;
 
 	bool lowerfield = 0;
 	if (validinterlace) {
 		if (emucontrolsvicurrent == 1)
-			lowerfield = (*REG.VI_V_CURRENT_LINE & 1) == 0;
+			lowerfield = (regs.VI_V_CURRENT_LINE & 1) == 0;
 		else if (!emucontrolsvicurrent) {
 			if (y1 == oldvstart)
 				lowerfield = !oldlowerfield;
@@ -1090,7 +1090,7 @@ bool FrameBufferList::RdpUpdate::update(RdpUpdateResult & _result)
 
 	if (validinterlace) {
 		prevserrate = true;
-		prevvicurrent = *REG.VI_V_CURRENT_LINE & 1;
+		prevvicurrent = regs.VI_V_CURRENT_LINE & 1;
 		oldvstart = y1;
 	} else
 		prevserrate = false;
@@ -1099,8 +1099,8 @@ bool FrameBufferList::RdpUpdate::update(RdpUpdateResult & _result)
 	s32 vres = delta_y;
 	s32 h_start = x1 - (ispal ? 128 : 108);
 	s32 v_start = (y1 - (ispal ? 44 : 34)) / 2;
-	u32 x_start = _SHIFTR(*REG.VI_X_SCALE, 16, 12);
-	u32 y_start = _SHIFTR(*REG.VI_Y_SCALE, 16, 12);
+	u32 x_start = _SHIFTR(regs.VI_X_SCALE, 16, 12);
+	u32 y_start = _SHIFTR(regs.VI_Y_SCALE, 16, 12);
 
 	bool h_start_clamped = h_start < 0;
 	if (h_start < 0) {
@@ -1155,11 +1155,11 @@ bool FrameBufferList::RdpUpdate::update(RdpUpdateResult & _result)
 	_result.vi_y_add = y_add;
 	_result.vi_minhpass = h_start_clamped ? 0 : 8;
 	_result.vi_maxhpass = hres_clamped ? 0 : 7;
-	_result.vi_width = _SHIFTR(*REG.VI_WIDTH, 0, 12);
+	_result.vi_width = _SHIFTR(regs.VI_WIDTH, 0, 12);
 	_result.vi_lowerfield = lowerfield;
-	_result.vi_origin = _SHIFTR(*REG.VI_ORIGIN, 0, 24);
-	_result.vi_fsaa = (*REG.VI_STATUS & 512) == 0;
-	_result.vi_divot = (*REG.VI_STATUS & 16) != 0;
+	_result.vi_origin = _SHIFTR(regs.VI_ORIGIN, 0, 24);
+	_result.vi_fsaa = (regs.VI_STATUS & 512) == 0;
+	_result.vi_divot = (regs.VI_STATUS & 16) != 0;
 	if (config.frameBufferEmulation.instantInput)
 	{
 		_result.vi_origin = gDP.colorImage.address;
@@ -1337,7 +1337,7 @@ void FrameBufferList::OverscanBuffer::draw(u32 _fullHeight, bool _PAL)
 	drawer.copyTexturedRect(blitParams);
 }
 
-void FrameBufferList::renderBuffer()
+void FrameBufferList::renderBuffer(const VIRegsSample& regs)
 {
 	if (g_debugger.isDebugMode()) {
 		g_debugger.draw();
@@ -1345,12 +1345,12 @@ void FrameBufferList::renderBuffer()
 	}
 
 	if (config.frameBufferEmulation.enable == 0) {
-		_renderScreenSizeBuffer();
+		_renderScreenSizeBuffer(regs);
 		return;
 	}
 
 	RdpUpdateResult rdpRes;
-	if (!m_rdpUpdate.update(rdpRes)) {
+	if (!m_rdpUpdate.update(regs, rdpRes)) {
 		gfxContext.bindFramebuffer(bufferTarget::DRAW_FRAMEBUFFER, ObjectHandle::defaultFramebuffer);
 		gfxContext.clearColorBuffer(0.0f, 0.0f, 0.0f, 0.0f);
 		dwnd().swapBuffers();
@@ -1433,14 +1433,14 @@ void FrameBufferList::renderBuffer()
 	PostProcessor & postProcessor = PostProcessor::get();
 	FrameBuffer * pFilteredBuffer = pBuffer;
 	for (const auto & f : postProcessor.getPostprocessingList())
-		pFilteredBuffer = f(postProcessor, pFilteredBuffer);
+		pFilteredBuffer = f(postProcessor, regs, pFilteredBuffer);
 
-	const f32 viScaleX = _FIXED2FLOAT(_SHIFTR(*REG.VI_X_SCALE, 0, 12), 10);
+	const f32 viScaleX = _FIXED2FLOAT(_SHIFTR(regs.VI_X_SCALE, 0, 12), 10);
 	const f32 srcScaleX = pFilteredBuffer->m_scale;
 	const f32 dstScaleX = dwnd().getWidth() / (640 * viScaleX);
 	const s32 hx0 = rdpRes.vi_h_start + rdpRes.vi_minhpass;
 	const s32 h0 = (rdpRes.vi_ispal ? 128 : 108);
-	const s32 hEnd = _SHIFTR(*REG.VI_H_START, 0, 10);
+	const s32 hEnd = _SHIFTR(regs.VI_H_START, 0, 10);
 	const s32 hx1 = max(0, h0 + 640 - hEnd + (s32)rdpRes.vi_maxhpass);
 	//const s32 hx1 = hx0 + rdpRes.vi_hres;
 	dstX0 = (s32)((hx0 * viScaleX + f32(XoffsetRight)) * dstScaleX);
@@ -1506,7 +1506,7 @@ void FrameBufferList::renderBuffer()
 		pNextBuffer->m_isMainBuffer = true;
 		pFilteredBuffer = pNextBuffer;
 		for (const auto & f : postProcessor.getPostprocessingList())
-			pFilteredBuffer = f(postProcessor, pFilteredBuffer);
+			pFilteredBuffer = f(postProcessor, regs, pFilteredBuffer);
 		srcY1 = srcPartHeight;
 		dstY0 = dstY1;
 		dstY1 = dstY0 + dstPartHeight;

@@ -220,7 +220,7 @@ void GraphicsDrawer::updateScissor(FrameBuffer * _pBuffer) const
 	f32 SY1 = gDP.scissor.lry + offsetY;
 
 	if (u32(SX1) == 512 && (config.generalEmulation.hacks & hack_RE2) != 0) {
-		SX1 = f32(*REG.VI_WIDTH);
+		SX1 = f32(*REG._VI_WIDTH);
 		SY1 *= 512.0f / SX1;
 	}
 
