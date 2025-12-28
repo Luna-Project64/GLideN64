@@ -84,6 +84,10 @@ void gSPTriangle(s32 v0, s32 v1, s32 v2)
 			DebugMsg(DEBUG_NORMAL, "Triangle rejected (%i, %i, %i)\n", v0, v1, v2);
 			return;
 		}
+		if (gSP.alphaCompareCull.mode && drawer.isAlphaCompareCulled(v0, v1, v2, gSP.alphaCompareCull.mode, gSP.alphaCompareCull.thresh)) {
+			DebugMsg(DEBUG_NORMAL, "Triangle alpha compare culled (%i, %i, %i)\n", v0, v1, v2);
+			return;
+		}
 		drawer.addTriangle(v0, v1, v2);
 		DebugMsg(DEBUG_NORMAL, "Triangle #%i added (%i, %i, %i)\n", gSP.tri_num++, v0, v1, v2);
 	}

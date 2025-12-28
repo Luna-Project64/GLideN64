@@ -218,7 +218,7 @@ struct gSPInfo
 
 	struct
 	{
-		u8 mode;
+		s8 mode;
 		u8 thresh;
 	} alphaCompareCull;
 
