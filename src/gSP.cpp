@@ -1256,6 +1256,14 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 			spVtx[v].HWLight = 0;
 	}
 
+	if (gSP.geometryMode & G_ATTROFFSET_ST_ENABLE) {
+		for (int i = 0; i < VNUM; ++i) {
+			SPVertex& vtx = spVtx[v + i];
+			vtx.s += gSP.attrOffset.s / gSP.texture.scales;
+			vtx.t += gSP.attrOffset.t / gSP.texture.scalet;
+		}
+	}
+
 	for(u32 i = 0; i < VNUM; ++i) {
 		SPVertex & vtx = spVtx[v+i];
 		DebugMsg(DEBUG_DETAIL, "v%d - x: %f, y: %f, z: %f, w: %f, s: %f, t: %f, r=%02f, g=%02f, b=%02f, a=%02f\n",
