@@ -12,7 +12,7 @@ Config config;
 
 void Config_DoConfig(/*HWND hParent*/)
 {
-	wchar_t strIniFolderPath[PLUGIN_PATH_SIZE];
+	char strIniFolderPath[PLUGIN_PATH_SIZE];
 	api().FindPluginPath(strIniFolderPath);
 
 	const bool bRestart = RunConfig(strIniFolderPath, api().isRomOpen() ? RSP.romname : nullptr, 8, 16);
@@ -24,7 +24,7 @@ void Config_DoConfig(/*HWND hParent*/)
 
 void Config_LoadConfig()
 {
-	wchar_t strIniFolderPath[PLUGIN_PATH_SIZE];
+	char strIniFolderPath[PLUGIN_PATH_SIZE];
 	api().FindPluginPath(strIniFolderPath);
 	LoadConfig(&config, strIniFolderPath);
 	if (config.generalEmulation.enableCustomSettings != 0)

@@ -90,11 +90,11 @@ void Config::resetToDefaults()
 	textureFilter.txSaveCache = 1;
 
 	api().GetUserDataPath(textureFilter.txPath);
-	gln_wcscat(textureFilter.txPath, wst("/hires_texture"));
+	strcat(textureFilter.txPath, "/hires_texture");
 	api().GetUserCachePath(textureFilter.txCachePath);
-	gln_wcscat(textureFilter.txCachePath, wst("/cache"));
+	strcat(textureFilter.txCachePath, "/cache");
 	api().GetUserCachePath(textureFilter.txDumpPath);
-	gln_wcscat(textureFilter.txDumpPath, wst("/texture_dump"));
+	strcat(textureFilter.txDumpPath, "/texture_dump");
 
 #ifdef OS_WINDOWS
 	font.name.assign("arial.ttf");

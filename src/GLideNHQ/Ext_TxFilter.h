@@ -27,11 +27,11 @@
 #ifdef OS_WINDOWS
 #include <windows.h>
 #define TXHMODULE HMODULE
-#define DLOPEN(a) LoadLibraryW(a)
+#define DLOPEN(a) LoadLibraryA(a)
 #define DLCLOSE(a) FreeLibrary(a)
 #define DLSYM(a, b) GetProcAddress(a, b)
-#define GETCWD(a, b) GetCurrentDirectoryW(a, b)
-#define CHDIR(a) SetCurrentDirectoryW(a)
+#define GETCWD(a, b) GetCurrentDirectoryA(a, b)
+#define CHDIR(a) SetCurrentDirectoryA(a)
 #else
 #include <iostream>
 #include <dlfcn.h>
@@ -136,7 +136,7 @@ struct GHQTexInfo {
  * }
  */
 #define INFO_BUF 4095
-typedef void (*dispInfoFuncExt)(const wchar_t *format, ...);
+typedef void (*dispInfoFuncExt)(const char *format, ...);
 
 /* dll exports */
 /* Use TXFilter as a library. Define exported functions. */
@@ -168,8 +168,8 @@ boolean ext_ghq_init(int maxwidth, /* maximum texture width supported by hardwar
 					 int maxbpp,   /* maximum texture bpp supported by hardware */
 					 int options,  /* options */
 					 int cachesize,/* cache textures to system memory */
-					 const wchar_t *path,   /* plugin directory. must be smaller than MAX_PATH */
-					 const wchar_t *ident,  /* name of ROM. must be no longer than 64 in character. */
+					 const char *path,   /* plugin directory. must be smaller than MAX_PATH */
+					 const char *ident,  /* name of ROM. must be no longer than 64 in character. */
 					 dispInfoFuncExt callback /* callback function to display info */
 					 );
 
@@ -220,8 +220,8 @@ extern "C"{
 
 TAPI boolean TAPIENTRY
 txfilter_init(int maxwidth, int maxheight, int maxbpp, int options, int cachesize,
-	const wchar_t *txCachePath, const wchar_t *txDumpPath, const wchar_t * texPackPath,
-	const wchar_t* ident, dispInfoFuncExt callback);
+	const char *txCachePath, const char *txDumpPath, const char * texPackPath,
+	const char* ident, dispInfoFuncExt callback);
 
 TAPI void TAPIENTRY
 txfilter_shutdown(void);

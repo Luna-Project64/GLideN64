@@ -1,6 +1,6 @@
 #ifndef DISPLAYLOADPROGRESS_H
 #define DISPLAYLOADPROGRESS_H
 
-void displayLoadProgress(const wchar_t *format, ...);
+void displayLoadProgress(const char *format, ...);
 
 #endif // DISPLAYLOADPROGRESS_H

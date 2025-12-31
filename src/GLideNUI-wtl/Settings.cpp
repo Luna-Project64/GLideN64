@@ -95,9 +95,9 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.textureFilter.txForce16bpp = settings.value("txForce16bpp", config.textureFilter.txForce16bpp).toInt();
 	config.textureFilter.txCacheCompression = settings.value("txCacheCompression", config.textureFilter.txCacheCompression).toInt();
 	config.textureFilter.txSaveCache = settings.value("txSaveCache", config.textureFilter.txSaveCache).toInt();
-	wcscpy_s(config.textureFilter.txPath, ToUTF16(settings.value("txPath", FromUTF16(config.textureFilter.txPath).c_str()).toString().c_str()).c_str());
-	wcscpy_s(config.textureFilter.txCachePath, ToUTF16(settings.value("txCachePath", FromUTF16(config.textureFilter.txCachePath).c_str()).toString().c_str()).c_str());
-	wcscpy_s(config.textureFilter.txDumpPath, ToUTF16(settings.value("txDumpPath", FromUTF16(config.textureFilter.txDumpPath).c_str()).toString().c_str()).c_str());
+	strcpy_s(config.textureFilter.txPath, settings.value("txPath", config.textureFilter.txPath).toString().c_str());
+	strcpy_s(config.textureFilter.txCachePath, settings.value("txCachePath", config.textureFilter.txCachePath).toString().c_str());
+	strcpy_s(config.textureFilter.txDumpPath, settings.value("txDumpPath", config.textureFilter.txDumpPath).toString().c_str());
 	settings.endGroup();
 
 	settings.beginGroup("font");
@@ -277,9 +277,9 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("txForce16bpp", config.textureFilter.txForce16bpp);
 		settings.setValue("txCacheCompression", config.textureFilter.txCacheCompression);
 		settings.setValue("txSaveCache", config.textureFilter.txSaveCache);
-		settings.setValue("txPath", FromUTF16(config.textureFilter.txPath).c_str());
-		settings.setValue("txCachePath", FromUTF16(config.textureFilter.txCachePath).c_str());
-		settings.setValue("txDumpPath", FromUTF16(config.textureFilter.txDumpPath).c_str());
+		settings.setValue("txPath", config.textureFilter.txPath);
+		settings.setValue("txCachePath", config.textureFilter.txCachePath);
+		settings.setValue("txDumpPath", config.textureFilter.txDumpPath);
 		settings.endGroup();
 
 		settings.beginGroup("font");
@@ -361,8 +361,8 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 		origConfig.G.S != settings.value(#S, config.G.S).toFloat()) \
 		settings.setValue(#S, config.G.S)
 #define WriteCustomSettingS(S) \
-	const std::string new##S = FromUTF16(config.textureFilter.S); \
-	const std::string orig##S = FromUTF16(origConfig.textureFilter.S); \
+	const std::string new##S = config.textureFilter.S; \
+	const std::string orig##S = origConfig.textureFilter.S; \
 	if (orig##S != new##S || \
 		orig##S != settings.value(#S, new##S.c_str()).toString()) \
 		settings.setValue(#S, new##S.c_str())

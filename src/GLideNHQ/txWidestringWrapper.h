@@ -53,14 +53,14 @@ private:
 #define removeColon(A)
 #else
 
-#define tx_wstring std::wstring
-#define tx_swprintf	swprintf
-#define wst(A) L##A
+#define tx_wstring std::string
+#define tx_swprintf	snprintf
+#define wst(A) A
 #define wccmp(A, B) A[0] == B[0]
 inline
-void removeColon(tx_wstring& _s)
+void removeColon(std::string& _s)
 {
-	std::replace(_s.begin(), _s.end(), L':', L'-');
+	std::replace(_s.begin(), _s.end(), ':', '-');
 }
 
 #endif // OS_ANDROID

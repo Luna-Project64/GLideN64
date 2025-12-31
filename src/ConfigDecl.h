@@ -156,9 +156,9 @@ struct Config
 		u32 txCacheCompression;			// Zip textures cache
 		u32 txSaveCache;				// Save texture cache to hard disk
 
-		wchar_t txPath[PLUGIN_PATH_SIZE]; // Path to texture packs
-		wchar_t txCachePath[PLUGIN_PATH_SIZE]; // Path to store texture cache, that is .htc files
-		wchar_t txDumpPath[PLUGIN_PATH_SIZE]; // Path to store texture dumps
+		char txPath[PLUGIN_PATH_SIZE]; // Path to texture packs
+		char txCachePath[PLUGIN_PATH_SIZE]; // Path to store texture cache, that is .htc files
+		char txDumpPath[PLUGIN_PATH_SIZE]; // Path to store texture dumps
 	} textureFilter;
 
 	struct

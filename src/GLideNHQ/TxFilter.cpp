@@ -62,10 +62,10 @@ TxFilter::TxFilter(int maxwidth,
 				   int maxbpp,
 				   int options,
 				   int cachesize,
-				   const wchar_t * texCachePath,
-				   const wchar_t * texDumpPath,
-				   const wchar_t * texPackPath,
-				   const wchar_t * ident,
+				   const char* texCachePath,
+				   const char* texDumpPath,
+				   const char* texPackPath,
+				   const char* ident,
 				   dispInfoFuncExt callback)
 	: _tex1(nullptr)
 	, _tex2(nullptr)
@@ -75,7 +75,7 @@ TxFilter::TxFilter(int maxwidth,
 	, _txImage(nullptr)
 {
 	/* HACKALERT: the emulator misbehaves and sometimes forgets to shutdown */
-	if ((ident && wcscmp(ident, wst("DEFAULT")) != 0 && _ident.compare(ident) == 0) &&
+	if ((ident && strcmp(ident, wst("DEFAULT")) != 0 && _ident.compare(ident) == 0) &&
 			_maxwidth  == maxwidth  &&
 			_maxheight == maxheight &&
 			_maxbpp    == maxbpp    &&
@@ -126,7 +126,7 @@ TxFilter::TxFilter(int maxwidth,
 		_dumpPath.assign(texDumpPath);
 
 	/* save ROM name */
-	if (ident && wcscmp(ident, wst("DEFAULT")) != 0)
+	if (ident && strcmp(ident, wst("DEFAULT")) != 0)
 		_ident.assign(ident);
 
 	if (TxMemBuf::getInstance()->init(_maxwidth, _maxheight)) {
@@ -601,21 +601,21 @@ TxFilter::dmptx(uint8 *src, int width, int height, int rowStridePixel, ColorForm
 		tmpbuf.append(wst("/"));
 		tmpbuf.append(_ident);
 		tmpbuf.append(wst("/GLideNHQ"));
-		if (!osal_path_existsW(tmpbuf.c_str()) && osal_mkdirp(tmpbuf.c_str()) != 0)
+		if (!osal_path_exists(tmpbuf.c_str()) && osal_mkdirp(tmpbuf.c_str()) != 0)
 			return 0;
 
 		if ((n64fmt >> 8) == 0x2) {
-			wchar_t wbuf[256];
-			tx_swprintf(wbuf, 256, wst("/%ls#%08X#%01X#%01X#%08X_ciByRGBA.png"), _ident.c_str(), (uint32)(r_crc64 & 0xffffffff), (n64fmt >> 8), (n64fmt & 0xf), (uint32)(r_crc64 >> 32));
-			tmpbuf.append(wbuf);
+			char cbuf[256];
+			tx_swprintf(cbuf, 256, wst("/%s#%08X#%01X#%01X#%08X_ciByRGBA.png"), _ident.c_str(), (uint32)(r_crc64 & 0xffffffff), (n64fmt >> 8), (n64fmt & 0xf), (uint32)(r_crc64 >> 32));
+			tmpbuf.append(cbuf);
 		} else {
-			wchar_t wbuf[256];
-			tx_swprintf(wbuf, 256, wst("/%ls#%08X#%01X#%01X_all.png"), _ident.c_str(), (uint32)(r_crc64 & 0xffffffff), (n64fmt >> 8), (n64fmt & 0xf));
-			tmpbuf.append(wbuf);
+			char cbuf[256];
+			tx_swprintf(cbuf, 256, wst("/%s#%08X#%01X#%01X_all.png"), _ident.c_str(), (uint32)(r_crc64 & 0xffffffff), (n64fmt >> 8), (n64fmt & 0xf));
+			tmpbuf.append(cbuf);
 		}
 
 #ifdef OS_WINDOWS
-		if ((fp = _wfopen(tmpbuf.c_str(), wst("wb"))) != nullptr) {
+		if ((fp = fopen(tmpbuf.c_str(), wst("wb"))) != nullptr) {
 #else
 		char cbuf[MAX_PATH];
 		wcstombs(cbuf, tmpbuf.c_str(), MAX_PATH);

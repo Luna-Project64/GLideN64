@@ -74,33 +74,34 @@ void TextureFilterHandler::init()
 	m_options = _getConfigOptions();
 
 	s32 maxTextureSize = gfxContext.getMaxTextureSize();
-	wchar_t wRomName[32];
-	::mbstowcs(wRomName, RSP.romname, 32);
+	char sRomName[33]{};
+	strncpy(sRomName, RSP.romname, 32);
+	sRomName[32] = '\0';
 
-	wchar_t txPath[PLUGIN_PATH_SIZE + 16];
-	wchar_t * pTexPackPath = config.textureFilter.txPath;
-	if (::wcslen(config.textureFilter.txPath) == 0 ||
+	char txPath[PLUGIN_PATH_SIZE + 16];
+	char * pTexPackPath = config.textureFilter.txPath;
+	if (::strlen(config.textureFilter.txPath) == 0 ||
 		osal_is_absolute_path(config.textureFilter.txPath) == 0) {
 		api().GetUserDataPath(txPath);
-		gln_wcscat(txPath, wst("/hires_texture"));
+		strcat(txPath, "/hires_texture");
 		pTexPackPath = txPath;
 	}
 
-	wchar_t txCachePath[PLUGIN_PATH_SIZE + 16];
-	wchar_t * pTexCachePath = config.textureFilter.txCachePath;
-	if (::wcslen(config.textureFilter.txCachePath) == 0 ||
+	char txCachePath[PLUGIN_PATH_SIZE + 16];
+	char * pTexCachePath = config.textureFilter.txCachePath;
+	if (::strlen(config.textureFilter.txCachePath) == 0 ||
 		osal_is_absolute_path(config.textureFilter.txCachePath) == 0) {
 		api().GetUserCachePath(txCachePath);
-		gln_wcscat(txCachePath, wst("/cache"));
+		strcat(txCachePath, "/cache");
 		pTexCachePath = txCachePath;
 	}
 
-	wchar_t txDumpPath[PLUGIN_PATH_SIZE + 16];
-	wchar_t * pTexDumpPath = config.textureFilter.txDumpPath;
-	if (::wcslen(config.textureFilter.txDumpPath) == 0 ||
+	char txDumpPath[PLUGIN_PATH_SIZE + 16];
+	char * pTexDumpPath = config.textureFilter.txDumpPath;
+	if (::strlen(config.textureFilter.txDumpPath) == 0 ||
 		osal_is_absolute_path(config.textureFilter.txDumpPath) == 0) {
 		api().GetUserCachePath(txDumpPath);
-		gln_wcscat(txDumpPath, wst("/texture_dump"));
+		strcat(txDumpPath, "/texture_dump");
 		pTexDumpPath = txDumpPath;
 	}
 
@@ -112,7 +113,7 @@ void TextureFilterHandler::init()
 		pTexCachePath, // path to store cache files
 		pTexDumpPath, // path to folder with dumped textures
 		pTexPackPath, // path to texture packs folder
-		wRomName, // name of ROM. must be no longer than 256 characters
+		sRomName, // name of ROM. must be no longer than 256 characters
 		displayLoadProgress);
 
 }

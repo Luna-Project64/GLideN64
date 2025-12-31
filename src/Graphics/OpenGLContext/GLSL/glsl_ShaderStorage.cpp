@@ -38,22 +38,15 @@ std::string getStorageFileName(const opengl::GLInfo & _glinfo, const char * _fil
 		std::string m_locale;
 	} setLocale;
 
-	wchar_t strCacheFolderPath[PLUGIN_PATH_SIZE];
-	api().GetUserCachePath(strCacheFolderPath);
-
-	// Convert wchar string to multibyte string
-	// Use large enough buffer to hold multibyte conversion of wchar string
-	char strCacheFolderPathChar[PLUGIN_PATH_SIZE * 4];
-	std::wcstombs(strCacheFolderPathChar, strCacheFolderPath, sizeof(strCacheFolderPathChar));
+	char strCacheFolderPathChar[PLUGIN_PATH_SIZE];
+	api().GetUserCachePath(strCacheFolderPathChar);
 
 	std::stringstream path;
 	path << strCacheFolderPathChar << "/" << SHADER_STORAGE_FOLDER_NAME;
+	std::string strShaderFolderPathStr = path.str();
+	const char* strShaderFolderPath = strShaderFolderPathStr.c_str();
 
-	// Convert back to wide chars before using osal
-	wchar_t strShaderFolderPath[PLUGIN_PATH_SIZE];
-	std::mbstowcs(strShaderFolderPath, path.str().c_str(), PLUGIN_PATH_SIZE);
-
-	if (!osal_path_existsW(strShaderFolderPath) || !osal_is_directory(strShaderFolderPath)) {
+	if (!osal_path_exists(strShaderFolderPath) || !osal_is_directory(strShaderFolderPath)) {
 		if (osal_mkdirp(strShaderFolderPath) != 0) {
 			path.str("");
 			path << strCacheFolderPathChar;
@@ -167,7 +160,7 @@ bool ShaderStorage::saveShadersStorage(const graphics::Combiners & _combiners) c
 	if (!shadersOut)
 		return false;
 
-	displayLoadProgress(L"SAVE COMBINER SHADERS %.1f%%", 0.0f);
+	displayLoadProgress("SAVE COMBINER SHADERS %.1f%%", 0.0f);
 
 	shadersOut.write((char*)&m_formatVersion, sizeof(m_formatVersion));
 
@@ -204,7 +197,7 @@ bool ShaderStorage::saveShadersStorage(const graphics::Combiners & _combiners) c
 			++totalWritten;
 			progress += step;
 			if (progress > percents) {
-				displayLoadProgress(L"SAVE COMBINER SHADERS %.1f%%", f32(totalWritten) * 100.f / f32(szCombiners));
+				displayLoadProgress("SAVE COMBINER SHADERS %.1f%%", f32(totalWritten) * 100.f / f32(szCombiners));
 				percents += percent;
 			}
 		}
@@ -220,7 +213,7 @@ bool ShaderStorage::saveShadersStorage(const graphics::Combiners & _combiners) c
 
 	shadersOut.flush();
 	shadersOut.close();
-	displayLoadProgress(L"");
+	displayLoadProgress("");
 	return true;
 }
 
@@ -275,7 +268,7 @@ bool ShaderStorage::_loadFromCombinerKeys(graphics::Combiners & _combiners)
 	fin >> std::hex >> hwlSupport;
 	GBI.setHWLSupported(hwlSupport != 0);
 
-	displayLoadProgress(L"LOAD COMBINER SHADERS %.1f%%", 0.0f);
+	displayLoadProgress("LOAD COMBINER SHADERS %.1f%%", 0.0f);
 
 	u32 szCombiners;
 	fin >> std::hex >> szCombiners;
@@ -291,7 +284,7 @@ bool ShaderStorage::_loadFromCombinerKeys(graphics::Combiners & _combiners)
 		_combiners[pCombiner->getKey()] = pCombiner;
 		progress += step;
 		if (progress > percents) {
-			displayLoadProgress(L"LOAD COMBINER SHADERS %.1f%%", f32(i + 1) * 100.f / f32(szCombiners));
+			displayLoadProgress("LOAD COMBINER SHADERS %.1f%%", f32(i + 1) * 100.f / f32(szCombiners));
 			percents += percent;
 		}
 	}
@@ -304,7 +297,7 @@ bool ShaderStorage::_loadFromCombinerKeys(graphics::Combiners & _combiners)
 		// Restore shaders storage
 		return saveShadersStorage(_combiners);
 
-	displayLoadProgress(L"");
+	displayLoadProgress("");
 	return true;
 }
 
@@ -352,7 +345,7 @@ bool ShaderStorage::loadShadersStorage(graphics::Combiners & _combiners)
 		if (strncmp(strGLVersion, strBuf.data(), len) != 0)
 			return _loadFromCombinerKeys(_combiners);
 
-		displayLoadProgress(L"LOAD COMBINER SHADERS %.1f%%", 0.0f);
+		displayLoadProgress("LOAD COMBINER SHADERS %.1f%%", 0.0f);
 		CombinerProgramUniformFactory uniformFactory(m_glinfo);
 
 		fin.read((char*)&len, sizeof(len));
@@ -366,7 +359,7 @@ bool ShaderStorage::loadShadersStorage(graphics::Combiners & _combiners)
 			_combiners[pCombiner->getKey()] = pCombiner;
 			progress += step;
 			if (progress > percents) {
-				displayLoadProgress(L"LOAD COMBINER SHADERS %.1f%%", f32(i + 1) * 100.f / f32(len) );
+				displayLoadProgress("LOAD COMBINER SHADERS %.1f%%", f32(i + 1) * 100.f / f32(len) );
 				percents += percent;
 			}
 		}
@@ -375,7 +368,7 @@ bool ShaderStorage::loadShadersStorage(graphics::Combiners & _combiners)
 	}
 
 	fin.close();
-	displayLoadProgress(L"");
+	displayLoadProgress("");
 	return !opengl::Utils::isGLError();
 }
 

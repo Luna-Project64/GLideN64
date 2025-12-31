@@ -16,22 +16,16 @@ Q_IMPORT_PLUGIN(QICOPlugin)
 //#define RUN_DIALOG_IN_THREAD
 
 static
-int openConfigDialog(const wchar_t * _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy, bool & _accepted)
+int openConfigDialog(const char* _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy, bool & _accepted)
 {
-	std::string IniFolder;
-	uint32_t slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, NULL, 0, NULL, NULL);
-	IniFolder.resize(slength);
-	slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, (LPSTR)IniFolder.c_str(), slength, NULL, NULL);
-	IniFolder.resize(slength - 1); //Remove null end char
-
-	loadSettings(config, IniFolder.c_str());
+	loadSettings(config, _strFileName);
 	if (config.generalEmulation.enableCustomSettings != 0 && _romName != nullptr && strlen(_romName) != 0)
-		loadCustomRomSettings(config, IniFolder.c_str(), _romName);
+		loadCustomRomSettings(config, _strFileName, _romName);
 
-	LoadCurrentStrings(IniFolder.c_str(), config.translationFile);
+	LoadCurrentStrings(_strFileName, config.translationFile);
 
 	CConfigDlg Dlg;
-	Dlg.setIniPath(IniFolder.c_str());
+	Dlg.setIniPath(_strFileName);
 	Dlg.setRomName(_romName);
 	Dlg.setMSAALevel(_maxMSAALevel);
 	Dlg.setMaxAnisotropy(_maxAnisotropy);
@@ -41,7 +35,7 @@ int openConfigDialog(const wchar_t * _strFileName, const char * _romName, unsign
 	return 0;
 }
 
-bool runConfigThread(const wchar_t * _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy)
+static bool runConfigThread(const char* _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy)
 {
 	bool accepted = false;
 #ifdef RUN_DIALOG_IN_THREAD
@@ -54,44 +48,26 @@ bool runConfigThread(const wchar_t * _strFileName, const char * _romName, unsign
 
 }
 
-bool RunConfig(const wchar_t * _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy)
+bool RunConfig(const char* _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy)
 {
 	return runConfigThread(_strFileName, _romName, _maxMSAALevel, _maxAnisotropy);
 }
 
-int RunAbout(const wchar_t * _strFileName)
+int RunAbout(const char * _strFileName)
 {
-	std::string IniFolder;
-	uint32_t slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, NULL, 0, NULL, NULL);
-	IniFolder.resize(slength);
-	slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, (LPSTR)IniFolder.c_str(), slength, NULL, NULL);
-	IniFolder.resize(slength - 1); //Remove null end char
-
-	LoadCurrentStrings(IniFolder.c_str(), config.translationFile);
+	LoadCurrentStrings(_strFileName, config.translationFile);
 
 	CAboutDlg Dlg;
 	Dlg.DoModal();
 	return 0;
 }
 
-void LoadConfig(Config* cfg, const wchar_t * _strFileName)
+void LoadConfig(Config* cfg, const char* _strFileName)
 {
-	std::string IniFolder;
-	uint32_t slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, NULL, 0, NULL, NULL);
-	IniFolder.resize(slength);
-	slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, (LPSTR)IniFolder.c_str(), slength, NULL, NULL);
-	IniFolder.resize(slength - 1); //Remove null end char
-
-	loadSettings(*cfg, IniFolder.c_str());
+	loadSettings(*cfg, _strFileName);
 }
 
-void LoadCustomRomSettings(Config* cfg, const wchar_t * _strFileName, const char * _romName)
+void LoadCustomRomSettings(Config* cfg, const char* _strFileName, const char * _romName)
 {
-	std::string IniFolder;
-	uint32_t slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, NULL, 0, NULL, NULL);
-	IniFolder.resize(slength);
-	slength = WideCharToMultiByte(CP_ACP, 0, _strFileName, -1, (LPSTR)IniFolder.c_str(), slength, NULL, NULL);
-	IniFolder.resize(slength - 1); //Remove null end char
-
-	loadCustomRomSettings(*cfg, IniFolder.c_str(), _romName);
+	loadCustomRomSettings(*cfg, _strFileName, _romName);
 }

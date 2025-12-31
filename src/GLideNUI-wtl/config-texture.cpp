@@ -179,9 +179,9 @@ void CTextureEnhancementTab::LoadSettings(bool /*blockCustomSettings*/)
 	CButton(GetDlgItem(IDC_CHK_IGNORE_BACKGROUNDS)).SetCheck(config.textureFilter.txFilterIgnoreBG != 0 ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_CHK_TEXTURE_PACK)).SetCheck(config.textureFilter.txHiresEnable != 0 ? BST_CHECKED : BST_UNCHECKED);
 
-	GetDlgItem(IDC_TEX_PACK_PATH_EDIT).SetWindowText(config.textureFilter.txPath);
-	GetDlgItem(IDC_TEX_CACHE_PATH_EDIT).SetWindowText(config.textureFilter.txCachePath);
-	GetDlgItem(IDC_TEX_DUMP_PATH_EDIT).SetWindowText(config.textureFilter.txDumpPath);
+	GetDlgItem(IDC_TEX_PACK_PATH_EDIT).SetWindowText(ToUTF16(config.textureFilter.txPath).c_str());
+	GetDlgItem(IDC_TEX_CACHE_PATH_EDIT).SetWindowText(ToUTF16(config.textureFilter.txCachePath).c_str());
+	GetDlgItem(IDC_TEX_DUMP_PATH_EDIT).SetWindowText(ToUTF16(config.textureFilter.txDumpPath).c_str());
 
 	CButton(GetDlgItem(IDC_CHK_ALPHA_CHANNEL)).SetCheck(config.textureFilter.txHiresFullAlphaChannel != 0 ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_CHK_ALTERNATIVE_CRC)).SetCheck(config.textureFilter.txHresAltCRC != 0 ? BST_CHECKED : BST_UNCHECKED);
@@ -197,15 +197,16 @@ void CTextureEnhancementTab::LoadSettings(bool /*blockCustomSettings*/)
 	OnScroll(0, 0, (LPARAM)(GetDlgItem(IDC_TEXTURE_FILTER_CACHE_SPIN).Detach()), bHandled);
 }
 
-void CTextureEnhancementTab::SaveDirectory(int EditCtrl, wchar_t * txPath)
+void CTextureEnhancementTab::SaveDirectory(int EditCtrl, char* txPath)
 {
 	CWindow EditWnd = GetDlgItem(EditCtrl);
 	int TxtLen = EditWnd.GetWindowTextLength();
-	std::wstring Path;
-	Path.resize(TxtLen + 1);
-	EditWnd.GetWindowTextW((wchar_t *)Path.data(), static_cast<int>(Path.size()));
+	std::wstring wPath;
+	wPath.resize(TxtLen + 1);
+	EditWnd.GetWindowText(wPath.data(), static_cast<int>(wPath.size()));
+	std::string Path = FromUTF16(wPath.c_str());
 
-	bool exists = osal_path_existsW(Path.data());
+	bool exists = osal_path_exists(Path.data());
 
 	if (!exists) {
 		if (osal_mkdirp(Path.data()) != 0) {
@@ -224,7 +225,8 @@ void CTextureEnhancementTab::SaveDirectory(int EditCtrl, wchar_t * txPath)
 			}
 		}
 	}
-	wcscpy(txPath, Path.c_str());
+
+	strcpy(txPath, Path.c_str());
 }
 
 void CTextureEnhancementTab::SaveSettings()

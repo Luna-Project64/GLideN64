@@ -38,63 +38,68 @@ int PluginAPI::InitiateGFX(const GFX_INFO & _gfxInfo)
 	return TRUE;
 }
 
-void PluginAPI::FindPluginPath(wchar_t * _strPath)
+extern "C" char gPluginConfigDir[MAX_PATH];
+void PluginAPI::FindPluginPath(char * _strPath)
 {
 	if (_strPath == NULL)
 		return;
 
-	if (FAILED(SHGetFolderPathW(NULL,
-		CSIDL_APPDATA,
-		NULL,
-		0,
-		_strPath)))
+	if (*gPluginConfigDir)
 	{
-		::GetModuleFileName((HINSTANCE)&__ImageBase, _strPath, PLUGIN_PATH_SIZE);
+		strcpy_s(_strPath, MAX_PATH, gPluginConfigDir);
 	}
 	else
 	{
-		PathAppendW(_strPath, L"GLideN64");
-		CreateDirectoryW(_strPath, nullptr); // can fail, ignore errors
-		size_t length = wcslen(_strPath);
+		SHGetFolderPathA(NULL,
+						 CSIDL_APPDATA,
+						 NULL,
+						 0,
+						 _strPath);
+	}
 
-		PathAppendW(_strPath, L"GLideN64.custom.ini");
-		int fd = _wopen(_strPath, _O_BINARY | _O_WRONLY | _O_CREAT | _O_EXCL, 0666);
+	{
+		PathAppendA(_strPath, "GLideN64");
+		CreateDirectoryA(_strPath, nullptr); // can fail, ignore errors
+		size_t length = strlen(_strPath);
+
+		PathAppendA(_strPath, "GLideN64.custom.ini");
+		int fd = _open(_strPath, _O_BINARY | _O_WRONLY | _O_CREAT | _O_EXCL, 0666);
 		if (-1 != fd)
 		{
 			auto rc = FindResource(hInstance, MAKEINTRESOURCE(IDR_RCDATA_CUSTOM_DEFAULT), RT_RCDATA);
 			auto res = LoadResource(hInstance, rc);
-			void* data = (wchar_t*)LockResource(res);
+			void* data = LockResource(res);
 			size_t size = SizeofResource(hInstance, rc);
 			_write(fd, data, size);
 			_close(fd);
 		}
 
-		wchar_t* namePos = wcsstr(_strPath + length, L"GLideN64");
-		wcscpy(namePos, L"GLideN64.ini");
-		fd = _wopen(_strPath, _O_BINARY | _O_WRONLY | _O_CREAT | _O_EXCL, 0666);
+		char* namePos = strstr(_strPath + length, "GLideN64");
+		strcpy(namePos, "GLideN64.ini");
+		fd = _open(_strPath, _O_BINARY | _O_WRONLY | _O_CREAT | _O_EXCL, 0666);
 		if (-1 != fd)
 		{
 			auto rc = FindResource(hInstance, MAKEINTRESOURCE(IDR_RCDATA_DEFAULT), RT_RCDATA);
 			auto res = LoadResource(hInstance, rc);
-			void* data = (wchar_t*) LockResource(res);
+			void* data = LockResource(res);
 			size_t size = SizeofResource(hInstance, rc);
 			_write(fd, data, size);
 			_close(fd);
 		}
 	}
 
-	std::wstring pluginPath(_strPath);
-	std::replace(pluginPath.begin(), pluginPath.end(), L'\\', L'/');
-	std::wstring::size_type pos = pluginPath.find_last_of(L"/");
-	wcscpy(_strPath, pluginPath.substr(0, pos).c_str());
+	std::string pluginPath(_strPath);
+	std::replace(pluginPath.begin(), pluginPath.end(), '\\', '/');
+	std::string::size_type pos = pluginPath.find_last_of("/");
+	strcpy(_strPath, pluginPath.substr(0, pos).c_str());
 }
 
-void PluginAPI::GetUserDataPath(wchar_t * _strPath)
+void PluginAPI::GetUserDataPath(char * _strPath)
 {
 	FindPluginPath(_strPath);
 }
 
-void PluginAPI::GetUserCachePath(wchar_t * _strPath)
+void PluginAPI::GetUserCachePath(char* _strPath)
 {
 	FindPluginPath(_strPath);
 }

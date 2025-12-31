@@ -38,7 +38,7 @@ TxCache::~TxCache()
 	clear();
 }
 
-TxCache::TxCache(int options, int cachesize, const wchar_t *cachePath, const wchar_t *ident,
+TxCache::TxCache(int options, int cachesize, const char *cachePath, const char *ident,
 				 dispInfoFuncExt callback)
 {
 	_options = options;
@@ -215,7 +215,7 @@ TxCache::get(uint64 checksum, GHQTexInfo *info)
 }
 
 boolean
-TxCache::save(const wchar_t *path, const wchar_t *filename, int config)
+TxCache::save(const char *path, const char *filename, int config)
 {
 	if (_cache.empty())
 		return 0;
@@ -227,7 +227,7 @@ TxCache::save(const wchar_t *path, const wchar_t *filename, int config)
 
 	/* Ugly hack to enable fopen/gzopen in Win9x */
 #ifdef OS_WINDOWS
-	wchar_t curpath[MAX_PATH];
+	char curpath[MAX_PATH];
 	GETCWD(MAX_PATH, curpath);
 	CHDIR(path);
 #else
@@ -237,10 +237,10 @@ TxCache::save(const wchar_t *path, const wchar_t *filename, int config)
 	CHDIR(cbuf);
 #endif
 
-	wcstombs(cbuf, filename, MAX_PATH);
+	strncpy(cbuf, filename, MAX_PATH);
 
 	gzFile gzfp = gzopen(cbuf, "wb1");
-	DBG_INFO(80, wst("gzfp:%x file:%ls\n"), gzfp, filename);
+	DBG_INFO(80, wst("gzfp:%x file:%s\n"), gzfp, filename);
 	if (gzfp) {
 		/* write header to determine config match */
 		gzwrite(gzfp, &config, 4);
@@ -288,7 +288,7 @@ TxCache::save(const wchar_t *path, const wchar_t *filename, int config)
 			itMap++;
 
 			if (_callback)
-				(*_callback)(wst("Total textures saved to HDD: %d\n"), ++total);
+				(*_callback)("Total textures saved to HDD: %d\n", ++total);
 		}
 		gzclose(gzfp);
 	}
@@ -299,13 +299,13 @@ TxCache::save(const wchar_t *path, const wchar_t *filename, int config)
 }
 
 boolean
-TxCache::load(const wchar_t *path, const wchar_t *filename, int config, boolean force)
+TxCache::load(const char *path, const char *filename, int config, boolean force)
 {
 	/* find it on disk */
 	char cbuf[MAX_PATH];
 
 #ifdef OS_WINDOWS
-	wchar_t curpath[MAX_PATH];
+	char curpath[MAX_PATH];
 	GETCWD(MAX_PATH, curpath);
 	CHDIR(path);
 #else
@@ -315,10 +315,10 @@ TxCache::load(const wchar_t *path, const wchar_t *filename, int config, boolean 
 	CHDIR(cbuf);
 #endif
 
-	wcstombs(cbuf, filename, MAX_PATH);
+	strncpy(cbuf, filename, MAX_PATH);
 
 	gzFile gzfp = gzopen(cbuf, "rb");
-	DBG_INFO(80, wst("gzfp:%x file:%ls\n"), gzfp, filename);
+	DBG_INFO(80, wst("gzfp:%x file:%s\n"), gzfp, filename);
 	if (gzfp) {
 		/* yep, we have it. load it into memory cache. */
 		int dataSize;
@@ -356,7 +356,7 @@ TxCache::load(const wchar_t *path, const wchar_t *filename, int config, boolean 
 
 				/* skip in between to prevent the loop from being tied down to vsync */
 				if (_callback && (!(_cache.size() % 100) || gzeof(gzfp)))
-					(*_callback)(wst("[%d] total mem:%.02fmb - %ls\n"), _cache.size(), (float)_totalSize/1000000, filename);
+					(*_callback)("[%d] total mem:%.02fmb - %s\n", _cache.size(), (float)_totalSize/1000000, filename);
 
 			} while (!gzeof(gzfp));
 			gzclose(gzfp);

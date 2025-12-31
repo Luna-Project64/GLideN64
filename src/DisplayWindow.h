@@ -69,7 +69,7 @@ protected:
 	f32 m_scaleY = 0;
 	f32 m_adjustScale = 0;
 
-	wchar_t m_strScreenDirectory[PLUGIN_PATH_SIZE];
+	char m_strScreenDirectory[PLUGIN_PATH_SIZE];
 
 private:
 	GraphicsDrawer m_drawer;

@@ -2,9 +2,9 @@
 #define GLIDENUII_H
 
 class Config;
-bool RunConfig(const wchar_t * _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy);
-int RunAbout(const wchar_t * _strFileName);
-void LoadConfig(Config*, const wchar_t * _strFileName);
-void LoadCustomRomSettings(Config*, const wchar_t * _strFileName, const char * _romName);
+bool RunConfig(const char * _strFileName, const char * _romName, unsigned int _maxMSAALevel, unsigned int _maxAnisotropy);
+int RunAbout(const char* _strFileName);
+void LoadConfig(Config*, const char* _strFileName);
+void LoadCustomRomSettings(Config*, const char* _strFileName, const char * _romName);
 
 #endif // GLIDENUII_H

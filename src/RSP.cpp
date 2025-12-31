@@ -152,7 +152,7 @@ void RSP_ProcessDList()
 		const u32 dlist_start = *(u32*)(DMEM + 0xFF0);
 		const u32 dlist_length = *(u32*)(DMEM + 0xFF4);
 		DebugMsg(DEBUG_NORMAL, "--- NEW DLIST --- ucode: %d, fbuf: %08lx, fbuf_width: %d, dlist start: %08lx, dlist_length: %d, x_scale: %f, y_scale: %f\n",
-			GBI.getMicrocodeType(), *REG.VI_ORIGIN, *REG.VI_WIDTH, dlist_start, dlist_length, (*REG.VI_X_SCALE & 0xFFF) / 1024.0f, (*REG.VI_Y_SCALE & 0xFFF) / 1024.0f);
+			GBI.getMicrocodeType(), *REG._VI_ORIGIN, *REG._VI_WIDTH, dlist_start, dlist_length, (*REG._VI_X_SCALE & 0xFFF) / 1024.0f, (*REG._VI_Y_SCALE & 0xFFF) / 1024.0f);
 
 		u32 uc_start = *(u32*)&DMEM[0x0FD0];
 		u32 uc_dstart = *(u32*)&DMEM[0x0FD8];

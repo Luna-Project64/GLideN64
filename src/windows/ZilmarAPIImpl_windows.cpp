@@ -9,7 +9,7 @@
 void PluginAPI::DllAbout(/*HWND _hParent*/)
 {
 	Config_LoadConfig();
-	wchar_t strIniFolderPath[PLUGIN_PATH_SIZE];
+	char strIniFolderPath[PLUGIN_PATH_SIZE];
 	api().FindPluginPath(strIniFolderPath);
 	RunAbout(strIniFolderPath);
 }
@@ -28,7 +28,7 @@ void PluginAPI::GetDllInfo(PLUGIN_INFO * PluginInfo)
 {
 	PluginInfo->Version = 0x103;
 	PluginInfo->Type = PLUGIN_TYPE_GFX;
-	sprintf(PluginInfo->Name, "ANGLE %s v4.3.27", pluginName);
+	sprintf(PluginInfo->Name, "ANGLE %s v4.3.28", pluginName);
 	PluginInfo->NormalMemory = FALSE;
 	PluginInfo->MemoryBswaped = TRUE;
 }

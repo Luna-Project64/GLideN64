@@ -31,9 +31,9 @@ public:
 	int InitiateGFX(const GFX_INFO & _gfxInfo);
 	void ChangeWindow();
 
-	void FindPluginPath(wchar_t * _strPath);
-	void GetUserDataPath(wchar_t * _strPath);
-	void GetUserCachePath(wchar_t * _strPath);
+	void FindPluginPath(char* _strPath);
+	void GetUserDataPath(char* _strPath);
+	void GetUserCachePath(char* _strPath);
 	bool isRomOpen() const { return m_bRomOpen; }
 
 	void Restart();

@@ -34,7 +34,7 @@ TxTexCache::~TxTexCache()
 {
 }
 
-TxTexCache::TxTexCache(int options, int cachesize, const wchar_t *cachePath, const wchar_t *ident,
+TxTexCache::TxTexCache(int options, int cachesize, const char* cachePath, const char* ident,
 					   dispInfoFuncExt callback
 					   ) : TxCache((options & ~GZ_HIRESTEXCACHE), cachesize, cachePath, ident, callback)
 {
@@ -71,9 +71,9 @@ TxTexCache::dump()
 	}
 }
 
-tx_wstring TxTexCache::_getFileName() const
+std::string TxTexCache::_getFileName() const
 {
-	tx_wstring filename = _ident + wst("_MEMORYCACHE.") + TEXCACHE_EXT;
+	std::string filename = _ident + "_MEMORYCACHE." + TEXCACHE_EXT;
 	removeColon(filename);
 	return filename;
 }

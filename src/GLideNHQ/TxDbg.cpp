@@ -80,18 +80,18 @@ TxDbg::~TxDbg()
 }
 
 void
-TxDbg::output(const int level, const wchar_t *format, ...)
+TxDbg::output(const int level, const char *format, ...)
 {
 	if (level > _level)
 		return;
 
 	va_list args;
-	wchar_t newformat[4095];
+	char newformat[4095];
 
 	va_start(args, format);
 	tx_swprintf(newformat, 4095, wst("%d:\t"), level);
-	wcscat(newformat, format);
-	vfwprintf(_dbgfile, newformat, args);
+	strcat(newformat, format);
+	vfprintf(_dbgfile, newformat, args);
 	fflush(_dbgfile);
 #ifdef GHQCHK
 	//vwprintf(newformat, args);

@@ -52,7 +52,7 @@ private:
 	  resNotFound,
 	  resError
   };
-  LoadResult loadHiResTextures(const wchar_t * dir_path, boolean replace);
+  LoadResult loadHiResTextures(const char * dir_path, boolean replace);
   tx_wstring _getFileName() const;
   int _getConfig() const;
   boolean _HiResTexPackPathExists() const;
@@ -63,9 +63,9 @@ public:
 			   int maxheight,
 			   int maxbpp,
 			   int options,
-			   const wchar_t *cachePath,
-			   const wchar_t *texPackPath,
-			   const wchar_t *ident,
+			   const char*cachePath,
+			   const char*texPackPath,
+			   const char*ident,
 			   dispInfoFuncExt callback);
   boolean empty();
   boolean load(boolean replace);

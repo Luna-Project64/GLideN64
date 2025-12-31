@@ -49,14 +49,14 @@ protected:
   int _totalSize;
   int _cacheSize;
   std::map<uint64, TXCACHE*> _cache;
-  boolean save(const wchar_t *path, const wchar_t *filename, const int config);
-  boolean load(const wchar_t *path, const wchar_t *filename, const int config, boolean force);
+  boolean save(const char *path, const char *filename, const int config);
+  boolean load(const char *path, const char *filename, const int config, boolean force);
   boolean del(uint64 checksum); /* checksum hi:palette low:texture */
   boolean is_cached(uint64 checksum); /* checksum hi:palette low:texture */
   void clear();
 public:
   ~TxCache();
-  TxCache(int options, int cachesize, const wchar_t *cachePath, const wchar_t *ident,
+  TxCache(int options, int cachesize, const char *cachePath, const char *ident,
               dispInfoFuncExt callback);
   boolean add(uint64 checksum, /* checksum hi:palette low:texture */
               GHQTexInfo *info, int dataSize = 0);

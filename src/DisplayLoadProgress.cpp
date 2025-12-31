@@ -9,12 +9,11 @@
 #include "DisplayWindow.h"
 #include "DisplayLoadProgress.h"
 
-void displayLoadProgress(const wchar_t *format, ...)
+void displayLoadProgress(const char *format, ...)
 {
 	return;
 
 	va_list args;
-	wchar_t wbuf[INFO_BUF];
 	char buf[INFO_BUF];
 
 	// process input
@@ -29,12 +28,9 @@ void displayLoadProgress(const wchar_t *format, ...)
 	mbstowcs(wbuf, cbuf, INFO_BUF);
 #else
 	va_start(args, format);
-	vswprintf(wbuf, INFO_BUF, format, args);
+	vsnprintf(buf, INFO_BUF, format, args);
 	va_end(args);
 #endif
-
-	// XXX: convert to multibyte
-	wcstombs(buf, wbuf, INFO_BUF);
 
 	FrameBuffer* pBuffer = frameBufferList().getCurrent();
 	if (pBuffer != nullptr)

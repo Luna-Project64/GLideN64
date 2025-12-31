@@ -39,46 +39,39 @@
 extern "C"{
 #endif
 
-EXPORT int CALL osal_path_existsA(const char *path)
+EXPORT int CALL osal_path_exists(const char *path)
 {
     struct _stat fileinfo;
     return _stat(path, &fileinfo) == 0 ? 1 : 0;
 }
 
-EXPORT int CALL osal_path_existsW(const wchar_t *path)
+EXPORT int CALL osal_is_absolute_path(const char* name)
 {
-    struct _stat fileinfo;
-    return _wstat(path, &fileinfo) == 0 ? 1 : 0;
+    return strchr(name, ':') != NULL || name[0] == '\\' || name[0] == '/';
 }
 
-EXPORT int CALL osal_is_absolute_path(const wchar_t* name)
+EXPORT int CALL osal_is_directory(const char* _name)
 {
-	return wcschr(name, L':') != NULL || name[0] == L'\\' || name[0] == L'/';
-}
-
-EXPORT int CALL osal_is_directory(const wchar_t* _name)
-{
-    wchar_t DirName[MAX_PATH + 1];
+    char DirName[MAX_PATH + 1];
     int namelen = 0;
-
     /* we must remove any trailing backslash on the end of the pathname, or this will fail */
-	wcsncpy(DirName, _name, MAX_PATH);
+    strncpy(DirName, _name, MAX_PATH);
     DirName[MAX_PATH] = 0;
-	namelen = wcslen(DirName);
-	if (namelen > 0 && DirName[namelen - 1] == OSAL_DIR_SEPARATOR_CHAR)
-		DirName[namelen - 1] = L'\0';
-    return (GetFileAttributes(DirName) & FILE_ATTRIBUTE_DIRECTORY);
+    namelen = strlen(DirName);
+    if (namelen > 0 && DirName[namelen - 1] == OSAL_DIR_SEPARATOR_CHAR)
+        DirName[namelen - 1] = '\0';
+    return (GetFileAttributesA(DirName) & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-EXPORT int CALL osal_mkdirp(const wchar_t * dirpath)
+EXPORT int CALL osal_mkdirp(const char* dirpath)
 {
     struct _stat fileinfo;
-	size_t dirpathlen = wcslen(dirpath);
-	wchar_t *currpath = _wcsdup(dirpath);
+    size_t dirpathlen = strlen(dirpath);
+    char* currpath = _strdup(dirpath);
 
     /* first, remove sub-dirs on the end (by replacing slashes with NULL chars) until we find an existing directory */
-	while (wcslen(currpath) > 1 && _wstat(currpath, &fileinfo) != 0) {
-		wchar_t *lastslash = wcsrchr(currpath, OSAL_DIR_SEPARATOR_CHAR);
+    while (strlen(currpath) > 1 && _stat(currpath, &fileinfo) != 0) {
+        char* lastslash = strrchr(currpath, OSAL_DIR_SEPARATOR_CHAR);
         if (lastslash == NULL) {
             free(currpath);
             return 1; /* error: we never found an existing directory, this path is bad */
@@ -88,32 +81,32 @@ EXPORT int CALL osal_mkdirp(const wchar_t * dirpath)
 
     /* then walk up the path chain, creating directories along the way */
     do {
-		if (currpath[wcslen(currpath) - 1] != OSAL_DIR_SEPARATOR_CHAR && _wstat(currpath, &fileinfo) != 0)
+        if (currpath[strlen(currpath) - 1] != OSAL_DIR_SEPARATOR_CHAR && _stat(currpath, &fileinfo) != 0)
         {
-            if (_wmkdir(currpath) != 0)
+            if (_mkdir(currpath) != 0)
             {
                 free(currpath);
                 return 2;        /* mkdir failed */
             }
         }
-		if (wcslen(currpath) == dirpathlen)
+        if (strlen(currpath) == dirpathlen)
             break;
         else
-			currpath[wcslen(currpath)] = OSAL_DIR_SEPARATOR_CHAR;
+            currpath[strlen(currpath)] = OSAL_DIR_SEPARATOR_CHAR;
     } while (1);
-    
+
     free(currpath);
     return 0;
 }
 
 typedef struct {
     HANDLE hFind;
-    WIN32_FIND_DATA find_data;
+    WIN32_FIND_DATAA find_data;
 } dir_search_info;
 
-EXPORT void * CALL osal_search_dir_open(const wchar_t *pathname)
+EXPORT void * CALL osal_search_dir_open(const char *pathname)
 {
-    wchar_t SearchString[MAX_PATH + 1];
+    char SearchString[MAX_PATH + 1];
     dir_search_info *pInfo = (dir_search_info *)malloc(sizeof(dir_search_info));
 
     if (pInfo == NULL)
@@ -122,27 +115,27 @@ EXPORT void * CALL osal_search_dir_open(const wchar_t *pathname)
     pInfo->hFind = INVALID_HANDLE_VALUE;
     pInfo->find_data.cFileName[0] = 0;
 
-	if (pathname[wcslen(pathname) - 1] == OSAL_DIR_SEPARATOR_CHAR)
-		swprintf(SearchString, MAX_PATH, L"%ls*", pathname);
+	if (pathname[strlen(pathname) - 1] == OSAL_DIR_SEPARATOR_CHAR)
+		snprintf(SearchString, MAX_PATH, "%s*", pathname);
     else
-		swprintf(SearchString, MAX_PATH, L"%ls%ls*", pathname, OSAL_DIR_SEPARATOR_STR);
+		snprintf(SearchString, MAX_PATH, "%s%s*", pathname, OSAL_DIR_SEPARATOR_STR);
     SearchString[MAX_PATH] = 0;
 
-    pInfo->hFind = FindFirstFile(SearchString, &pInfo->find_data);
+    pInfo->hFind = FindFirstFileA(SearchString, &pInfo->find_data);
     return (void *) pInfo;
 }
 
-EXPORT const wchar_t * CALL osal_search_dir_read_next(void * search_info)
+EXPORT const char * CALL osal_search_dir_read_next(void * search_info)
 {
-    static wchar_t last_filename[_MAX_PATH];
+    static char last_filename[_MAX_PATH];
     dir_search_info *pInfo = (dir_search_info *) search_info;
 
     if (pInfo == NULL || pInfo->hFind == INVALID_HANDLE_VALUE || pInfo->find_data.cFileName[0] == 0)
         return NULL;
 
-	wcscpy(last_filename, pInfo->find_data.cFileName);
+	strcpy(last_filename, pInfo->find_data.cFileName);
 
-    if (FindNextFile(pInfo->hFind, &pInfo->find_data) == 0)
+    if (FindNextFileA(pInfo->hFind, &pInfo->find_data) == 0)
     {
         pInfo->find_data.cFileName[0] = 0;
     }

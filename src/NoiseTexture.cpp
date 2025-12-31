@@ -63,7 +63,7 @@ void FillTextureData(u32 _seed, NoiseTexturesData * _pData, u32 _start, u32 _sto
 
 void NoiseTexture::_fillTextureData()
 {
-	displayLoadProgress(L"INIT NOISE TEXTURES. PLEASE WAIT...");
+	displayLoadProgress("INIT NOISE TEXTURES. PLEASE WAIT...");
 
 	for (auto& vec : m_texData)
 		vec.resize(NOISE_TEX_WIDTH * NOISE_TEX_HEIGHT);
@@ -100,7 +100,7 @@ void NoiseTexture::_fillTextureData()
 		FillTextureData(static_cast<u32>(time(nullptr)), &m_texData, 0, static_cast<u32>(m_texData.size()));
 	}
 
-	displayLoadProgress(L"");
+	displayLoadProgress("");
 }
 
 

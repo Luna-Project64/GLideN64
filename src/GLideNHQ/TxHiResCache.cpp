@@ -55,9 +55,9 @@ TxHiResCache::TxHiResCache(int maxwidth,
 						   int maxheight,
 						   int maxbpp,
 						   int options,
-						   const wchar_t *cachePath,
-						   const wchar_t *texPackPath,
-						   const wchar_t *ident,
+						   const char*cachePath,
+						   const char*texPackPath,
+						   const char*ident,
 						   dispInfoFuncExt callback)
 	: TxCache((options & ~GZ_TEXCACHE), 0, cachePath, ident, callback)
 {
@@ -117,7 +117,7 @@ boolean TxHiResCache::_HiResTexPackPathExists() const
 	tx_wstring dir_path(_texPackPath);
 	dir_path += OSAL_DIR_SEPARATOR_STR;
 	dir_path += _ident;
-	return osal_path_existsW(dir_path.c_str());
+	return osal_path_exists(dir_path.c_str());
 }
 
 boolean TxHiResCache::empty()
@@ -162,13 +162,13 @@ boolean TxHiResCache::load(boolean replace) /* 0 : reload, 1 : replace partial *
 }
 
 TxHiResCache::LoadResult
-TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
+TxHiResCache::loadHiResTextures(const char * dir_path, boolean replace)
 {
   DBG_INFO(80, wst("-----\n"));
-  DBG_INFO(80, wst("path: %ls\n"), dir_path);
+  DBG_INFO(80, wst("path: %s\n"), dir_path);
 
   /* find it on disk */
-  if (!osal_path_existsW(dir_path)) {
+  if (!osal_path_exists(dir_path)) {
 	INFO(80, wst("Error: path not found!\n"));
 	return resNotFound;
   }
@@ -176,7 +176,7 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
   LoadResult result = resOk;
 
 #ifdef OS_WINDOWS
-  wchar_t curpath[MAX_PATH];
+  char curpath[MAX_PATH];
   GETCWD(MAX_PATH, curpath);
   CHDIR(dir_path);
 #else
@@ -188,7 +188,7 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 #endif
 
   void *dir = osal_search_dir_open(dir_path);
-  const wchar_t *foundfilename;
+  const char *foundfilename;
   // the path of the texture
   tx_wstring texturefilename;
 
@@ -223,7 +223,7 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	}
 
 	DBG_INFO(80, wst("-----\n"));
-	DBG_INFO(80, wst("file: %ls\n"), foundfilename);
+	DBG_INFO(80, wst("file: %s\n"), foundfilename);
 
 	int width = 0, height = 0;
 	ColorFormat format = graphics::internalcolorFormat::NOCOLOR;
@@ -240,7 +240,7 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	std::string ident;
 	FILE *fp = nullptr;
 
-	wcstombs(fname, _ident.c_str(), MAX_PATH);
+	strncpy(fname, _ident.c_str(), MAX_PATH);
 	/* XXX case sensitivity fiasco!
 	 * files must use _a, _rgb, _all, _allciByRGBA, _ciByRGBA, _ci
 	 * and file extensions must be in lower case letters! */
@@ -255,7 +255,7 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	/* read in Rice's file naming convention */
 #define CRCFMTSIZ_LEN 13
 #define PALCRC_LEN 9
-	wcstombs(fname, foundfilename, MAX_PATH);
+	strncpy(fname, foundfilename, MAX_PATH);
 	/* XXX case sensitivity fiasco!
 	 * files must use _a, _rgb, _all, _allciByRGBA, _ciByRGBA, _ci
 	 * and file extensions must be in lower case letters! */
@@ -271,8 +271,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 		  pfname == strstr(fname, ".dds"))) {
 #if !DEBUG
 	  INFO(80, wst("-----\n"));
-	  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-	  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+	  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+	  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 	  INFO(80, wst("Error: not png or bmp or dds!\n"));
 	  continue;
@@ -290,8 +290,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	if (!pfname) {
 #if !DEBUG
 	  INFO(80, wst("-----\n"));
-	  INFO(80, wst("path: %ls\n", dir_path));
-	  INFO(80, wst("file: %ls\n", foundfilename));
+	  INFO(80, wst("path: %s\n", dir_path));
+	  INFO(80, wst("file: %s\n", foundfilename));
 #endif
 	  INFO(80, wst("Error: not Rice texture naming convention!\n"));
 	  continue;
@@ -299,8 +299,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	if (!chksum) {
 #if !DEBUG
 	  INFO(80, wst("-----\n"));
-	  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-	  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+	  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+	  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 	  INFO(80, wst("Error: crc32 = 0!\n"));
 	  continue;
@@ -314,15 +314,15 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	  if (TxCache::is_cached(chksum64)) {
 #if !DEBUG
 		INFO(80, wst("-----\n"));
-		INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-		INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+		INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+		INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 		INFO(80, wst("Error: already cached! duplicate texture!\n"));
 		continue;
 	  }
 	}
 
-	DBG_INFO(80, wst("rom: %ls chksum:%08X %08X fmt:%x size:%x\n"), _ident.c_str(), chksum, palchksum, fmt, siz);
+	DBG_INFO(80, wst("rom: %s chksum:%08X %08X fmt:%x size:%x\n"), _ident.c_str(), chksum, palchksum, fmt, siz);
 
 	/* Deal with the wackiness some texture packs utilize Rice format.
 	 * Read in the following order: _a.* + _rgb.*, _all.png _ciByRGBA.png,
@@ -345,13 +345,13 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	 */
 	if (pfname == strstr(fname, "_rgb.") || pfname == strstr(fname, "_a.")) {
 	  strcpy(pfname, "_rgb.png");
-	  if (!osal_path_existsA(fname)) {
+	  if (!osal_path_exists(fname)) {
 		strcpy(pfname, "_rgb.bmp");
-		if (!osal_path_existsA(fname)) {
+		if (!osal_path_exists(fname)) {
 #if !DEBUG
 		  INFO(80, wst("-----\n"));
-		  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-		  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+		  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+		  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 		  INFO(80, wst("Error: missing _rgb.*! _a.* must be paired with _rgb.*!\n"));
 		  continue;
@@ -391,8 +391,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 			format != graphics::internalcolorFormat::RGBA8 || tmpformat != graphics::internalcolorFormat::RGBA8) {
 #if !DEBUG
 		  INFO(80, wst("-----\n"));
-		  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-		  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+		  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+		  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 		  if (!tex) {
 			INFO(80, wst("Error: missing _rgb.*!\n"));
@@ -443,8 +443,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 		  /* clobber A comp. never a question of alpha. only RGB used. */
 #if !DEBUG
 		  INFO(80, wst("-----\n"));
-		  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-		  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+		  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+		  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 		  INFO(80, wst("Warning: missing _a.*! only using _rgb.*. treat as opaque texture.\n"));
 		  int i;
@@ -484,8 +484,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	if (!tex) {
 #if !DEBUG
 	  INFO(80, wst("-----\n"));
-	  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-	  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+	  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+	  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 	  INFO(80, wst("Error: load failed!\n"));
 	  continue;
@@ -499,8 +499,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	  tex = nullptr;
 #if !DEBUG
 	  INFO(80, wst("-----\n"));
-	  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-	  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+	  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+	  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 	  INFO(80, wst("Error: not width * height > 4 or 8bit palette color or 32bpp or dxt1 or dxt3 or dxt5!\n"));
 	  continue;
@@ -700,8 +700,8 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 	if (!tex || !chksum || !width || !height || format == graphics::internalcolorFormat::NOCOLOR || width > _maxwidth || height > _maxheight) {
 #if !DEBUG
 	  INFO(80, wst("-----\n"));
-	  INFO(80, wst("path: %ls\n"), dir_path.string().c_str());
-	  INFO(80, wst("file: %ls\n"), it->path().leaf().c_str());
+	  INFO(80, wst("path: %s\n"), dir_path.string().c_str());
+	  INFO(80, wst("file: %s\n"), it->path().leaf().c_str());
 #endif
 	  if (tex) {
 		free(tex);
@@ -738,9 +738,7 @@ TxHiResCache::loadHiResTextures(const wchar_t * dir_path, boolean replace)
 		/* Callback to display hires texture info.
 		 * Gonetz <gonetz(at)ngs.ru> */
 		if (_callback) {
-		  wchar_t tmpbuf[MAX_PATH];
-		  mbstowcs(tmpbuf, fname, MAX_PATH);
-		  (*_callback)(wst("[%d] total mem:%.2fmb - %ls\n"), _cache.size(), (float)_totalSize/1000000, tmpbuf);
+		  (*_callback)(wst("[%d] total mem:%.2fmb - %s\n"), _cache.size(), (float)_totalSize/1000000, fname);
 		}
 		DBG_INFO(80, wst("texture loaded!\n"));
 	  } else {

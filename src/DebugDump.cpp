@@ -38,13 +38,10 @@ BufferedLog::BufferedLog(u32 _mode) : m_mode(_mode)
 		LOG(LOG_ERROR, "Failed to alloc memory for log buffer\n");
 	}
 
-	wchar_t logPath[PLUGIN_PATH_SIZE + 16];
+	char logPath[PLUGIN_PATH_SIZE + 16];
 	api().GetUserDataPath(logPath);
-	gln_wcscat(logPath, wst("/gliden64.debug.log"));
-	const size_t bufSize = PLUGIN_PATH_SIZE * 6;
-	char cbuf[bufSize];
-	wcstombs(cbuf, logPath, bufSize);
-	m_log.open(cbuf, std::ios::trunc);
+	strcat(logPath, "/gliden64.debug.log");
+	m_log.open(logPath, std::ios::trunc);
 }
 
 BufferedLog::~BufferedLog()

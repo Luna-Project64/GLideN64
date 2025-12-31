@@ -48,7 +48,7 @@ void DisplayWindow::swapBuffers()
 
 void DisplayWindow::setCaptureScreen(const char * const _strDirectory)
 {
-	::mbstowcs(m_strScreenDirectory, _strDirectory, PLUGIN_PATH_SIZE - 1);
+	::strncpy(m_strScreenDirectory, _strDirectory, PLUGIN_PATH_SIZE - 1);
 	m_bCaptureScreen = true;
 }
 
@@ -67,12 +67,12 @@ void DisplayWindow::saveBufferContent(FrameBuffer * _pBuffer)
 
 void DisplayWindow::saveBufferContent(graphics::ObjectHandle _fbo, CachedTexture *_pTexture)
 {
-	if (wcslen(m_strScreenDirectory) == 0) {
+	if (strlen(m_strScreenDirectory) == 0) {
 		api().FindPluginPath(m_strScreenDirectory);
-		std::wstring pluginPath(m_strScreenDirectory);
-		if (pluginPath.back() != L'/')
-			pluginPath += L'/';
-		::wcsncpy(m_strScreenDirectory, pluginPath.c_str(), pluginPath.length() + 1);
+		std::string pluginPath(m_strScreenDirectory);
+		if (pluginPath.back() != '/')
+			pluginPath += '/';
+		::strncpy(m_strScreenDirectory, pluginPath.c_str(), pluginPath.length() + 1);
 	}
 	_saveBufferContent(_fbo, _pTexture);
 }
