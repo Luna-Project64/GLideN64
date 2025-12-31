@@ -12,12 +12,12 @@
 #include <algorithm>
 #include <memory>
 
-static const char * strIniFileName = "GLideN64.ini";
-static const char * strCustomSettingsFileName = "GLideN64.custom.ini";
-static const char * strUserProfile = "User";
+static const char* strIniFileName = "GLideN64.ini";
+static const char* strCustomSettingsFileName = "GLideN64.custom.ini";
+static const char* strUserProfile = "User";
 
 static
-void _loadSettings(Config& config, GlSettings & settings)
+void _loadSettings(Config& config, GlSettings& settings)
 {
 	config.version = settings.value("version").toInt();
 
@@ -28,11 +28,14 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.video.windowedHeight = settings.value("windowedHeight", config.video.windowedHeight).toInt();
 	config.video.fullscreenRefresh = settings.value("fullscreenRefresh", config.video.fullscreenRefresh).toInt();
 	config.video.multisampling = settings.value("multisampling", config.video.multisampling).toInt();
-	config.video.fxaa= settings.value("fxaa", config.video.fxaa).toInt();
+	// config.video.maxMultiSampling = settings.value("maxMultiSampling", config.video.maxMultiSampling).toInt();
+	config.video.fxaa = settings.value("fxaa", config.video.fxaa).toInt();
 	config.video.verticalSync = settings.value("verticalSync", config.video.verticalSync).toInt();
+	// config.video.threadedVideo = settings.value("threadedVideo", config.video.threadedVideo).toInt();
 	settings.endGroup();
 
 	settings.beginGroup("texture");
+	// config.texture.anisotropy = settings.value("anisotropy", config.texture.anisotropy).toInt();
 	config.texture.maxAnisotropy = settings.value("maxAnisotropy", config.texture.maxAnisotropy).toInt();
 	config.texture.bilinearMode = settings.value("bilinearMode", config.texture.bilinearMode).toInt();
 	config.texture.enableHalosRemoval = settings.value("enableHalosRemoval", config.texture.enableHalosRemoval).toInt();
@@ -40,12 +43,20 @@ void _loadSettings(Config& config, GlSettings & settings)
 	settings.endGroup();
 
 	settings.beginGroup("generalEmulation");
+	// config.generalEmulation.enableDitheringPattern = settings.value("enableDitheringPattern", config.generalEmulation.enableDitheringPattern).toInt();
+	// config.generalEmulation.enableDitheringQuantization = settings.value("enableDitheringQuantization", config.generalEmulation.enableDitheringQuantization).toInt();
+	// config.generalEmulation.enableHiresNoiseDithering = settings.value("enableHiresNoiseDithering", config.generalEmulation.enableHiresNoiseDithering).toInt();
+	// config.generalEmulation.rdramImageDitheringMode = settings.value("rdramImageDitheringMode", config.generalEmulation.rdramImageDitheringMode).toInt();
 	config.generalEmulation.enableLOD = settings.value("enableLOD", config.generalEmulation.enableLOD).toInt();
 	config.generalEmulation.enableHWLighting = settings.value("enableHWLighting", config.generalEmulation.enableHWLighting).toInt();
 	config.generalEmulation.enableNoise = settings.value("enableNoise", config.generalEmulation.enableNoise).toInt();
+	// config.generalEmulation.enableCoverage = settings.value("enableCoverage", config.generalEmulation.enableCoverage).toInt();
 	config.generalEmulation.enableShadersStorage = settings.value("enableShadersStorage", config.generalEmulation.enableShadersStorage).toInt();
 	config.generalEmulation.enableLegacyBlending = settings.value("enableLegacyBlending", config.generalEmulation.enableLegacyBlending).toInt();			 //ini only
 	config.generalEmulation.enableFragmentDepthWrite = (Config::FragDepthWriteMode) settings.value("enableFragmentDepthWrite", (int) config.generalEmulation.enableFragmentDepthWrite).toInt(); //ini only
+	// config.generalEmulation.enableHybridFilter = settings.value("enableHybridFilter", config.generalEmulation.enableHybridFilter).toInt();					 //ini only
+	// config.generalEmulation.enableFragmentDepthWrite = settings.value("enableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite).toInt(); //ini only
+	// config.generalEmulation.hacks |= settings.value("hacks", config.generalEmulation.hacks).toInt();														 //ini only
 	config.generalEmulation.enableCustomSettings = settings.value("enableCustomSettings", config.generalEmulation.enableCustomSettings).toInt();
 	settings.endGroup();
 
@@ -69,11 +80,12 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.frameBufferEmulation.fbInfoDisabled = settings.value("fbInfoDisabled", config.frameBufferEmulation.fbInfoDisabled).toInt();
 	config.frameBufferEmulation.fbInfoReadColorChunk = settings.value("fbInfoReadColorChunk", config.frameBufferEmulation.fbInfoReadColorChunk).toInt();
 	config.frameBufferEmulation.fbInfoReadDepthChunk = settings.value("fbInfoReadDepthChunk", config.frameBufferEmulation.fbInfoReadDepthChunk).toInt();
+	// config.frameBufferEmulation.copyDepthToMainDepthBuffer = settings.value("copyDepthToMainDepthBuffer", config.frameBufferEmulation.copyDepthToMainDepthBuffer).toInt();
 	config.frameBufferEmulation.enableOverscan = settings.value("enableOverscan", config.frameBufferEmulation.enableOverscan).toInt();
 	config.frameBufferEmulation.overscanPAL.left = settings.value("overscanPalLeft", config.frameBufferEmulation.overscanPAL.left).toInt();
 	config.frameBufferEmulation.overscanPAL.right = settings.value("overscanPalRight", config.frameBufferEmulation.overscanPAL.right).toInt();
 	config.frameBufferEmulation.overscanPAL.top = settings.value("overscanPalTop", config.frameBufferEmulation.overscanPAL.top).toInt();
-	config.frameBufferEmulation.overscanPAL.bottom= settings.value("overscanPalBottom", config.frameBufferEmulation.overscanPAL.bottom).toInt();
+	config.frameBufferEmulation.overscanPAL.bottom = settings.value("overscanPalBottom", config.frameBufferEmulation.overscanPAL.bottom).toInt();
 	config.frameBufferEmulation.overscanNTSC.left = settings.value("overscanNtscLeft", config.frameBufferEmulation.overscanNTSC.left).toInt();
 	config.frameBufferEmulation.overscanNTSC.right = settings.value("overscanNtscRight", config.frameBufferEmulation.overscanNTSC.right).toInt();
 	config.frameBufferEmulation.overscanNTSC.top = settings.value("overscanNtscTop", config.frameBufferEmulation.overscanNTSC.top).toInt();
@@ -95,6 +107,8 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.textureFilter.txForce16bpp = settings.value("txForce16bpp", config.textureFilter.txForce16bpp).toInt();
 	config.textureFilter.txCacheCompression = settings.value("txCacheCompression", config.textureFilter.txCacheCompression).toInt();
 	config.textureFilter.txSaveCache = settings.value("txSaveCache", config.textureFilter.txSaveCache).toInt();
+	config.textureFilter.txEnhancedTextureFileStorage = settings.value("txEnhancedTextureFileStorage", config.textureFilter.txEnhancedTextureFileStorage).toInt();
+	config.textureFilter.txHiresTextureFileStorage = settings.value("txHiresTextureFileStorage", config.textureFilter.txHiresTextureFileStorage).toInt();
 	strcpy_s(config.textureFilter.txPath, settings.value("txPath", config.textureFilter.txPath).toString().c_str());
 	strcpy_s(config.textureFilter.txCachePath, settings.value("txCachePath", config.textureFilter.txCachePath).toString().c_str());
 	strcpy_s(config.textureFilter.txDumpPath, settings.value("txDumpPath", config.textureFilter.txDumpPath).toString().c_str());
@@ -127,6 +141,7 @@ void _loadSettings(Config& config, GlSettings & settings)
 	config.onScreenDisplay.percent = settings.value("showPercent", config.onScreenDisplay.percent).toInt();
 	config.onScreenDisplay.internalResolution = settings.value("showInternalResolution", config.onScreenDisplay.internalResolution).toInt();
 	config.onScreenDisplay.renderingResolution = settings.value("showRenderingResolution", config.onScreenDisplay.renderingResolution).toInt();
+	// config.onScreenDisplay.statistics = settings.value("showStatistics", config.onScreenDisplay.statistics).toInt();
 	config.onScreenDisplay.pos = settings.value("osdPos", config.onScreenDisplay.pos).toInt();
 	settings.endGroup();
 
@@ -172,7 +187,8 @@ void loadSettings(Config& config, const char * _strIniFolder)
 			settings.beginGroup(profile.c_str());
 			_loadSettings(config, settings);
 			settings.endGroup();
-		} else
+		}
+		else
 			rewriteSettings = true;
 		if (config.version != CONFIG_VERSION_CURRENT)
 			rewriteSettings = true;
@@ -211,23 +227,33 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("windowedHeight", config.video.windowedHeight);
 		settings.setValue("fullscreenRefresh", config.video.fullscreenRefresh);
 		settings.setValue("multisampling", config.video.multisampling);
+		// settings.setValue("maxMultiSampling", config.video.maxMultiSampling);
 		settings.setValue("fxaa", config.video.fxaa);
 		settings.setValue("verticalSync", config.video.verticalSync);
+		// settings.setValue("threadedVideo", config.video.threadedVideo);
 		settings.endGroup();
 
 		settings.beginGroup("texture");
+		// settings.setValue("anisotropy", config.texture.anisotropy);
 		settings.setValue("maxAnisotropy", config.texture.maxAnisotropy);
 		settings.setValue("bilinearMode", config.texture.bilinearMode);
 		settings.setValue("enableHalosRemoval", config.texture.enableHalosRemoval);
 		settings.endGroup();
 
 		settings.beginGroup("generalEmulation");
+		// settings.setValue("enableDitheringPattern", config.generalEmulation.enableDitheringPattern);
+		// settings.setValue("enableDitheringQuantization", config.generalEmulation.enableDitheringQuantization);
+		// settings.setValue("enableHiresNoiseDithering", config.generalEmulation.enableHiresNoiseDithering);
+		// settings.setValue("rdramImageDitheringMode", config.generalEmulation.rdramImageDitheringMode);
 		settings.setValue("enableLOD", config.generalEmulation.enableLOD);
 		settings.setValue("enableHWLighting", config.generalEmulation.enableHWLighting);
 		settings.setValue("enableNoise", config.generalEmulation.enableNoise);
+		// settings.setValue("enableCoverage", config.generalEmulation.enableCoverage);
 		settings.setValue("enableShadersStorage", config.generalEmulation.enableShadersStorage);
 		settings.setValue("enableLegacyBlending", config.generalEmulation.enableLegacyBlending);		 //ini only
 		settings.setValue("enableFragmentDepthWrite", (int) config.generalEmulation.enableFragmentDepthWrite); //ini only
+		// settings.setValue("enableHybridFilter", config.generalEmulation.enableHybridFilter);			 //ini only
+		// settings.setValue("enableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite); //ini only
 		settings.setValue("enableCustomSettings", config.generalEmulation.enableCustomSettings);
 		settings.endGroup();
 
@@ -251,6 +277,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("fbInfoDisabled", config.frameBufferEmulation.fbInfoDisabled);
 		settings.setValue("fbInfoReadColorChunk", config.frameBufferEmulation.fbInfoReadColorChunk);
 		settings.setValue("fbInfoReadDepthChunk", config.frameBufferEmulation.fbInfoReadDepthChunk);
+		// settings.setValue("copyDepthToMainDepthBuffer", config.frameBufferEmulation.copyDepthToMainDepthBuffer);
 		settings.setValue("enableOverscan", config.frameBufferEmulation.enableOverscan);
 		settings.setValue("overscanPalLeft", config.frameBufferEmulation.overscanPAL.left);
 		settings.setValue("overscanPalRight", config.frameBufferEmulation.overscanPAL.right);
@@ -277,6 +304,8 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("txForce16bpp", config.textureFilter.txForce16bpp);
 		settings.setValue("txCacheCompression", config.textureFilter.txCacheCompression);
 		settings.setValue("txSaveCache", config.textureFilter.txSaveCache);
+		settings.setValue("txEnhancedTextureFileStorage", config.textureFilter.txEnhancedTextureFileStorage);
+		settings.setValue("txHiresTextureFileStorage", config.textureFilter.txHiresTextureFileStorage);
 		settings.setValue("txPath", config.textureFilter.txPath);
 		settings.setValue("txCachePath", config.textureFilter.txCachePath);
 		settings.setValue("txDumpPath", config.textureFilter.txDumpPath);
@@ -300,6 +329,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("showInternalResolution", config.onScreenDisplay.internalResolution);
 		settings.setValue("showRenderingResolution", config.onScreenDisplay.renderingResolution);
 		settings.setValue("osdPos", config.onScreenDisplay.pos);
+		// settings.setValue("showStatistics", config.onScreenDisplay.statistics);
 		settings.endGroup();
 
 		settings.beginGroup("debug");
@@ -381,14 +411,20 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	settings.endGroup();
 
 	settings.beginGroup("texture");
+	// WriteCustomSetting(texture, anisotropy);
 	WriteCustomSetting(texture, maxAnisotropy);
 	WriteCustomSetting(texture, bilinearMode);
 	WriteCustomSetting(texture, enableHalosRemoval);
 	settings.endGroup();
 
 	settings.beginGroup("generalEmulation");
+	// WriteCustomSetting(generalEmulation, enableDitheringPattern);
+	// WriteCustomSetting(generalEmulation, enableDitheringQuantization);
+	// WriteCustomSetting(generalEmulation, enableHiresNoiseDithering);
+	// WriteCustomSetting(generalEmulation, rdramImageDitheringMode);
 	WriteCustomSetting(generalEmulation, enableLOD);
 	WriteCustomSetting(generalEmulation, enableHWLighting);
+	// WriteCustomSetting(generalEmulation, enableCoverage);
 	WriteCustomSetting(generalEmulation, enableNoise);
 	WriteCustomSetting(generalEmulation, enableShadersStorage);
 	settings.endGroup();
@@ -413,6 +449,7 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	WriteCustomSetting(frameBufferEmulation, fbInfoDisabled);
 	WriteCustomSetting(frameBufferEmulation, fbInfoReadColorChunk);
 	WriteCustomSetting(frameBufferEmulation, fbInfoReadDepthChunk);
+	// WriteCustomSetting(frameBufferEmulation, copyDepthToMainDepthBuffer);
 	WriteCustomSetting(frameBufferEmulation, enableOverscan);
 	WriteCustomSetting2(frameBufferEmulation, overscanPalLeft, overscanPAL.left);
 	WriteCustomSetting2(frameBufferEmulation, overscanPalRight, overscanPAL.right);
@@ -433,6 +470,8 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	WriteCustomSetting(textureFilter, txDeposterize);
 	WriteCustomSetting(textureFilter, txFilterIgnoreBG);
 	WriteCustomSetting(textureFilter, txCacheSize);
+	WriteCustomSetting(textureFilter, txEnhancedTextureFileStorage);
+	WriteCustomSetting(textureFilter, txHiresTextureFileStorage);
 	WriteCustomSetting(textureFilter, txHiresEnable);
 	WriteCustomSetting(textureFilter, txHiresFullAlphaChannel);
 	WriteCustomSetting(textureFilter, txHresAltCRC);
@@ -455,6 +494,7 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	WriteCustomSetting2(onScreenDisplay, showPercent, percent);
 	WriteCustomSetting2(onScreenDisplay, showInternalResolution, internalResolution);
 	WriteCustomSetting2(onScreenDisplay, showRenderingResolution, renderingResolution);
+	// WriteCustomSetting2(onScreenDisplay, showStatistics, statistics);
 	WriteCustomSetting2(onScreenDisplay, osdPos, pos);
 	settings.endGroup();
 
@@ -488,7 +528,7 @@ ProfileList getProfiles(const char * _strIniFolder)
 	return profiles;
 }
 
-std::string getCurrentProfile(const char * _strIniFolder)
+std::string getCurrentProfile(const char* _strIniFolder)
 {
 	std::string IniFileName = _strIniFolder;
 	IniFileName += "/";
@@ -523,7 +563,7 @@ void addProfile(Config& config, const char * _strIniFolder, const char * _strPro
 	writeSettings(config, _strIniFolder);
 }
 
-void removeProfile(const char * _strIniFolder, const char * _strProfile)
+void removeProfile(const char* _strIniFolder, const char* _strProfile)
 {
 	std::string IniFileName = _strIniFolder;
 	IniFileName += "/";

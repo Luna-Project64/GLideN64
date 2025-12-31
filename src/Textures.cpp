@@ -15,7 +15,7 @@
 #include "FrameBuffer.h"
 #include "Config.h"
 #include "Keys.h"
-#include "GLideNHQ/Ext_TxFilter.h"
+#include "GLideNHQ/TxFilterExport.h"
 #include "TextureFilterHandler.h"
 #include "DisplayLoadProgress.h"
 #include "Graphics/Context.h"
@@ -756,11 +756,10 @@ bool TextureCache::_loadHiresBackground(CachedTexture *_pTexture, u64 & _ricecrc
 	}
 
 	_ricecrc = txfilter_checksum(addr, tile_width,
-						tile_height, (unsigned short)(gSP.bgImage.format << 8 | gSP.bgImage.size),
-						bpl, paladdr);
+		tile_height, gSP.bgImage.size, bpl, paladdr);
 	GHQTexInfo ghqTexInfo;
 	// TODO: fix problem with zero texture dimensions on GLideNHQ side.
-	if (txfilter_hirestex(_pTexture->crc, _ricecrc, palette, &ghqTexInfo) &&
+	if (txfilter_hirestex(_pTexture->crc, _ricecrc, palette, N64FormatSize(_pTexture->format, _pTexture->size), &ghqTexInfo) &&
 			ghqTexInfo.width != 0 && ghqTexInfo.height != 0) {
 		ghqTexInfo.format = gfxContext.convertInternalTextureFormat(ghqTexInfo.format);
 		Context::InitTextureParams params;
@@ -856,10 +855,10 @@ void TextureCache::_loadBackground(CachedTexture *pTexture)
 	if (m_toggleDumpTex &&
 		config.textureFilter.txHiresEnable != 0 &&
 		config.textureFilter.txDump != 0) {
-		txfilter_dmptx((u8*)pDest, pTexture->realWidth, pTexture->realHeight,
-			pTexture->realWidth, (u16)u32(glInternalFormat),
-			(unsigned short)(pTexture->format << 8 | pTexture->size),
-			ricecrc);
+			txfilter_dmptx((u8*)pDest, pTexture->realWidth, pTexture->realHeight,
+				pTexture->realWidth, (u16)u32(glInternalFormat),
+				N64FormatSize(pTexture->format, pTexture->size),
+				ricecrc);
 	}
 
 	bool bLoaded = false;
@@ -868,7 +867,7 @@ void TextureCache::_loadBackground(CachedTexture *pTexture)
 			TFH.isInited()) {
 		GHQTexInfo ghqTexInfo;
 		if (txfilter_filter((u8*)pDest, pTexture->realWidth, pTexture->realHeight,
-				(u16)u32(glInternalFormat), (uint64)pTexture->crc, &ghqTexInfo) != 0 &&
+			    (u16)u32(glInternalFormat), pTexture->crc, N64FormatSize(pTexture->format, pTexture->size), &ghqTexInfo) != 0 &&
 				ghqTexInfo.data != nullptr) {
 
 			if (ghqTexInfo.width % 2 != 0 &&
@@ -913,7 +912,7 @@ void TextureCache::_loadBackground(CachedTexture *pTexture)
 	free(pDest);
 }
 
-bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & _ricecrc)
+bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & _ricecrc, u64& _strongcrc)
 {
 	if (config.textureFilter.txHiresEnable == 0 || !TFH.isInited())
 		return false;
@@ -976,11 +975,20 @@ bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & 
 		//			palette = (rdp.pal_8 + (gSP.textureTile[_t]->palette << 4));
 	}
 
-	_ricecrc = txfilter_checksum(addr, width, height, (unsigned short)(_pTexture->format << 8 | _pTexture->size), bpl, paladdr);
+	_ricecrc = txfilter_checksum(addr, width, height, _pTexture->size, bpl, paladdr);
+	if (config.textureFilter.txStrongCRC)
+		_strongcrc = txfilter_checksum_strong(addr, width, height, _pTexture->size, bpl, paladdr);
+
 	GHQTexInfo ghqTexInfo;
 	// TODO: fix problem with zero texture dimensions on GLideNHQ side.
-	if (txfilter_hirestex(_pTexture->crc, _ricecrc, palette, &ghqTexInfo) &&
-		ghqTexInfo.width != 0 && ghqTexInfo.height != 0) {
+	auto hirestexFound = txfilter_hirestex(_pTexture->crc, _ricecrc, palette, N64FormatSize(_pTexture->format, _pTexture->size), &ghqTexInfo);
+	if (!hirestexFound) {
+		// Texture with RiceCRC was not found. Try alternative CRC.
+		if (_strongcrc == 0U)
+			_strongcrc = txfilter_checksum_strong(addr, width, height, _pTexture->size, bpl, paladdr);
+		hirestexFound = txfilter_hirestex(_pTexture->crc, _strongcrc, palette, N64FormatSize(_pTexture->format, _pTexture->size), &ghqTexInfo);
+	}
+	if (hirestexFound && ghqTexInfo.width != 0 && ghqTexInfo.height != 0) {
 		ghqTexInfo.format = gfxContext.convertInternalTextureFormat(ghqTexInfo.format);
 		Context::InitTextureParams params;
 		params.handle = _pTexture->name;
@@ -1143,7 +1151,8 @@ void TextureCache::_getTextureDestData(CachedTexture& tmptex,
 void TextureCache::_load(u32 _tile, CachedTexture *_pTexture)
 {
 	u64 ricecrc = 0;
-	if (_loadHiresTexture(_tile, _pTexture, ricecrc))
+	u64 strongcrc = 0;
+	if (_loadHiresTexture(_tile, _pTexture, ricecrc, strongcrc))
 		return;
 
 	u32 *pDest;
@@ -1207,7 +1216,7 @@ void TextureCache::_load(u32 _tile, CachedTexture *_pTexture)
 				config.textureFilter.txDump != 0) {
 			txfilter_dmptx((u8*)pDest, tmptex.realWidth, tmptex.realHeight,
 					tmptex.realWidth, (u16)u32(glInternalFormat),
-					(unsigned short)(_pTexture->format << 8 | _pTexture->size),
+					N64FormatSize(_pTexture->format, _pTexture->size),
 					ricecrc);
 		}
 
@@ -1234,6 +1243,7 @@ void TextureCache::_load(u32 _tile, CachedTexture *_pTexture)
 			GHQTexInfo ghqTexInfo;
 			if (txfilter_filter((u8*)pDest, tmptex.realWidth, tmptex.realHeight,
 							(u16)u32(glInternalFormat), (uint64)_pTexture->crc,
+							N64FormatSize(_pTexture->format, _pTexture->size),
 							&ghqTexInfo) != 0 && ghqTexInfo.data != nullptr) {
 				if (ghqTexInfo.width % 2 != 0 &&
 					ghqTexInfo.format != u32(internalcolorFormat::RGBA8) &&

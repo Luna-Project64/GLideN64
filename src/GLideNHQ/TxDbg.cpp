@@ -42,7 +42,7 @@ TxDbg::~TxDbg()
 
 
 void
-TxDbg::output(const int level, const wchar_t *format, ...)
+TxDbg::output(const int level, const char *format, ...)
 {
 	if (level > _level)
 		return;
@@ -62,11 +62,7 @@ TxDbg::TxDbg()
 	_level = DBG_LEVEL;
 
 	if (!_dbgfile)
-#ifdef GHQCHK
-		_dbgfile = fopen("ghqchk.txt", "w");
-#else
 		_dbgfile = fopen("glidenhq.dbg", "w");
-#endif
 }
 
 TxDbg::~TxDbg()
@@ -93,10 +89,6 @@ TxDbg::output(const int level, const char *format, ...)
 	strcat(newformat, format);
 	vfprintf(_dbgfile, newformat, args);
 	fflush(_dbgfile);
-#ifdef GHQCHK
-	//vwprintf(newformat, args);
-	vwprintf(newformat.c_str(), args);
-#endif
 	va_end(args);
 }
 #endif // OS_ANDROID

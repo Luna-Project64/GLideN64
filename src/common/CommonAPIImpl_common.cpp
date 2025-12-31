@@ -19,6 +19,8 @@
 #include "Graphics/Context.h"
 #include <DisplayWindow.h>
 
+#include "osal_keys.h"
+
 PluginAPI & PluginAPI::get()
 {
 	static PluginAPI api;
@@ -129,6 +131,8 @@ void PluginAPI::RomClosed()
 
 void PluginAPI::RomOpen()
 {
+	osal_keys_init();
+
 	LOG(LOG_APIFUNC, "RomOpen\n");
 #ifdef RSPTHREAD
 	std::lock_guard<std::mutex> lck(m_initMutex);

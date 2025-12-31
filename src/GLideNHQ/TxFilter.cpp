@@ -34,12 +34,11 @@
 #include "TxFilter.h"
 #include "TextureFilters.h"
 #include "TxDbg.h"
-#include "bldno.h"
 
 void TxFilter::clear()
 {
-	/* clear hires texture cache */
-	delete _txHiResCache;
+	/* clear hires texture loader */
+	delete _txHiResLoader;
 
 	/* clear texture cache */
 	delete _txTexCache;
@@ -62,16 +61,16 @@ TxFilter::TxFilter(int maxwidth,
 				   int maxbpp,
 				   int options,
 				   int cachesize,
-				   const char* texCachePath,
-				   const char* texDumpPath,
-				   const char* texPackPath,
-				   const char* ident,
+				   const char * texCachePath,
+				   const char * texDumpPath,
+				   const char * texPackPath,
+				   const char * ident,
 				   dispInfoFuncExt callback)
 	: _tex1(nullptr)
 	, _tex2(nullptr)
 	, _txQuantize(nullptr)
 	, _txTexCache(nullptr)
-	, _txHiResCache(nullptr)
+	, _txHiResLoader(nullptr)
 	, _txImage(nullptr)
 {
 	/* HACKALERT: the emulator misbehaves and sometimes forgets to shutdown */
@@ -88,11 +87,7 @@ TxFilter::TxFilter(int maxwidth,
 	/* shamelessness :P this first call to the debug output message creates
    * a file in the executable directory. */
 	INFO(0, wst("------------------------------------------------------------------\n"));
-#ifdef GHQCHK
-	INFO(0, wst(" GLideNHQ Hires Texture Checker 1.02.00.%d\n"), BUILD_NUMBER);
-#else
-	INFO(0, wst(" GLideNHQ version 1.00.00.%d\n"), BUILD_NUMBER);
-#endif
+	INFO(0, wst(" GLideNHQ\n"));
 	INFO(0, wst(" Copyright (C) 2010  Hiroshi Morii   All Rights Reserved\n"));
 	INFO(0, wst("    email   : koolsmoky(at)users.sourceforge.net\n"));
 	INFO(0, wst("    website : http://www.3dfxzone.it/koolsmoky\n"));
@@ -129,6 +124,9 @@ TxFilter::TxFilter(int maxwidth,
 	if (ident && strcmp(ident, wst("DEFAULT")) != 0)
 		_ident.assign(ident);
 
+	/* replace ':' in ROM name with '-' */
+	removeColon(_ident);
+
 	if (TxMemBuf::getInstance()->init(_maxwidth, _maxheight)) {
 		if (!_tex1)
 			_tex1 = TxMemBuf::getInstance()->get(0);
@@ -147,9 +145,17 @@ TxFilter::TxFilter(int maxwidth,
 
 	/* hires texture */
 #if HIRES_TEXTURE
-	_txHiResCache = new TxHiResCache(_maxwidth, _maxheight, _maxbpp, _options, texCachePath, texPackPath, _ident.c_str(), callback);
+	if ((_options & FILE_NOTEXCACHE) == FILE_NOTEXCACHE) {
+		char fullTexPackPath[MAX_PATH];
+		strcpy(fullTexPackPath, texPackPath);
+		strcat(fullTexPackPath, OSAL_DIR_SEPARATOR_STR);
+		strcat(fullTexPackPath, _ident.c_str());
+		_txHiResLoader = new TxHiResNoCache(_maxwidth, _maxheight, _maxbpp, _options, texCachePath, texPackPath, fullTexPackPath, _ident.c_str(), callback);
+	} else {
+		_txHiResLoader = new TxHiResCache(_maxwidth, _maxheight, _maxbpp, _options, texCachePath, texPackPath, _ident.c_str(), callback);
+	}
 
-	if (_txHiResCache->empty())
+	if (_txHiResLoader->empty())
 		_options &= ~HIRESTEXTURES_MASK;
 #endif
 
@@ -158,7 +164,7 @@ TxFilter::TxFilter(int maxwidth,
 }
 
 boolean
-TxFilter::filter(uint8 *src, int srcwidth, int srcheight, ColorFormat srcformat, uint64 g64crc, GHQTexInfo *info)
+TxFilter::filter(uint8 *src, int srcwidth, int srcheight, ColorFormat srcformat, uint64 g64crc, N64FormatSize n64FmtSz, GHQTexInfo *info)
 {
 	uint8 *texture = src;
 	uint8 *tmptex = _tex1;
@@ -180,7 +186,7 @@ TxFilter::filter(uint8 *src, int srcwidth, int srcheight, ColorFormat srcformat,
 
 		/* check if we have it in cache */
 		if ((g64crc & 0xffffffff00000000) == 0 && /* we reach here only when there is no hires texture for this crc */
-				_txTexCache->get(g64crc, info)) {
+				_txTexCache->get(g64crc, n64FmtSz, info)) {
 			DBG_INFO(80, wst("cache hit: %d x %d gfmt:%x\n"), info->width, info->height, info->format);
 			return 1; /* yep, we've got it */
 		}
@@ -445,6 +451,7 @@ TxFilter::filter(uint8 *src, int srcwidth, int srcheight, ColorFormat srcformat,
 	info->width  = srcwidth;
 	info->height = srcheight;
 	info->is_hires_tex = 0;
+	info->n64_format_size = n64FmtSz;
 	setTextureFormat(destformat, info);
 
 	/* cache the texture. */
@@ -457,7 +464,7 @@ TxFilter::filter(uint8 *src, int srcwidth, int srcheight, ColorFormat srcformat,
 }
 
 boolean
-TxFilter::hirestex(uint64 g64crc, uint64 r_crc64, uint16 *palette, GHQTexInfo *info)
+TxFilter::hirestex(uint64 g64crc, Checksum r_crc64, uint16 *palette, N64FormatSize n64FmtSz, GHQTexInfo *info)
 {
 	/* NOTE: Rice CRC32 sometimes return the same value for different textures.
    * As a workaround, Glide64 CRC32 is used for the key for NON-hires
@@ -470,13 +477,13 @@ TxFilter::hirestex(uint64 g64crc, uint64 r_crc64, uint16 *palette, GHQTexInfo *i
    */
 
 	DBG_INFO(80, wst("hirestex: r_crc64:%08X %08X, g64crc:%08X %08X\n"),
-			 (uint32)(r_crc64 >> 32), (uint32)(r_crc64 & 0xffffffff),
+			 r_crc64._palette, r_crc64._texture,
 			 (uint32)(g64crc >> 32), (uint32)(g64crc & 0xffffffff));
 
 #if HIRES_TEXTURE
 	/* check if we have it in hires memory cache. */
 	if ((_options & HIRESTEXTURES_MASK) && r_crc64) {
-		if (_txHiResCache->get(r_crc64, info)) {
+		if (_txHiResLoader->get(r_crc64, n64FmtSz, info)) {
 			DBG_INFO(80, wst("hires hit: %d x %d gfmt:%x\n"), info->width, info->height, info->format);
 
 			/* TODO: Enable emulation for special N64 combiner modes. There are few ways
@@ -503,10 +510,11 @@ TxFilter::hirestex(uint64 g64crc, uint64 r_crc64, uint16 *palette, GHQTexInfo *i
 
 			return 1; /* yep, got it */
 		}
-		if (_txHiResCache->get((r_crc64 & 0xffffffff), info)) {
+		if (_txHiResLoader->get(r_crc64._palette, n64FmtSz, info) ||
+			_txHiResLoader->get(r_crc64._texture, n64FmtSz, info)) {
 			DBG_INFO(80, wst("hires hit: %d x %d gfmt:%x\n"), info->width, info->height, info->format);
 
-			/* for true CI textures, we use the passed in palette to convert to
+	  /* for true CI textures, we use the passed in palette to convert to
 	   * ARGB1555 and add it to memory cache.
 	   *
 	   * NOTE: we do this AFTER all other texture cache searches because
@@ -536,10 +544,11 @@ TxFilter::hirestex(uint64 g64crc, uint64 r_crc64, uint16 *palette, GHQTexInfo *i
 				info->width = width;
 				info->height = height;
 				info->is_hires_tex = 1;
+				info->n64_format_size = n64FmtSz;
 				setTextureFormat(format, info);
 
 				/* XXX: add to hires texture cache!!! */
-				_txHiResCache->add(r_crc64, info);
+				_txHiResLoader->add(r_crc64, info);
 
 				DBG_INFO(80, wst("COLOR_INDEX8 loaded as gfmt:%x!\n"), u32(format));
 			}
@@ -551,7 +560,7 @@ TxFilter::hirestex(uint64 g64crc, uint64 r_crc64, uint16 *palette, GHQTexInfo *i
 
 	/* check if we have it in memory cache */
 	if (_cacheSize && g64crc) {
-		if (_txTexCache->get(g64crc, info)) {
+		if (_txTexCache->get(g64crc, n64FmtSz, info)) {
 			DBG_INFO(80, wst("cache hit: %d x %d gfmt:%x\n"), info->width, info->height, info->format);
 			return 1; /* yep, we've got it */
 		}
@@ -571,8 +580,18 @@ TxFilter::checksum64(uint8 *src, int width, int height, int size, int rowStride,
 	return 0;
 }
 
+uint64
+TxFilter::checksum64strong(uint8 *src, int width, int height, int size, int rowStride, uint8 *palette)
+{
+	if (_options & (HIRESTEXTURES_MASK | DUMP_TEX))
+		return TxUtil::checksum64strong(src, width, height, size, rowStride, palette);
+
+	return 0;
+}
+
 boolean
-TxFilter::dmptx(uint8 *src, int width, int height, int rowStridePixel, ColorFormat gfmt, uint16 n64fmt, uint64 r_crc64)
+TxFilter::dmptx(uint8 *src, int width, int height, int rowStridePixel,
+				ColorFormat gfmt, N64FormatSize n64FmtSz, Checksum r_crc64, boolean isStrongCrc)
 {
 	assert(gfmt != graphics::colorFormat::RGBA);
 	if (!_initialized)
@@ -581,9 +600,9 @@ TxFilter::dmptx(uint8 *src, int width, int height, int rowStridePixel, ColorForm
 	if (!(_options & DUMP_TEX))
 		return 0;
 
-	DBG_INFO(80, wst("gfmt = %02x n64fmt = %02x\n"), u32(gfmt), n64fmt);
+	DBG_INFO(80, wst("gfmt = %02x n64fmt = %02x\n"), u32(gfmt), n64FmtSz._format);
 	DBG_INFO(80, wst("hirestex: r_crc64:%08X %08X\n"),
-			 (uint32)(r_crc64 >> 32), (uint32)(r_crc64 & 0xffffffff));
+			 r_crc64._palette, r_crc64._texture);
 
 	if (gfmt != graphics::internalcolorFormat::RGBA8) {
 		if (!_txQuantize->quantize(src, _tex1, rowStridePixel, height, gfmt, graphics::internalcolorFormat::RGBA8))
@@ -600,18 +619,18 @@ TxFilter::dmptx(uint8 *src, int width, int height, int rowStridePixel, ColorForm
 		tmpbuf.assign(_dumpPath);
 		tmpbuf.append(wst("/"));
 		tmpbuf.append(_ident);
-		tmpbuf.append(wst("/GLideNHQ"));
+		isStrongCrc ? tmpbuf.append(wst("/GLideNHQ_strong_crc")) : tmpbuf.append(wst("/GLideNHQ"));
 		if (!osal_path_exists(tmpbuf.c_str()) && osal_mkdirp(tmpbuf.c_str()) != 0)
 			return 0;
 
-		if ((n64fmt >> 8) == 0x2) {
-			char cbuf[256];
-			tx_swprintf(cbuf, 256, wst("/%s#%08X#%01X#%01X#%08X_ciByRGBA.png"), _ident.c_str(), (uint32)(r_crc64 & 0xffffffff), (n64fmt >> 8), (n64fmt & 0xf), (uint32)(r_crc64 >> 32));
-			tmpbuf.append(cbuf);
+		if (n64FmtSz._format == 0x2) {
+			char wbuf[256];
+			tx_swprintf(wbuf, 256, wst("/%s#%08X#%01X#%01X#%08X_ciByRGBA.png"), _ident.c_str(), r_crc64._texture, n64FmtSz._format, n64FmtSz._size, r_crc64._palette);
+			tmpbuf.append(wbuf);
 		} else {
-			char cbuf[256];
-			tx_swprintf(cbuf, 256, wst("/%s#%08X#%01X#%01X_all.png"), _ident.c_str(), (uint32)(r_crc64 & 0xffffffff), (n64fmt >> 8), (n64fmt & 0xf));
-			tmpbuf.append(cbuf);
+			char wbuf[256];
+			tx_swprintf(wbuf, 256, wst("/%s#%08X#%01X#%01X_all.png"), _ident.c_str(), r_crc64._texture, n64FmtSz._format, n64FmtSz._size);
+			tmpbuf.append(wbuf);
 		}
 
 #ifdef OS_WINDOWS
@@ -635,7 +654,7 @@ TxFilter::reloadhirestex()
 {
 	DBG_INFO(80, wst("Reload hires textures from texture pack.\n"));
 
-	if (_txHiResCache->load(0) && !_txHiResCache->empty()) {
+	if (_txHiResLoader->reload()) {
 		_options |= HIRESTEXTURES_MASK;
 		return 1;
 	}
@@ -651,6 +670,6 @@ TxFilter::dumpcache()
 
 	/* hires texture */
 #if HIRES_TEXTURE
-	_txHiResCache->dump();
+	_txHiResLoader->dump();
 #endif
 }

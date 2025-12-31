@@ -24,38 +24,29 @@
 #ifndef __TXHIRESCACHE_H__
 #define __TXHIRESCACHE_H__
 
-/* support hires textures
- *   0: disable
- *   1: enable
- */
-#define HIRES_TEXTURE 1
-
 #include "TxCache.h"
 #include "TxQuantize.h"
 #include "TxImage.h"
 #include "TxReSample.h"
+#include "TxHiResLoader.h"
 
-class TxHiResCache : public TxCache
+class TxHiResCache : public TxCache, public TxHiResLoader
 {
 private:
-  int _maxwidth;
-  int _maxheight;
-  int _maxbpp;
-  boolean _cacheDumped;
-  boolean _abortLoad;
-  TxImage *_txImage;
-  TxQuantize *_txQuantize;
-  TxReSample *_txReSample;
+	bool _abortLoad;
+	bool _cacheDumped;
+
   tx_wstring _texPackPath;
   enum LoadResult {
 	  resOk,
 	  resNotFound,
 	  resError
   };
-  LoadResult loadHiResTextures(const char * dir_path, boolean replace);
-  tx_wstring _getFileName() const;
-  int _getConfig() const;
+  LoadResult _loadHiResTextures(const char * dir_path, boolean replace);
   boolean _HiResTexPackPathExists() const;
+	tx_wstring _getFileName() const override;
+	int _getConfig() const override;
+  bool _load(boolean replace);
 
 public:
   ~TxHiResCache();
@@ -63,13 +54,15 @@ public:
 			   int maxheight,
 			   int maxbpp,
 			   int options,
-			   const char*cachePath,
-			   const char*texPackPath,
-			   const char*ident,
+			   const char *cachePath,
+			   const char *texPackPath,
+			   const char *ident,
 			   dispInfoFuncExt callback);
-  boolean empty();
-  boolean load(boolean replace);
-  void dump();
+  bool empty() const override;
+  bool add(Checksum checksum, GHQTexInfo *info, int dataSize = 0) override;
+  bool get(Checksum checksum, N64FormatSize n64FmtSz, GHQTexInfo *info) override;
+  bool reload() override;
+  void dump() override;
 };
 
 #endif /* __TXHIRESCACHE_H__ */

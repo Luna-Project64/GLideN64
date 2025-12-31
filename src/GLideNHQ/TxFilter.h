@@ -27,6 +27,8 @@
 #include "TxInternal.h"
 #include "TxQuantize.h"
 #include "TxHiResCache.h"
+#include "TxHiResNoCache.h"
+#include "TxHiResLoader.h"
 #include "TxTexCache.h"
 #include "TxUtil.h"
 #include "TxImage.h"
@@ -47,7 +49,7 @@ private:
   tx_wstring _dumpPath;
   TxQuantize *_txQuantize;
   TxTexCache *_txTexCache;
-  TxHiResCache *_txHiResCache;
+  TxHiResLoader *_txHiResLoader;
   TxImage *_txImage;
   boolean _initialized;
   void clear();
@@ -58,23 +60,27 @@ public:
 		   int maxbpp,
 		   int options,
 		   int cachesize,
-		   const char* texCachePath,
-		   const char* texDumpPath,
-		   const char* texPackPath,
-		   const char* ident,
+		   const char * texCachePath,
+		   const char * texDumpPath,
+		   const char * texPackPath,
+		   const char * ident,
 		   dispInfoFuncExt callback);
   boolean filter(uint8 *src,
 				  int srcwidth,
 				  int srcheight,
 				  ColorFormat srcformat,
 				  uint64 g64crc, /* glide64 crc, 64bit for future use */
+				  N64FormatSize n64FmtSz,
 				  GHQTexInfo *info);
   boolean hirestex(uint64 g64crc, /* glide64 crc, 64bit for future use */
-				   uint64 r_crc64,   /* checksum hi:palette low:texture */
+				   Checksum r_crc64,
 				   uint16 *palette,
+				   N64FormatSize n64FmtSz,
 				   GHQTexInfo *info);
   uint64 checksum64(uint8 *src, int width, int height, int size, int rowStride, uint8 *palette);
-  boolean dmptx(uint8 *src, int width, int height, int rowStridePixel, ColorFormat gfmt, uint16 n64fmt, uint64 r_crc64);
+  uint64 checksum64strong(uint8 *src, int width, int height, int size, int rowStride, uint8 *palette);
+  boolean dmptx(uint8 *src, int width, int height, int rowStridePixel,
+				ColorFormat gfmt, N64FormatSize n64FmtSz, Checksum r_crc64, boolean isStrongCrc);
   boolean reloadhirestex();
   void dumpcache();
 };

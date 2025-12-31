@@ -151,10 +151,15 @@ struct Config
 		u32 txHiresFullAlphaChannel;	// Use alpha channel fully
 		u32 txHresAltCRC;				// Use alternative method of paletted textures CRC calculation
 		u32 txDump;						// Dump textures
+		u32 txStrongCRC;                // Dump textures with alternative (strong) CRC
 
 		u32 txForce16bpp;				// Force use 16bit color textures
 		u32 txCacheCompression;			// Zip textures cache
 		u32 txSaveCache;				// Save texture cache to hard disk
+
+		u32 txEnhancedTextureFileStorage;	// Use file storage instead of memory cache for enhanced textures.
+		u32 txHiresTextureFileStorage;		// Use file storage instead of memory cache for hires textures.
+		u32 txNoTextureFileStorage;			// Use no file storage or cache for hires textures.
 
 		char txPath[PLUGIN_PATH_SIZE]; // Path to texture packs
 		char txCachePath[PLUGIN_PATH_SIZE]; // Path to store texture cache, that is .htc files

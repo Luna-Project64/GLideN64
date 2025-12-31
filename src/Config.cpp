@@ -84,10 +84,15 @@ void Config::resetToDefaults()
 	textureFilter.txHiresFullAlphaChannel = 1;
 	textureFilter.txHresAltCRC = 0;
 	textureFilter.txDump = 0;
+	textureFilter.txStrongCRC = 0;
 
 	textureFilter.txForce16bpp = 0;
 	textureFilter.txCacheCompression = 1;
 	textureFilter.txSaveCache = 1;
+
+	textureFilter.txEnhancedTextureFileStorage = 0;
+	textureFilter.txHiresTextureFileStorage = 0;
+	textureFilter.txNoTextureFileStorage = 0;
 
 	api().GetUserDataPath(textureFilter.txPath);
 	strcat(textureFilter.txPath, "/hires_texture");

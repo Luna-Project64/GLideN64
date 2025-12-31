@@ -19,5 +19,8 @@
     <ClCompile Include="..\..\src\osal\osal_files_win32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\osal\osal_keys_win.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
