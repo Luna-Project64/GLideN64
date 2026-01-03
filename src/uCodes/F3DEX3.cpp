@@ -98,7 +98,7 @@ static void writeLight(int off, u32 w)
 		gSPLookAt(w - (sizeof(F3DEX3_LookAtOld) - sizeof(F3DEX3_LookAt)) + sizeof(F3DEX3_LookAt), 1);
 	}
 
-	for (int i = 1; i <= gSP.numLights + 1; i++)
+	for (int i = 1; i <= 10; i++)
 	{
 		if (_LIGHT_TO_OFFSET(i) == off)
 		{
