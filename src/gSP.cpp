@@ -142,6 +142,7 @@ static const Mtx identityMatrix =
 
 void gSPLoadUcodeEx( u32 uc_start, u32 uc_dstart, u16 uc_dsize )
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.matrix.modelViewi = 0;
 	gSP.status[0] = gSP.status[1] = gSP.status[2] = gSP.status[3] = 0;
 	gSP.fog.multiplier = gSP.fog.offset = 0;
@@ -311,6 +312,7 @@ void gSPViewport( u32 v )
 
 void gSPForceMatrix( u32 mptr )
 {
+	gVtxLastLoadedAddress = -1;
 	u32 address = RSP_SegmentToPhysical( mptr );
 
 	if (address + 64 > RDRAMSize) {
@@ -468,6 +470,7 @@ void gSPLookAt( u32 _l, u32 _n )
 
 void gSPCameraWorld( u32 _l )
 {
+	gVtxLastLoadedAddress = -1;
 	u32 address = RSP_SegmentToPhysical(_l);
 
 	if ((address + sizeof(Light)) > RDRAMSize) {
@@ -2012,6 +2015,7 @@ void gSPClipRatio(u32 ratio)
 
 void gSPInsertMatrix( u32 where, u32 num )
 {
+	gVtxLastLoadedAddress = -1;
 	DebugMsg(DEBUG_NORMAL, "gSPInsertMatrix(%u, %u);\n", where, num);
 
 	if ((where & 0x3) != 0)
@@ -2125,6 +2129,7 @@ void gSPNumLights( s32 n )
 
 void gSPLightColor( u32 lightNum, u32 packedColor )
 {
+	gVtxLastLoadedAddress = -1;
 	--lightNum;
 
 	if (lightNum < 9)
@@ -2139,6 +2144,7 @@ void gSPLightColor( u32 lightNum, u32 packedColor )
 
 void gSPFogFactor( s16 fm, s16 fo )
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.fog.multiplier = fm;
 	gSP.fog.offset = fo;
 	gSP.fog.multiplierf = _FIXED2FLOAT(fm, 8);
@@ -2155,37 +2161,43 @@ void gSPPerspNormalize( u16 scale )
 
 void gsSPAOAmbient(u16 amb)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.ao.amb = amb / 65536.f;
 }
 
 void gsSPAODirectional(u16 dir)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.ao.dir = dir / 65536.f;
 }
 
 void gsSPAOPoint(u16 point)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.ao.point = point / 65536.f;
 }
 
 void gsSPFresnelScale(s16 scale)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.fresnel.scale = scale / 32767.f * 256.f;
 }
 
 void gsSPFresnelOffset(s16 offset)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.fresnel.offset = offset / 32767.f * 256.f;
-
 }
 
 void gsSPAttrOffsetS(u16 offset)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.attrOffset.s = _FIXED2FLOAT((s16)offset, 5);
 }
 
 void gsSPAttrOffsetT(u16 offset)
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.attrOffset.t = _FIXED2FLOAT((s16)offset, 5);
 }
 
@@ -2200,6 +2212,7 @@ void gsSPAlphaCompareCull(u16 cfg)
 extern "C" uint32_t LegacySm64ToolsHacks;
 void gSPTexture( f32 sc, f32 tc, u32 level, u32 tile, u32 on )
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.texture.on = on;
 	if (on == 0) {
 		if (LegacySm64ToolsHacks)
@@ -2240,6 +2253,7 @@ void gSPEndDisplayList()
 
 void gSPGeometryMode( u32 clear, u32 set )
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.geometryMode = (gSP.geometryMode & ~clear) | set;
 
 	gSP.changed |= CHANGED_GEOMETRYMODE;
@@ -2269,6 +2283,7 @@ void gSPGeometryMode( u32 clear, u32 set )
 
 void gSPSetGeometryMode( u32 mode )
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.geometryMode |= mode;
 
 	gSP.changed |= CHANGED_GEOMETRYMODE;
@@ -2288,6 +2303,7 @@ void gSPSetGeometryMode( u32 mode )
 
 void gSPClearGeometryMode( u32 mode )
 {
+	gVtxLastLoadedAddress = -1;
 	gSP.geometryMode &= ~mode;
 
 	gSP.changed |= CHANGED_GEOMETRYMODE;

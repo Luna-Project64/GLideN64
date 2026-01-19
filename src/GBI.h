@@ -509,7 +509,7 @@ struct MicrocodeInfo
 		bool legacyVertexPipeline = true;
 		bool noOcclusionPlane = false;
 		bool branchOnZ = false;
-		uint8_t version = 0;
+		u8 version = 0;
 	} f3dex3;
 };
 
@@ -534,7 +534,7 @@ struct GBIInfo
 	bool isLegacyVertexPipeline() const { return m_pCurrent != nullptr ? m_pCurrent->f3dex3.legacyVertexPipeline : true; }
 	bool isNoOcclusionPlane() const { return m_pCurrent != nullptr ? m_pCurrent->f3dex3.noOcclusionPlane : false; }
 	bool isBranchOnZ() const { return m_pCurrent != nullptr ? m_pCurrent->f3dex3.branchOnZ : false; }
-	uint8_t f3dex3Version() const { return m_pCurrent->f3dex3.version; }
+	u8 f3dex3Version() const { return m_pCurrent != nullptr ? m_pCurrent->f3dex3.version : 0; }
 
 private:
 	void _flushCommands();
