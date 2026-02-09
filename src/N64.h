@@ -63,6 +63,12 @@ extern u64 TMEM[512];
 extern u32 RDRAMSize;
 extern bool ConfigOpen;
 
+extern "C"
+{
+	extern uint32_t LegacySm64ToolsHacks;
+	extern uint32_t DepthFragmentWrite;
+}
+
 static inline VIRegsSample sampleVI()
 {
 	VIRegsSample sample;
@@ -79,6 +85,12 @@ static inline VIRegsSample sampleVI()
 	sample.VI_V_BURST = *(REG._VI_V_BURST);
 	sample.VI_X_SCALE = *(REG._VI_X_SCALE);
 	sample.VI_Y_SCALE = *(REG._VI_Y_SCALE);
+
+	if (LegacySm64ToolsHacks)
+	{
+		if (sample.VI_V_SYNC == 0x0627) sample.VI_V_SYNC = 0x0834;
+	}
+
 	return sample;
 }
 
@@ -108,12 +120,6 @@ static inline const u32* tmemCacheHashTryGet(u32 off, u32 size)
 		return &TMEMCacheHash.hash;
 	else
 		return nullptr;
-}
-
-extern "C"
-{
-	extern uint32_t LegacySm64ToolsHacks;
-	extern uint32_t DepthFragmentWrite;
 }
 
 #endif

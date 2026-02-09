@@ -209,13 +209,7 @@ void PluginAPI::ShowCFB()
 
 void PluginAPI::UpdateScreen()
 {
-	if (LegacySm64ToolsHacks)
-	{
-		if (*REG._VI_V_SYNC == 0x0627) *REG._VI_V_SYNC = 0x0834;
-	}
-
 	VIRegsSample regs = sampleVI();
-
 	LOG(LOG_APIFUNC, "UpdateScreen\n");
 #ifdef RSPTHREAD
 	m_executor.async([regs]()
