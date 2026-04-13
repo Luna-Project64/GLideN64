@@ -1517,7 +1517,7 @@ void TextureCache::_updateBackground()
 	pCurrent->shiftScaleS = 1.0f;
 	pCurrent->shiftScaleT = 1.0f;
 
-	if (1) { // LegacySm64ToolsHacks
+	if (1) {
 		pCurrent->offsetS = 0.5f;
 		pCurrent->offsetT = 0.5f;
 	}
@@ -1677,7 +1677,7 @@ void TextureCache::update(u32 _t)
 	pCurrent->scaleS = 1.0f / (f32)(pCurrent->realWidth);
 	pCurrent->scaleT = 1.0f / (f32)(pCurrent->realHeight);
 
-	if (1) { // LegacySm64ToolsHacks
+	if (1) {
 		pCurrent->offsetS = 0.5f;
 		pCurrent->offsetT = 0.5f;
 	}

@@ -260,7 +260,7 @@ public:
 			"													\n"
 			"uniform int uTexturePersp;							\n";
 
-		if (0) { // LegacySm64ToolsHacks
+		if (!LegacySm64ToolsHacks) {
 			m_part += "uniform lowp int uTextureFilterMode;		\n";
 		}
 
@@ -287,11 +287,11 @@ public:
 			"    vec2 texCoordOut = texCoord*uCacheShiftScale[idx];			\n"
 			"    texCoordOut -= uTexOffset[idx];							\n";
 
-		m_part += (1) ? // LegacySm64ToolsHacks
+		m_part += (LegacySm64ToolsHacks) ?
 			"    return (uCacheOffset[idx] + texCoordOut)* uCacheScale[idx];\n"
 			:
 			"    texCoordOut += uCacheOffset[idx];							\n"
-			"    if (uTextureFilterMode != 0) texCoordOut += vec2(0.5);		\n"
+			"    if (uTextureFilterMode == 0) texCoordOut -= vec2(0.5);		\n"
 			"    return texCoordOut* uCacheScale[idx];						\n";
 
 		m_part +=
