@@ -350,7 +350,31 @@ static void F3DEX3_TriSnake(u32 w0, u32 /*w1 - read explicitly from RDRAM*/)
 
 static void F3DEX3_LightToRDP(u32 w0, u32 w1)
 {
-	// unsupported, i do not know what this is for
+	u32 w0x = w1;
+	u32 cmd = _SHIFTR(w0x, 24, 8);
+
+	u32 l = gSP.numLights - (_SHIFTR(w0, 8, 8) / 0x10);
+	ColorVec light = gSP.lights.rgb[l];
+	u32 a = _SHIFTR(w0, 0, 8);
+
+	switch (cmd)
+	{
+	case G_SETFILLCOLOR:
+		gDPSetFillColor(w0x);
+		break;
+	case G_SETFOGCOLOR:
+		gDPSetFogColor  (light[R], light[G], light[B], a);
+		break;
+	case G_SETBLENDCOLOR:
+		gDPSetBlendColor(light[R], light[G], light[B], a);
+		break;
+	case G_SETPRIMCOLOR:
+		gDPSetPrimColor (_SHIFTR(w0x, 8, 5), _SHIFTR(w0x, 0, 8), light[R], light[G], light[B], a);
+		break;
+	case G_SETENVCOLOR:
+		gDPSetEnvColor  (light[R], light[G], light[B], a);
+		break;
+	}
 }
 
 static void F3DEX3_RelSegment(u32 w0, u32 w1)
