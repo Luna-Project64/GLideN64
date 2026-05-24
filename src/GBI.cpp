@@ -356,7 +356,9 @@ void GBIInfo::_makeCurrent(MicrocodeInfo * _pCurrent)
 				m_hwlSupported = false;
 				break;
 		}
-		if (m_pCurrent->NoN)
+		if (m_pCurrent->type == F3DEX3)
+			gfxContext.setClampMode(graphics::ClampMode::NoClipping);
+		else if (m_pCurrent->NoN)
 			gfxContext.setClampMode(graphics::ClampMode::NoNearPlaneClipping);
 		else
 			gfxContext.setClampMode(graphics::ClampMode::ClippingEnabled);
@@ -366,7 +368,9 @@ void GBIInfo::_makeCurrent(MicrocodeInfo * _pCurrent)
 			GBI_SetGBI(G_RDPHALF_2, F3DBETA_RDPHALF_2, F3D_RDPHalf_2);
 		}
 	} else if (m_pCurrent->NoN != _pCurrent->NoN) {
-		if (_pCurrent->NoN)
+		if (m_pCurrent->type == F3DEX3)
+			gfxContext.setClampMode(graphics::ClampMode::NoClipping);
+		else if (_pCurrent->NoN)
 			gfxContext.setClampMode(graphics::ClampMode::NoNearPlaneClipping);
 		else
 			gfxContext.setClampMode(graphics::ClampMode::ClippingEnabled);
