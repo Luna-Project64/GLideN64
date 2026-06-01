@@ -38,6 +38,7 @@ public:
 
 	void LunaSaveConfig(const void* data);
 	void LunaLoadConfig(void* data);
+	void LunaRegisterRenderWindowApi(void* data);
 
 	void Restart();
 

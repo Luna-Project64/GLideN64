@@ -34,6 +34,12 @@ void PluginAPI::LunaLoadConfig(void* data)
 	LoadMiniConfig((MiniConfig*)data);
 }
 
+extern void registerRenderApi(void* api);
+void PluginAPI::LunaRegisterRenderWindowApi(void* data)
+{
+	registerRenderApi(data);
+}
+
 void PluginAPI::GetDllInfo(PLUGIN_INFO * PluginInfo)
 {
 	PluginInfo->Version = 0x103;

@@ -67,4 +67,9 @@ EXPORT bool CALL LunaLoadConfig(const char* name, void* data)
 	return true;
 }
 
+EXPORT void CALL LunaRegisterRenderWindowApi(void* data)
+{
+	api().LunaRegisterRenderWindowApi(data);
+}
+
 }

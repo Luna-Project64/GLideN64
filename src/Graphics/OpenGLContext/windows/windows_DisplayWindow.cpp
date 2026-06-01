@@ -15,6 +15,19 @@
 
 bool DisplayWindow::m_bToggleFullscreen = false;
 
+static HWND hRenderWindow = NULL;
+struct LunaRenderApi
+{
+	HWND(*CreateRenderWindow)(HWND);
+	void (*DestroyRenderWindow)(HWND, HWND);
+};
+static LunaRenderApi s_RenderApi = {};
+
+void registerRenderApi(void* api)
+{
+	s_RenderApi = *(const LunaRenderApi*)api;
+}
+
 extern "C"
 {
 	EGLAPI EGLDisplay EGLAPIENTRY eglGetPlatformDisplayEXT(EGLenum platform, void* native_display, const EGLint* attrib_list);
@@ -90,15 +103,11 @@ void DisplayWindow::reset()
 		{
 			if (dynamic_cast<DisplayWindowWGL*>(cur))
 				justRefreshSize = true;
-			else
-				Sleep(1000);
 		}
 		else
 		{
 			if (dynamic_cast<DisplayWindowEGL*>(cur))
 				justRefreshSize = true;
-			else
-				Sleep(1000);
 		}
 	}
 
@@ -107,6 +116,7 @@ void DisplayWindow::reset()
 		return;
 	}
 
+	TheWindow.reset();
 	if (config.angle.renderer == config.arOpenGL)
 	{
 		TheWindow = std::make_unique<DisplayWindowWGL>();
@@ -123,9 +133,10 @@ bool DisplayWindowWindows::_start()
 		hWnd = GetActiveWindow();
 
 	hWndThread = GetWindowThreadProcessId(hWnd, nullptr);
+	hRenderWindow = s_RenderApi.CreateRenderWindow ? s_RenderApi.CreateRenderWindow(hWnd) : hWnd;
 
-	if ((hDC = GetDC(hWnd)) == NULL) {
-		MessageBox(hWnd, L"Error while getting a device context!", pluginNameW, MB_ICONERROR | MB_OK);
+	if ((hDC = GetDC(hRenderWindow)) == NULL) {
+		MessageBox(hRenderWindow, L"Error while getting a device context!", pluginNameW, MB_ICONERROR | MB_OK);
 		return false;
 	}
 
@@ -135,9 +146,15 @@ bool DisplayWindowWindows::_start()
 void DisplayWindowWindows::_stop()
 {
 	if (hDC != NULL) {
-		ReleaseDC(hWnd, hDC);
+		ReleaseDC(hRenderWindow, hDC);
 		hDC = NULL;
 	}
+
+	if (s_RenderApi.DestroyRenderWindow)
+	{
+		s_RenderApi.DestroyRenderWindow(hWnd, hRenderWindow);
+	}
+	hRenderWindow = NULL;
 }
 
 bool DisplayWindowWGL::_start()
@@ -169,25 +186,25 @@ bool DisplayWindowWGL::_start()
 	};
 
 	if ((pixelFormat = ChoosePixelFormat(hDC, &pfd)) == 0) {
-		MessageBox(hWnd, L"Unable to find a suitable pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, L"Unable to find a suitable pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
 
 	if ((SetPixelFormat(hDC, pixelFormat, &pfd)) == FALSE) {
-		MessageBox(hWnd, L"Error while setting pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, L"Error while setting pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
 
 	if ((hRC = wglCreateContext(hDC)) == NULL) {
-		MessageBox(hWnd, L"Error while creating OpenGL context!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, L"Error while creating OpenGL context!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
 
 	if ((wglMakeCurrent(hDC, hRC)) == FALSE) {
-		MessageBox(hWnd, L"Error while making OpenGL context current!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, L"Error while making OpenGL context current!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -354,7 +371,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglInitialize(eglDisplay, &eglVersionMajor, &eglVersionMinor))
 	{
 		int err = eglGetError();
-		MessageBox(hWnd, (L"eglInitialize failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, (L"eglInitialize failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -362,7 +379,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglBindAPI(EGL_OPENGL_ES_API))
 	{
 		int err = eglGetError();
-		MessageBox(hWnd, (L"eglBindAPI failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, (L"eglBindAPI failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -390,7 +407,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglChooseConfig(eglDisplay, configAttributes, &windowConfig, 1, &numConfigs))
 	{
 		int err = eglGetError();
-		MessageBox(hWnd, (L"eglChooseConfig failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, (L"eglChooseConfig failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -403,11 +420,11 @@ bool DisplayWindowEGL::_start()
 		surfaceAttributes[1] = EGL_TRUE;
 	}
 
-	eglSurface = eglCreateWindowSurface(eglDisplay, windowConfig, hWnd, surfaceAttributes);
+	eglSurface = eglCreateWindowSurface(eglDisplay, windowConfig, hRenderWindow, surfaceAttributes);
 	if (!eglSurface)
 	{
 		int err = eglGetError();
-		MessageBox(hWnd, (L"eglCreateWindowSurface failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, (L"eglCreateWindowSurface failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -445,7 +462,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglContext)
 	{
 		int err = eglGetError();
-		MessageBox(hWnd, (L"eglCreateContext failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hRenderWindow, (L"eglCreateContext failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -616,7 +633,11 @@ bool DisplayWindowWindows::_resizeWindow()
 		m_heightOffset = 0;
 		_setBufferSize();
 
-		return (SetWindowPos(hWnd, NULL, 0, 0, m_screenWidth, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW) == TRUE);
+		SetWindowPos(hWnd, NULL, 0, 0, m_screenWidth, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
+		if (hWnd != hRenderWindow)
+			SetWindowPos(hRenderWindow, NULL, 0, 0, m_screenWidth, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
+
+		return true;
 	} else {
 		m_screenWidth = m_width = config.video.windowedWidth;
 		m_screenHeight = config.video.windowedHeight;
@@ -636,8 +657,16 @@ bool DisplayWindowWindows::_resizeWindow()
 
 		AdjustWindowRect( &windowRect, GetWindowLong( hWnd, GWL_STYLE ), GetMenu( hWnd ) != NULL );
 
-		return (SetWindowPos( hWnd, NULL, 0, 0, windowRect.right - windowRect.left + 1,
-			windowRect.bottom - windowRect.top + 1 + toolRect.bottom - toolRect.top + 1, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE ) == TRUE);
+		SetWindowPos( hWnd, NULL, 0, 0, windowRect.right - windowRect.left + 1,
+			windowRect.bottom - windowRect.top + toolRect.bottom - toolRect.top, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE );
+		if (hWnd != hRenderWindow)
+		{
+			SetWindowPos(hRenderWindow, NULL
+				,0, 0
+				, windowRect.right - windowRect.left, config.video.windowedHeight + m_heightOffset
+				, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+		}
+		return true;
 	}
 }
 
