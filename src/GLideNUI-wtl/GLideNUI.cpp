@@ -67,6 +67,12 @@ void LoadConfig(Config* cfg, const char* _strFileName)
 	loadSettings(*cfg, _strFileName);
 }
 
+void SaveConfig(const Config* cfg, const char* _strFileName)
+{
+	// TODO: Linker weirdness - why this cast is a must have?
+	writeSettings(*(Config*) cfg, _strFileName);
+}
+
 void LoadCustomRomSettings(Config* cfg, const char* _strFileName, const char * _romName)
 {
 	loadCustomRomSettings(*cfg, _strFileName, _romName);

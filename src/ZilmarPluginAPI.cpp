@@ -55,4 +55,16 @@ EXPORT void CALL ReadScreen (void **dest, long *width, long *height)
 	api().ReadScreen(dest, width, height);
 }
 
+EXPORT bool CALL LunaSaveConfig(const char* name, void* data)
+{
+	api().LunaSaveConfig(data);
+	return true;
+}
+
+EXPORT bool CALL LunaLoadConfig(const char* name, void* data)
+{
+	api().LunaLoadConfig(data);
+	return true;
+}
+
 }

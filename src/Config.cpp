@@ -9,6 +9,64 @@
 #include "GBI.h"
 #include "wst.h"
 
+void Config::resetFbSettings()
+{
+	frameBufferEmulation.copyDepthToRDRAM = cdSoftwareRender;
+	frameBufferEmulation.copyFromRDRAM = 0;
+	frameBufferEmulation.copyAuxToRDRAM = 0;
+	frameBufferEmulation.copyToRDRAM = ctDoubleBuffer;
+	frameBufferEmulation.forceDepthBufferClear = 0;
+	frameBufferEmulation.aspect = a43;
+	frameBufferEmulation.bufferSwapMode = bsOnVerticalInterrupt;
+	frameBufferEmulation.nativeResFactor = 0;
+	frameBufferEmulation.fbInfoReadColorChunk = 0;
+	frameBufferEmulation.fbInfoReadDepthChunk = 1;
+	frameBufferEmulation.fbInfoDisabled = 0;
+	frameBufferEmulation.enableOverscan = 0;
+}
+
+bool Config::isFbSettingsDefault() const
+{
+	return frameBufferEmulation.copyDepthToRDRAM == cdSoftwareRender
+		&& frameBufferEmulation.copyFromRDRAM == 0
+		&& frameBufferEmulation.copyAuxToRDRAM == 0
+		&& frameBufferEmulation.copyToRDRAM == ctDoubleBuffer
+		&& frameBufferEmulation.forceDepthBufferClear == 0
+		&& frameBufferEmulation.aspect == a43
+		&& frameBufferEmulation.bufferSwapMode == bsOnVerticalInterrupt
+		&& frameBufferEmulation.nativeResFactor == 0
+		&& frameBufferEmulation.fbInfoReadColorChunk == 0
+		&& frameBufferEmulation.fbInfoReadDepthChunk == 1
+		&& frameBufferEmulation.fbInfoDisabled == 0
+		&& frameBufferEmulation.enableOverscan == 0;
+}
+
+void Config::resetGenericSettings()
+{
+	generalEmulation.enableLOD = 1;
+	generalEmulation.enableNoise = 1;
+	generalEmulation.enableHWLighting = 0;
+	generalEmulation.enableShadersStorage = 1;
+	generalEmulation.enableLegacyBlending = 0;
+	generalEmulation.enableFragmentDepthWrite = FragDepthWriteMode::adaptive;
+	graphics2D.correctTexrectCoords = tcDisable;
+	graphics2D.enableNativeResTexrects = 0;
+	graphics2D.bgMode = BGMode::bgStripped;
+}
+
+bool Config::isGenericSettingsDefault() const
+{
+	return generalEmulation.enableLOD == 1
+		&& generalEmulation.enableNoise == 1
+		&& generalEmulation.enableHWLighting == 0
+		&& generalEmulation.enableShadersStorage == 1
+		&& generalEmulation.enableLegacyBlending == 0
+		&& generalEmulation.enableFragmentDepthWrite == FragDepthWriteMode::adaptive
+		&& graphics2D.correctTexrectCoords == tcDisable
+		&& graphics2D.enableNativeResTexrects == 0
+		&& graphics2D.bgMode == BGMode::bgStripped;
+}
+
 void Config::resetToDefaults()
 {
 	version = CONFIG_VERSION_CURRENT;
@@ -38,6 +96,7 @@ void Config::resetToDefaults()
 	generalEmulation.enableShadersStorage = 1;
 	generalEmulation.enableLegacyBlending = 0;
 	generalEmulation.hacks = 0;
+	generalEmulation.hacksBase = 0;
 #if defined(OS_ANDROID) || defined(OS_IOS)
 	generalEmulation.enableFragmentDepthWrite = FragDepthWriteMode::adaptive;
 	generalEmulation.enableBlitScreenWorkaround = 0;

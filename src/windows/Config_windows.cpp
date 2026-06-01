@@ -33,3 +33,47 @@ void Config_LoadConfig()
 
 	dwnd().reset();
 }
+
+void LoadMiniConfig(MiniConfig* miniConfig)
+{
+	char strIniFolderPath[PLUGIN_PATH_SIZE];
+	api().FindPluginPath(strIniFolderPath);
+
+	LoadConfig(&config, strIniFolderPath);
+	miniConfig->fb = config.frameBufferEmulation.enable != 0;
+	miniConfig->fbDepthCompare = config.frameBufferEmulation.N64DepthCompare != 0;
+	miniConfig->fbDefault = config.isFbSettingsDefault();
+	miniConfig->emuDefault = config.isGenericSettingsDefault();
+	miniConfig->removeBlackBars = config.frameBufferEmulation.removeBlackBars != 0;
+	miniConfig->reduceInputDelay = config.frameBufferEmulation.instantInput != 0;
+	miniConfig->enableZeldaHacks = config.generalEmulation.hacksBase == (hack_ZeldaMonochrome | hack_ZeldaMM);
+}
+
+void SaveMiniConfig(const MiniConfig* miniConfig)
+{
+	char strIniFolderPath[PLUGIN_PATH_SIZE];
+	api().FindPluginPath(strIniFolderPath);
+
+	LoadConfig(&config, strIniFolderPath);
+
+	config.frameBufferEmulation.enable = miniConfig->fb ? 1 : 0;
+	config.frameBufferEmulation.N64DepthCompare = miniConfig->fbDepthCompare ? 1 : 0;
+	if (miniConfig->fbDefault)
+		config.resetFbSettings();
+	if (miniConfig->emuDefault)
+		config.resetGenericSettings();
+
+	config.frameBufferEmulation.removeBlackBars = miniConfig->removeBlackBars ? 1 : 0;
+	config.frameBufferEmulation.instantInput = miniConfig->reduceInputDelay ? 1 : 0;
+	if (miniConfig->enableZeldaHacks)
+		config.generalEmulation.hacksBase = (hack_ZeldaMonochrome | hack_ZeldaMM);
+	else
+		config.generalEmulation.hacksBase = 0;
+
+	config.validate();
+
+	SaveConfig(&config, strIniFolderPath);
+
+	// Assuming not needed because it is a private API called with rom not being running.
+	// PluginAPI::get().Restart();
+}

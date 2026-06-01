@@ -58,6 +58,7 @@ void _loadSettings(Config& config, GlSettings& settings)
 	// config.generalEmulation.enableFragmentDepthWrite = settings.value("enableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite).toInt(); //ini only
 	// config.generalEmulation.hacks |= settings.value("hacks", config.generalEmulation.hacks).toInt();														 //ini only
 	config.generalEmulation.enableCustomSettings = settings.value("enableCustomSettings", config.generalEmulation.enableCustomSettings).toInt();
+	config.generalEmulation.hacksBase = settings.value("hacksBase", 0).toInt();
 	settings.endGroup();
 
 	settings.beginGroup("graphics2D");
@@ -255,6 +256,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		// settings.setValue("enableHybridFilter", config.generalEmulation.enableHybridFilter);			 //ini only
 		// settings.setValue("enableFragmentDepthWrite", config.generalEmulation.enableFragmentDepthWrite); //ini only
 		settings.setValue("enableCustomSettings", config.generalEmulation.enableCustomSettings);
+		settings.setValue("hacksBase", config.generalEmulation.hacksBase);
 		settings.endGroup();
 
 		settings.beginGroup("graphics2D");
@@ -427,6 +429,7 @@ void saveCustomRomSettings(Config& config, const char * _strIniFolder, const cha
 	// WriteCustomSetting(generalEmulation, enableCoverage);
 	WriteCustomSetting(generalEmulation, enableNoise);
 	WriteCustomSetting(generalEmulation, enableShadersStorage);
+	WriteCustomSetting(generalEmulation, hacksBase);
 	settings.endGroup();
 
 	settings.beginGroup("graphics2D");

@@ -33,7 +33,6 @@
 #define IDD_INPUT_DIALOG                128
 #define IDD_TAB_ANGLE                   129
 #define IDR_RCDATA_CUSTOM_DEFAULT       133
-#define IDR_RCDATA_DEFAULT              134
 #define IDC_ABOUT_TITLE                 1001
 #define IDC_TABS                        1002
 #define IDC_CONTRIBUTORS                1003

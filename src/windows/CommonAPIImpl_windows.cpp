@@ -73,19 +73,6 @@ void PluginAPI::FindPluginPath(char * _strPath)
 			_write(fd, data, size);
 			_close(fd);
 		}
-
-		char* namePos = strstr(_strPath + length, "GLideN64");
-		strcpy(namePos, "GLideN64.ini");
-		fd = _open(_strPath, _O_BINARY | _O_WRONLY | _O_CREAT | _O_EXCL, 0666);
-		if (-1 != fd)
-		{
-			auto rc = FindResource(hInstance, MAKEINTRESOURCE(IDR_RCDATA_DEFAULT), RT_RCDATA);
-			auto res = LoadResource(hInstance, rc);
-			void* data = LockResource(res);
-			size_t size = SizeofResource(hInstance, rc);
-			_write(fd, data, size);
-			_close(fd);
-		}
 	}
 
 	std::string pluginPath(_strPath);

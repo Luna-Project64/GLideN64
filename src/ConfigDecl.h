@@ -61,6 +61,7 @@ struct Config
 		FragDepthWriteMode enableFragmentDepthWrite;
 		u32 enableBlitScreenWorkaround;
 		u32 hacks;
+		u32 hacksBase;
 #if defined(OS_ANDROID) || defined(OS_IOS)
 		u32 forcePolygonOffset;
 		f32 polygonOffsetFactor;
@@ -217,6 +218,23 @@ struct Config
 
 	void resetToDefaults();
 	void validate();
+
+	void resetGenericSettings();
+	void resetFbSettings();
+	bool isGenericSettingsDefault() const;
+	bool isFbSettingsDefault() const;
+};
+
+struct MiniConfig
+{
+	bool fb;
+	bool fbDepthCompare;
+	bool fbDefault;
+	bool emuDefault;
+
+	bool reduceInputDelay;
+	bool removeBlackBars;
+	bool enableZeldaHacks;
 };
 
 #endif // CONFIG_DECL_H

@@ -32,6 +32,8 @@ extern Config config;
 void Config_LoadConfig();
 #ifndef MUPENPLUSAPI
 void Config_DoConfig(/*HWND hParent*/);
+void LoadMiniConfig(MiniConfig* miniConfig);
+void SaveMiniConfig(const MiniConfig* miniConfig);
 #endif
 
 bool isHWLightingAllowed();

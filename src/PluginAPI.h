@@ -36,6 +36,9 @@ public:
 	void GetUserCachePath(char* _strPath);
 	bool isRomOpen() const { return m_bRomOpen; }
 
+	void LunaSaveConfig(const void* data);
+	void LunaLoadConfig(void* data);
+
 	void Restart();
 
 #ifndef MUPENPLUSAPI
