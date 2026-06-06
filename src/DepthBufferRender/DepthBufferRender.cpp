@@ -191,13 +191,13 @@ void Rasterize(vertexi * vtx, int vertices, int dzdx)
 		LeftSection();
 	} while (left_height <= 0);
 
-	u16 * destptr = (u16*)(RDRAM + gDP.depthImageAddress);
+	u16 * __restrict destptr = (u16*)(RDRAM + gDP.depthImageAddress);
 	int y1 = iceil(min_y);
 	if (y1 >= (int)gDP.scissor.lry)
 		return;
 	int shift;
 
-	const u16 * const zLUT = depthBufferList().getZLUT();
+	const u16 * __restrict const zLUT = depthBufferList().getZLUT();
 	const u32 depthBufferWidth = depthBufferList().getCurrent()->m_width;
 
 	for (;;) {

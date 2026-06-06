@@ -50,6 +50,7 @@ protected:
 	void _readScreen(void** _pDest, long* _pWidth, long* _pHeight) override;
 	void _readScreen2(void* _dest, int* _width, int* _height, int _front) override {}
 	graphics::ObjectHandle _getDefaultFramebuffer() override;
+	bool _borderlessDevice();
 
 	HDC		hDC;
 };
@@ -569,18 +570,21 @@ void DisplayWindowWindows::_changeWindow()
 	static HMENU	windowedMenu;
 
 	if (!m_bFullscreen) {
-		DEVMODE fullscreenMode;
-		memset( &fullscreenMode, 0, sizeof(DEVMODE) );
-		fullscreenMode.dmSize = sizeof(DEVMODE);
-		fullscreenMode.dmPelsWidth = config.video.fullscreenWidth;
-		fullscreenMode.dmPelsHeight = config.video.fullscreenHeight;
-		fullscreenMode.dmBitsPerPel = 32;
-		fullscreenMode.dmDisplayFrequency = config.video.fullscreenRefresh;
-		fullscreenMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+		if (!config.video.borderless)
+		{
+			DEVMODE fullscreenMode;
+			memset(&fullscreenMode, 0, sizeof(DEVMODE));
+			fullscreenMode.dmSize = sizeof(DEVMODE);
+			fullscreenMode.dmPelsWidth = config.video.fullscreenWidth;
+			fullscreenMode.dmPelsHeight = config.video.fullscreenHeight;
+			fullscreenMode.dmBitsPerPel = 32;
+			fullscreenMode.dmDisplayFrequency = config.video.fullscreenRefresh;
+			fullscreenMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
 
-		if (ChangeDisplaySettings( &fullscreenMode, CDS_FULLSCREEN ) != DISP_CHANGE_SUCCESSFUL) {
-			MessageBox( NULL, L"Failed to change display mode", pluginNameW, MB_ICONERROR | MB_OK );
-			return;
+			if (ChangeDisplaySettings(&fullscreenMode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) {
+				MessageBox(NULL, L"Failed to change display mode", pluginNameW, MB_ICONERROR | MB_OK);
+				return;
+			}
 		}
 
 		ShowCursor( FALSE );
@@ -623,11 +627,30 @@ void DisplayWindowWindows::_changeWindow()
 	}
 }
 
+bool DisplayWindowWindows::_borderlessDevice()
+{
+	DEVMODE deviceMode;
+	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &deviceMode) != 0) {
+		m_screenWidth = static_cast<u32>(deviceMode.dmPelsWidth);
+		m_screenHeight = static_cast<u32>(deviceMode.dmPelsHeight);
+		m_heightOffset = 0;
+		_setBufferSize();
+		SetWindowPos(hWnd, NULL, 0, 0, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
+		SetWindowPos(hRenderWindow, NULL, 0, 0, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
+		return true;
+	}
+
+	return false;
+}
+
 bool DisplayWindowWindows::_resizeWindow()
 {
 	RECT windowRect, statusRect, toolRect;
 
 	if (m_bFullscreen) {
+		if (config.video.borderless && _borderlessDevice())
+			return true;
+
 		m_screenWidth = config.video.fullscreenWidth;
 		m_screenHeight = config.video.fullscreenHeight;
 		m_heightOffset = 0;

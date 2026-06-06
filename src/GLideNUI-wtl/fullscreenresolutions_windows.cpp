@@ -60,6 +60,8 @@ void _fillFullscreenRefreshRateList(StringList & _listRefreshRates, int & _rateI
 	fullscreen.numRefreshRates = 0;
 	_rateIdx = 0;
 
+	fullscreen.refreshRate[fullscreen.numRefreshRates++] = 30;
+
 	int i = 0;
 	DEVMODE deviceMode;
 	char text[128];

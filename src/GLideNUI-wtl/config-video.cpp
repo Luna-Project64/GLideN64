@@ -108,7 +108,7 @@ void CVideoTab::ApplyLanguage(void) {
 	SetDlgItemTextW(IDC_TXT_WINDOWED_RESOLUTION, wGS(VIDEO_WINDOWED_RESOLUTION).c_str());
 	SetDlgItemTextW(IDC_TXT_ASPECT_RATIO, wGS(VIDEO_ASPECT_RATIO).c_str());
 	SetDlgItemTextW(IDC_CHK_VERTICAL_SYNC, wGS(VIDEO_VSYNC).c_str());
-	SetDlgItemTextW(IDC_CHK_THREADED_VIDEO, wGS(VIDEO_THREADED_VIDEO).c_str());
+	// SetDlgItemTextW(IDC_CHK_THREADED_VIDEO, wGS(VIDEO_THREADED_VIDEO).c_str());
 	SetDlgItemTextW(IDC_CHK_OVERSCAN, wGS(VIDEO_OVERSCAN).c_str());
 	SetDlgItemTextW(IDC_AA_GROUP, wGS(VIDEO_ANTI_ALIASING).c_str());
 	SetDlgItemTextW(IDC_NOAA_RADIO, wGS(VIDEO_NO_ANTI_ALIASING).c_str());
@@ -428,6 +428,7 @@ void CVideoTab::LoadSettings(bool /*blockCustomSettings*/) {
 	CWindow(GetDlgItem(IDC_ANISOTROPIC_LABEL)).SetWindowTextW(FormatStrW(L"%dx", m_AnisotropicSlider.GetPos()).c_str());
 
 	CButton(GetDlgItem(IDC_CHK_VERTICAL_SYNC)).SetCheck(config.video.verticalSync != 0 ? BST_CHECKED : BST_UNCHECKED);
+	CButton(GetDlgItem(IDC_CHK_BORDERLESS)).SetCheck(config.video.borderless != 0 ? BST_CHECKED : BST_UNCHECKED);
 
 	CButton(GetDlgItem(IDC_BILINEAR_3POINT)).SetCheck(config.texture.bilinearMode == BILINEAR_3POINT ? BST_CHECKED : BST_UNCHECKED);
 	CButton(GetDlgItem(IDC_BILINEAR_STANDARD)).SetCheck(config.texture.bilinearMode == BILINEAR_STANDARD ? BST_CHECKED : BST_UNCHECKED);
@@ -482,6 +483,7 @@ void CVideoTab::SaveSettings()
 	else if (AspectIndx == 3) { config.frameBufferEmulation.aspect = Config::aAdjust; }
 
 	config.video.verticalSync = CButton(GetDlgItem(IDC_CHK_VERTICAL_SYNC)).GetCheck() == BST_CHECKED;
+	config.video.borderless = CButton(GetDlgItem(IDC_CHK_BORDERLESS)).GetCheck() == BST_CHECKED;
 	config.frameBufferEmulation.enableOverscan = CButton(GetDlgItem(IDC_CHK_OVERSCAN)).GetCheck() == BST_CHECKED;
 
 	m_OverscanTabs[0]->GetValue(

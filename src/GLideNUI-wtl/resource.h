@@ -48,6 +48,8 @@
 #define IDC_CMB_ASPECT_RATIO            1013
 #define IDC_CHK_VERTICAL_SYNC           1014
 #define IDC_CHK_THREADED_VIDEO          1015
+#define IDC_CHK_VERTICAL_SYNC2          1015
+#define IDC_CHK_BORDERLESS              1015
 #define IDC_CHK_OVERSCAN                1016
 #define IDC_TAB_OVERSCAN                1017
 #define IDC_NOAA_RADIO                  1018

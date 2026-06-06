@@ -83,6 +83,7 @@ void Config::resetToDefaults()
 	video.fxaa = 0;
 	video.multisampling = 0;
 	video.verticalSync = 0;
+	video.borderless = 0;
 
 	texture.maxAnisotropy = 0;
 	texture.bilinearMode = BILINEAR_STANDARD;

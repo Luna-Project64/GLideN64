@@ -31,6 +31,7 @@ void _loadSettings(Config& config, GlSettings& settings)
 	// config.video.maxMultiSampling = settings.value("maxMultiSampling", config.video.maxMultiSampling).toInt();
 	config.video.fxaa = settings.value("fxaa", config.video.fxaa).toInt();
 	config.video.verticalSync = settings.value("verticalSync", config.video.verticalSync).toInt();
+	config.video.borderless = settings.value("borderless", config.video.borderless).toInt();
 	// config.video.threadedVideo = settings.value("threadedVideo", config.video.threadedVideo).toInt();
 	settings.endGroup();
 
@@ -230,6 +231,7 @@ void writeSettings(Config& config, const char * _strIniFolder)
 		settings.setValue("multisampling", config.video.multisampling);
 		// settings.setValue("maxMultiSampling", config.video.maxMultiSampling);
 		settings.setValue("fxaa", config.video.fxaa);
+		settings.setValue("borderless", config.video.borderless);
 		settings.setValue("verticalSync", config.video.verticalSync);
 		// settings.setValue("threadedVideo", config.video.threadedVideo);
 		settings.endGroup();
