@@ -684,9 +684,10 @@ bool DisplayWindowWindows::_resizeWindow()
 			windowRect.bottom - windowRect.top + toolRect.bottom - toolRect.top, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE );
 		if (hWnd != hRenderWindow)
 		{
+			m_heightOffset = 0;
 			SetWindowPos(hRenderWindow, NULL
 				,0, 0
-				, windowRect.right - windowRect.left, config.video.windowedHeight + m_heightOffset
+				, windowRect.right - windowRect.left, config.video.windowedHeight
 				, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 		}
 		return true;
