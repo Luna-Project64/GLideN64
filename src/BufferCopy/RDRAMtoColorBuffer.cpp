@@ -92,9 +92,9 @@ void RDRAMtoColorBuffer::addAddress(u32 _address, u32 _size)
 
 // Write the whole buffer
 template <typename TSrc>
-bool _copyBufferFromRdram(u32 _address, u32* _dst, u32(*converter)(TSrc _c, bool _bCFB), u32 _xor, u32 _x0, u32 _y0, u32 _width, u32 _height, bool _fullAlpha)
+static inline bool _copyBufferFromRdram(u32 _address, u32* __restrict _dst, u32(*converter)(TSrc _c, bool _bCFB), u32 _xor, u32 _x0, u32 _y0, u32 _width, u32 _height, bool _fullAlpha)
 {
-	TSrc * src = reinterpret_cast<TSrc*>(RDRAM + _address);
+	TSrc * __restrict src = reinterpret_cast<TSrc* __restrict>(RDRAM + _address);
 	const u32 bound = (RDRAMSize + 1 - _address) >> (sizeof(TSrc) / 2);
 	TSrc col;
 	u32 idx;
@@ -118,7 +118,7 @@ bool _copyBufferFromRdram(u32 _address, u32* _dst, u32(*converter)(TSrc _c, bool
 
 // Write only pixels provided with FBWrite
 template <typename TSrc>
-bool _copyPixelsFromRdram(u32 _address, const std::vector<u32> & _vecAddress, u32* _dst, u32(*converter)(TSrc _c, bool _bCFB), u32 _xor, u32 _width, u32 _height, bool _fullAlpha)
+static inline bool _copyPixelsFromRdram(u32 _address, const std::vector<u32> & _vecAddress, u32* _dst, u32(*converter)(TSrc _c, bool _bCFB), u32 _xor, u32 _width, u32 _height, bool _fullAlpha)
 {
 	memset(_dst, 0, _width*_height*sizeof(u32));
 	TSrc * src = reinterpret_cast<TSrc*>(RDRAM + _address);
@@ -143,7 +143,7 @@ bool _copyPixelsFromRdram(u32 _address, const std::vector<u32> & _vecAddress, u3
 	return summ != 0;
 }
 
-static
+static inline
 u32 RGBA16ToABGR32(u16 col, bool _fullAlpha)
 {
 	u32 r, g, b, a;
@@ -157,7 +157,7 @@ u32 RGBA16ToABGR32(u16 col, bool _fullAlpha)
 	return ((a << 24) | (b << 16) | (g << 8) | r);
 }
 
-static
+static inline
 u32 RGBA32ToABGR32(u32 col, bool _fullAlpha)
 {
 	u32 r, g, b, a;
@@ -189,7 +189,7 @@ void RDRAMtoColorBuffer::_copyFromRDRAM(u32 _height, bool _fullAlpha)
 	m_pTexture->width = width;
 	m_pTexture->height = height;
 
-	u32 * pDst = nullptr;
+	u32 * __restrict pDst = nullptr;
 	std::unique_ptr<u8[]> dstData;
 
 	//If not using float, the initial coversion will already be correct
