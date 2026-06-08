@@ -83,7 +83,7 @@ EXPORT void CALL FBWList(FrameBufferModifyEntry *plist, unsigned int size)
 char gPluginConfigDir[MAX_PATH]{};
 namespace Zilmar
 {
-    short Set_PluginConfigDir = 0;
+	short Set_RdramSize = 0;
     enum SettingLocation
     {
         SettingType_ConstString = 0,
@@ -161,6 +161,8 @@ extern "C" EXPORT void CALL SetSettingInfo2(Zilmar::PLUGIN_SETTINGS2* info)
 extern "C" EXPORT void CALL PluginLoaded(void)
 {
     int pluginConfigDir = Zilmar::FindSystemSettingId("Config Base Dir");
+    Zilmar::Set_RdramSize = Zilmar::FindSystemSettingId("RDRamSize");
+
     if (pluginConfigDir)
     {
         const char* cfg = Zilmar::g_PluginSettings.GetSettingSz(Zilmar::g_PluginSettings.handle, pluginConfigDir, gPluginConfigDir, sizeof(gPluginConfigDir));
@@ -168,4 +170,12 @@ extern "C" EXPORT void CALL PluginLoaded(void)
             *gPluginConfigDir = '\0';
     }
 }
+}
+
+uint32_t QueryRdramSize()
+{
+    if (!Zilmar::Set_RdramSize)
+        return 0;
+
+    return Zilmar::GetSystemSetting(Zilmar::Set_RdramSize) - 1;
 }

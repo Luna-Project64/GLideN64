@@ -257,10 +257,14 @@ void setDepthClearColor()
 		DepthClearColor = 0xFFFCFFFC;
 }
 
+extern uint32_t QueryRdramSize();
 void RSP_Init()
 {
+	RDRAMSize = QueryRdramSize();
+
 	if (RDRAMSize == 0) {
 #ifdef OS_WINDOWS
+
 		// Calculate RDRAM size by intentionally causing an access violation
 		u32 test;
 		try
