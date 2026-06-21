@@ -635,7 +635,8 @@ bool DisplayWindowWindows::_borderlessDevice()
 		m_screenHeight = static_cast<u32>(deviceMode.dmPelsHeight);
 		m_heightOffset = 0;
 		_setBufferSize();
-		SetWindowPos(hWnd, NULL, 0, 0, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
+        // While deviceMode.position on Windows is always 0,0, Linux emulation is broken so respect it.
+		SetWindowPos(hWnd, NULL, deviceMode.dmPosition.x, deviceMode.dmPosition.y, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
 		SetWindowPos(hRenderWindow, NULL, 0, 0, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
 		return true;
 	}

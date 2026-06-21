@@ -224,9 +224,15 @@ void Config::validate()
 		}
 	}
 
-	if (config.angle.renderer == config.arDirectX11 && isWine())
+	bool wine = isWine();
+	if (config.angle.renderer == config.arDirectX11 && wine)
 	{
 		config.angle.renderer = config.arOpenGL;
+	}
+
+	if (wine)
+	{
+		config.video.borderless = true;
 	}
 
 	if (frameBufferEmulation.enable != 0 && frameBufferEmulation.N64DepthCompare != 0)
