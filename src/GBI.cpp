@@ -204,7 +204,17 @@ void GBIInfo::_makeCurrent(MicrocodeInfo * _pCurrent)
 		switch (config.generalEmulation.enableFragmentDepthWrite)
 		{
 			case Config::FragDepthWriteMode::adaptive:
-				DepthFragmentWrite = !LegacySm64ToolsHacks;
+				if (LegacySm64ToolsHacks)
+				{
+					if (0 == strcmp(RSP.romname, "SSA"))
+						DepthFragmentWrite = true;
+					else
+						DepthFragmentWrite = false;
+				}
+				else
+				{
+					DepthFragmentWrite = true;
+				}
 				break;
 			case Config::FragDepthWriteMode::enabled:
 				DepthFragmentWrite = true;
