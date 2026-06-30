@@ -258,6 +258,11 @@ void PluginAPI::_initiateGFX(const GFX_INFO & _gfxInfo) const {
 	REG.SP_STATUS = nullptr;
 }
 
+void PluginAPI::SetSpStatus(uint32_t* v) const
+{
+    REG.SP_STATUS = v;
+}
+
 void PluginAPI::ChangeWindow()
 {
 	LOG(LOG_APIFUNC, "ChangeWindow\n");

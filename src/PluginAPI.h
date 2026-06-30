@@ -29,6 +29,7 @@ public:
 	void ShowCFB();
 	void UpdateScreen();
 	int InitiateGFX(const GFX_INFO & _gfxInfo);
+	void SetSpStatus(uint32_t*) const;
 	void ChangeWindow();
 
 	void FindPluginPath(char* _strPath);

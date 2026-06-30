@@ -72,4 +72,9 @@ EXPORT void CALL LunaRegisterRenderWindowApi(void* data)
 	api().LunaRegisterRenderWindowApi(data);
 }
 
+EXPORT void CALL LunaSetSpStatus(uint32_t* value)
+{
+	api().SetSpStatus(value);
+}
+
 }
