@@ -247,8 +247,8 @@ bool DepthBufferToRDRAM::_copy(u32 _startAddress, u32 _endAddress)
 	if (pixelData == nullptr)
 		return false;
 
-	f32 * ptr_src = (f32*)pixelData;
-	u16 *ptr_dst = (u16*)(RDRAM + _startAddress);
+	f32 * __restrict ptr_src = (f32*)pixelData;
+	u16 * __restrict ptr_dst = (u16*)(RDRAM + _startAddress);
 
 	std::vector<f32> srcBuf(width * height);
 	memcpy(srcBuf.data(), ptr_src, width * height * sizeof(f32));

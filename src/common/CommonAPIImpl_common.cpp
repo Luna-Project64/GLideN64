@@ -49,11 +49,113 @@ private:
 };
 #endif
 
+#ifdef RSPTHREAD
+#define PAGE_SIZE 4096
+#define MAX_PAGES (8*1024*1024) / PAGE_SIZE
+static uint16_t sUnprotectedPages[MAX_PAGES];
+static uint16_t sUnprotectedPagesCount = 0;
+
+static int32_t memoryFilter(uint32_t dwExptCode, void* lpExceptionPointer)
+{
+	LPEXCEPTION_POINTERS lpEP = (LPEXCEPTION_POINTERS)lpExceptionPointer;
+	uint32_t MemAddress = (char*)lpEP->ExceptionRecord->ExceptionInformation[1] - (char*)RDRAM;
+
+	if (MemAddress >= RDRAMSize)
+	{
+		return EXCEPTION_EXECUTE_HANDLER;
+    }
+
+	uint32_t start = MemAddress;
+    uint32_t end = MemAddress + 16; // assume SSE2 will not access more than 16 bytes at once
+
+    uint16_t startPage = start / PAGE_SIZE;
+    uint16_t endPage = end / PAGE_SIZE;
+
+	for (int page = startPage; page <= endPage; page++)
+	{
+		void* addr = (void*)((uintptr_t)RDRAM + page * PAGE_SIZE);
+        DWORD oldProtect;
+		BOOL ok = VirtualProtect(addr, PAGE_SIZE, PAGE_READWRITE, &oldProtect);
+		if (ok)
+		{
+			if (oldProtect == PAGE_READONLY)
+			{
+				sUnprotectedPages[sUnprotectedPagesCount++] = page;
+			}
+			else
+			{
+				// this should never happen... something is up with protection
+                VirtualProtect(addr, PAGE_SIZE, oldProtect, &oldProtect);
+            }
+		}
+	}
+
+	return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void memoryProtectionInit()
+{
+	sUnprotectedPagesCount = 0;
+}
+
+static void memoryProtectionRollback()
+{
+	for (uint16_t i = 0; i < sUnprotectedPagesCount; i++)
+	{
+		uint16_t page = sUnprotectedPages[i];
+		void* addr = (void*)((uintptr_t)RDRAM + page * PAGE_SIZE);
+		DWORD oldProtect;
+		VirtualProtect(addr, PAGE_SIZE, PAGE_READONLY, &oldProtect);
+	}
+}
+
+struct MemoryProtectionGuard
+{
+	MemoryProtectionGuard()
+	{
+		memoryProtectionInit();
+	}
+	~MemoryProtectionGuard()
+	{
+		memoryProtectionRollback();
+	}
+};
+
+static void doProcessDList()
+{
+	GLContextGuard lck;
+	MemoryProtectionGuard memGuard;
+	__try
+	{
+		RSP_ProcessDList();
+	}
+	__except (memoryFilter(_exception_code(), _exception_info()))
+	{ }
+}
+
+static void doProcessRDPList()
+{
+	GLContextGuard lck;
+	if (!Combiner_IsInit())
+	{
+		Combiner_Init();
+	}
+
+	MemoryProtectionGuard memGuard;
+	__try
+	{
+		RDP_ProcessRDPList();
+	}
+	__except (memoryFilter(_exception_code(), _exception_info()))
+	{ }
+}
+#endif
+
 void PluginAPI::ProcessDList()
 {
 	LOG(LOG_APIFUNC, "ProcessDList\n");
 #ifdef RSPTHREAD
-	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; RSP_ProcessDList(); }), false))
+	if (__builtin_expect(!m_executor.sync(doProcessDList), false))
 	{
 		RSP_ProcessDList_Trivial();
 	}
@@ -66,7 +168,7 @@ void PluginAPI::ProcessRDPList()
 {
 	LOG(LOG_APIFUNC, "ProcessRDPList\n");
 #ifdef RSPTHREAD
-	if (__builtin_expect(!m_executor.sync([]() { GLContextGuard lck; if (!Combiner_IsInit()) { Combiner_Init(); } RDP_ProcessRDPList(); }), false))
+	if (__builtin_expect(!m_executor.sync(doProcessRDPList), false))
 	{
 		RDP_ProcessRDPList_Trivial();
 	}

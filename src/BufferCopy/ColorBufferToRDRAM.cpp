@@ -268,8 +268,8 @@ void ColorBufferToRDRAM::_copy(u32 _startAddress, u32 _endAddress, bool _sync)
 		return;
 
 	if (m_pCurFrameBuffer->m_size == G_IM_SIZ_32b) {
-		u32 *ptr_src = (u32*)pPixels;
-		u32 *ptr_dst = (u32*)(RDRAM + _startAddress);
+		u32 * __restrict ptr_src = (u32*)pPixels;
+		u32 * __restrict ptr_dst = (u32*)(RDRAM + _startAddress);
 
 		if (!FBInfo::fbInfo.isSupported() && config.frameBufferEmulation.copyFromRDRAM != 0) {
 			memset(ptr_dst, 0, numPixels * 4);

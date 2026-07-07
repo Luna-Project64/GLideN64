@@ -2,4 +2,4 @@
 #include "Platform.h"
 #include "Types.h"
 
-bool isMemoryWritable(void * ptr, size_t byteCount);
+static bool isMemoryWritable(void* ptr, size_t byteCount) { return true; }

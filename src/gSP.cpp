@@ -1188,15 +1188,6 @@ void gSPProcessVertex(u32 v, SPVertex * __restrict spVtx)
 		}
 	}
 
-	if (gSP.geometryMode & G_ATTROFFSET_ST_ENABLE)
-	{
-		for (int i = 0; i < VNUM; ++i) {
-			SPVertex& vtx = spVtx[v + i];
-			vtx.s += gSP.attrOffset.s / gSP.texture.scales;
-			vtx.t += gSP.attrOffset.t / gSP.texture.scalet;
-		}
-	}
-
 	if (gSP.matrix.billboard)
 		gSPBillboardVertex<VNUM>(v, spVtx);
 
