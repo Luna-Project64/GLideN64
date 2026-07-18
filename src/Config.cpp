@@ -21,7 +21,7 @@ void Config::resetFbSettings()
 	frameBufferEmulation.nativeResFactor = 0;
 	frameBufferEmulation.fbInfoReadColorChunk = 0;
 	frameBufferEmulation.fbInfoReadDepthChunk = 1;
-	frameBufferEmulation.fbInfoDisabled = 1;
+	frameBufferEmulation.fbInfoDisabled = 0;
 	frameBufferEmulation.enableOverscan = 0;
 }
 
@@ -37,7 +37,7 @@ bool Config::isFbSettingsDefault() const
 		&& frameBufferEmulation.nativeResFactor == 0
 		&& frameBufferEmulation.fbInfoReadColorChunk == 0
 		&& frameBufferEmulation.fbInfoReadDepthChunk == 1
-		&& frameBufferEmulation.fbInfoDisabled == 1
+		&& frameBufferEmulation.fbInfoDisabled == 0
 		&& frameBufferEmulation.enableOverscan == 0;
 }
 
@@ -124,7 +124,11 @@ void Config::resetToDefaults()
 	frameBufferEmulation.nativeResFactor = 0;
 	frameBufferEmulation.fbInfoReadColorChunk = 0;
 	frameBufferEmulation.fbInfoReadDepthChunk = 1;
+#ifndef MUPENPLUSAPI
+	frameBufferEmulation.fbInfoDisabled = 0;
+#else
 	frameBufferEmulation.fbInfoDisabled = 1;
+#endif
 	frameBufferEmulation.enableOverscan = 0;
 	frameBufferEmulation.instantInput = 0;
 	frameBufferEmulation.noForceGL = 0;
