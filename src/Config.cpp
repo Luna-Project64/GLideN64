@@ -215,8 +215,6 @@ static bool isWine(void)
 
 void Config::validate()
 {
-	config.angle.directComposition = false;
-
 	// Only OpenGL is capable of FB emulation
 	if (frameBufferEmulation.enable != 0)
 	{
