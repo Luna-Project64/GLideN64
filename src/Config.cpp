@@ -43,6 +43,7 @@ bool Config::isFbSettingsDefault() const
 
 void Config::resetGenericSettings()
 {
+	video.borderless = 1;
 	generalEmulation.enableLOD = 1;
 	generalEmulation.enableNoise = 1;
 	generalEmulation.enableHWLighting = 0;
@@ -83,7 +84,7 @@ void Config::resetToDefaults()
 	video.fxaa = 0;
 	video.multisampling = 0;
 	video.verticalSync = 0;
-	video.borderless = 0;
+	video.borderless = 1;
 
 	texture.maxAnisotropy = 0;
 	texture.bilinearMode = BILINEAR_STANDARD;

@@ -296,6 +296,12 @@ void DisplayWindowWGL::leaveContext()
 #define EGL_PLATFORM_ANGLE_DEVICE_ID_HIGH_ANGLE 0x34D6
 #define EGL_PLATFORM_ANGLE_DEVICE_ID_LOW_ANGLE 0x34D7
 
+#define EGL_PLATFORM_ANGLE_DEBUG_LAYERS_ENABLED_ANGLE 0x3451
+
+#define EGL_EXPERIMENTAL_PRESENT_PATH_ANGLE 0x33A4
+#define EGL_EXPERIMENTAL_PRESENT_PATH_FAST_ANGLE 0x33A9
+#define EGL_EXPERIMENTAL_PRESENT_PATH_COPY_ANGLE 0x33AA
+
 extern "C" void loader_initialize(void);
 extern "C" void loader_release(void);
 
@@ -361,6 +367,12 @@ bool DisplayWindowEGL::_start()
 		dispOptions.push_back(high);
 		dispOptions.push_back(EGL_PLATFORM_ANGLE_DEVICE_ID_LOW_ANGLE);
 		dispOptions.push_back(low);
+	}
+
+	if (Config::arDirectX11 == config.angle.renderer)
+	{
+		dispOptions.push_back(EGL_EXPERIMENTAL_PRESENT_PATH_ANGLE);
+		dispOptions.push_back(EGL_EXPERIMENTAL_PRESENT_PATH_FAST_ANGLE);
 	}
 
 	dispOptions.push_back(EGL_NONE);
