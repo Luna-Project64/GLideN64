@@ -38,7 +38,7 @@ extern void SaveScreenshot(const char* _folder, const char* _name, int _width, i
 class DisplayWindowWindows : public DisplayWindow
 {
 protected:
-	DisplayWindowWindows() : hDC(NULL) { }
+	DisplayWindowWindows() = default;
 
 	bool _start() override;
 	void _stop() override;
@@ -51,8 +51,6 @@ protected:
 	void _readScreen2(void* _dest, int* _width, int* _height, int _front) override {}
 	graphics::ObjectHandle _getDefaultFramebuffer() override;
 	bool _borderlessDevice();
-
-	HDC		hDC;
 };
 
 class DisplayWindowEGL final : public DisplayWindowWindows
@@ -75,7 +73,7 @@ private:
 class DisplayWindowWGL final : public DisplayWindowWindows
 {
 public:
-	DisplayWindowWGL() : hRC(NULL) {}
+	DisplayWindowWGL() : hRC(NULL), hDC(NULL) {}
 
 private:
 	bool _start() override;
@@ -85,6 +83,7 @@ private:
 	void leaveContext() override;
 
 	HGLRC	hRC;
+	HDC		hDC;
 };
 
 static std::unique_ptr<DisplayWindow> TheWindow;
@@ -136,21 +135,11 @@ bool DisplayWindowWindows::_start()
 	hWndThread = GetWindowThreadProcessId(hWnd, nullptr);
 	hRenderWindow = s_RenderApi.CreateRenderWindow ? s_RenderApi.CreateRenderWindow(hWnd) : hWnd;
 
-	if ((hDC = GetDC(hRenderWindow)) == NULL) {
-		MessageBox(hRenderWindow, L"Error while getting a device context!", pluginNameW, MB_ICONERROR | MB_OK);
-		return false;
-	}
-
 	return true;
 }
 
 void DisplayWindowWindows::_stop()
 {
-	if (hDC != NULL) {
-		ReleaseDC(hRenderWindow, hDC);
-		hDC = NULL;
-	}
-
 	if (s_RenderApi.DestroyRenderWindow)
 	{
 		s_RenderApi.DestroyRenderWindow(hWnd, hRenderWindow);
@@ -161,6 +150,12 @@ void DisplayWindowWindows::_stop()
 bool DisplayWindowWGL::_start()
 {
 	DisplayWindowWindows::_start();
+
+	if ((hDC = GetDC(hRenderWindow)) == NULL) {
+		MessageBox(hRenderWindow, L"Error while getting a device context!", pluginNameW, MB_ICONERROR | MB_OK);
+		return false;
+	}
+
 	m_bHasFlushControl = false;
 
 	int pixelFormat;
@@ -259,6 +254,11 @@ void DisplayWindowWGL::_stop()
 	if (hRC != NULL) {
 		wglDeleteContext(hRC);
 		hRC = NULL;
+	}
+
+	if (hDC != NULL) {
+		ReleaseDC(hRenderWindow, hDC);
+		hDC = NULL;
 	}
 
 	DisplayWindowWindows::_stop();
@@ -378,7 +378,7 @@ bool DisplayWindowEGL::_start()
 	dispOptions.push_back(EGL_NONE);
 	dispOptions.push_back(EGL_NONE);
 
-	eglDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, hDC, dispOptions.data());
+	eglDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, NULL, dispOptions.data());
 	EGLint eglVersionMajor, eglVersionMinor;
 
 	if (!eglInitialize(eglDisplay, &eglVersionMajor, &eglVersionMinor))
