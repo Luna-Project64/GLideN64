@@ -150,6 +150,8 @@ void DisplayWindowWindows::_stop()
 bool DisplayWindowWGL::_start()
 {
 	DisplayWindowWindows::_start();
+	if (!_resizeWindow())
+        return false;
 
 	if ((hDC = GetDC(hRenderWindow)) == NULL) {
 		MessageBox(hRenderWindow, L"Error while getting a device context!", pluginNameW, MB_ICONERROR | MB_OK);
@@ -182,25 +184,25 @@ bool DisplayWindowWGL::_start()
 	};
 
 	if ((pixelFormat = ChoosePixelFormat(hDC, &pfd)) == 0) {
-		MessageBox(hRenderWindow, L"Unable to find a suitable pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, L"Unable to find a suitable pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
 
 	if ((SetPixelFormat(hDC, pixelFormat, &pfd)) == FALSE) {
-		MessageBox(hRenderWindow, L"Error while setting pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, L"Error while setting pixel format!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
 
 	if ((hRC = wglCreateContext(hDC)) == NULL) {
-		MessageBox(hRenderWindow, L"Error while creating OpenGL context!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, L"Error while creating OpenGL context!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
 
 	if ((wglMakeCurrent(hDC, hRC)) == FALSE) {
-		MessageBox(hRenderWindow, L"Error while making OpenGL context current!", pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, L"Error while making OpenGL context current!", pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -240,7 +242,7 @@ bool DisplayWindowWGL::_start()
 		}
 	}
 
-	return _resizeWindow();
+	return true;
 }
 
 void DisplayWindowWGL::_stop()
@@ -318,6 +320,8 @@ extern int gNumericVersionOverride;
 bool DisplayWindowEGL::_start()
 {
 	DisplayWindowWindows::_start();
+	if (!_resizeWindow())
+        return false;
 
 	m_bHasFlushControl = true;
 	egl::InitializeProcess();
@@ -380,7 +384,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglInitialize(eglDisplay, &eglVersionMajor, &eglVersionMinor))
 	{
 		int err = eglGetError();
-		MessageBox(hRenderWindow, (L"eglInitialize failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, (L"eglInitialize failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -388,7 +392,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglBindAPI(EGL_OPENGL_ES_API))
 	{
 		int err = eglGetError();
-		MessageBox(hRenderWindow, (L"eglBindAPI failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, (L"eglBindAPI failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -416,7 +420,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglChooseConfig(eglDisplay, configAttributes, &windowConfig, 1, &numConfigs))
 	{
 		int err = eglGetError();
-		MessageBox(hRenderWindow, (L"eglChooseConfig failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, (L"eglChooseConfig failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -433,7 +437,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglSurface)
 	{
 		int err = eglGetError();
-		MessageBox(hRenderWindow, (L"eglCreateWindowSurface failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, (L"eglCreateWindowSurface failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -471,7 +475,7 @@ bool DisplayWindowEGL::_start()
 	if (!eglContext)
 	{
 		int err = eglGetError();
-		MessageBox(hRenderWindow, (L"eglCreateContext failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, (L"eglCreateContext failed: " + std::to_wstring(err)).c_str(), pluginNameW, MB_ICONERROR | MB_OK);
 		_stop();
 		return false;
 	}
@@ -480,7 +484,7 @@ bool DisplayWindowEGL::_start()
 
 	eglSwapInterval(eglDisplay, config.video.verticalSync);
 
-	return _resizeWindow();
+	return true;
 }
 
 void DisplayWindowEGL::_stop()
