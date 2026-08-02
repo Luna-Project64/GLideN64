@@ -217,16 +217,12 @@ bool DisplayWindowWGL::_start()
 			PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
 				(PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 
-			GLint majorVersion = 0;
-			glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
-			GLint minorVersion = 0;
-			glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
-
 			const int attribList[] =
 			{
-				WGL_CONTEXT_MAJOR_VERSION_ARB, majorVersion,
-				WGL_CONTEXT_MINOR_VERSION_ARB, minorVersion,
+				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+				WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+				WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 				0        //End
 			};
 
