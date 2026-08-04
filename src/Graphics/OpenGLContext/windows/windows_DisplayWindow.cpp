@@ -147,7 +147,7 @@ bool DisplayWindowWindows::_start()
 
 void DisplayWindowWindows::_stop()
 {
-	if (s_RenderApi.DestroyRenderWindow)
+	if (hWnd != hRenderWindow)
 	{
 		s_RenderApi.DestroyRenderWindow(hWnd, hRenderWindow);
 	}
