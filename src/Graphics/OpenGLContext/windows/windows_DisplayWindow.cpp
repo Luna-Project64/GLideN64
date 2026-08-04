@@ -133,7 +133,14 @@ bool DisplayWindowWindows::_start()
 		hWnd = GetActiveWindow();
 
 	hWndThread = GetWindowThreadProcessId(hWnd, nullptr);
-	hRenderWindow = s_RenderApi.CreateRenderWindow ? s_RenderApi.CreateRenderWindow(hWnd) : hWnd;
+	if (s_RenderApi.CreateRenderWindow && config.angle.renderer != Config::arDirectX11)
+	{
+		hRenderWindow = s_RenderApi.CreateRenderWindow(hWnd);
+	}
+	else
+	{
+		hRenderWindow = hWnd;
+	}
 
 	return true;
 }
