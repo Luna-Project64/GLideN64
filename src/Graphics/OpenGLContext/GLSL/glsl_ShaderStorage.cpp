@@ -24,7 +24,7 @@
 
 using namespace glsl;
 
-#define SHADER_STORAGE_FOLDER_NAME "shaders_v2"
+#define SHADER_STORAGE_FOLDER_NAME "shaders_v3"
 
 static
 std::string getStorageFileName(const opengl::GLInfo & _glinfo, const char * _fileExtension)
