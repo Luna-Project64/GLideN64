@@ -133,11 +133,16 @@ bool DisplayWindowWindows::_start()
 		hWnd = GetActiveWindow();
 
 	hWndThread = GetWindowThreadProcessId(hWnd, nullptr);
-	if (s_RenderApi.CreateRenderWindow && config.angle.renderer != Config::arDirectX11)
+	// Render into the host provided child window whenever one is available, including for
+	// DirectX11. hWnd is the frame window and owns the status bar as a child control; a DXGI
+	// swap chain presents to the whole client area and honours no child clipping, so anything
+	// presented onto hWnd covers the status bar with the undrawn bottom strip of the surface.
+	if (s_RenderApi.CreateRenderWindow)
 	{
 		hRenderWindow = s_RenderApi.CreateRenderWindow(hWnd);
 	}
-	else
+
+	if (hRenderWindow == NULL)
 	{
 		hRenderWindow = hWnd;
 	}
@@ -147,7 +152,7 @@ bool DisplayWindowWindows::_start()
 
 void DisplayWindowWindows::_stop()
 {
-	if (hWnd != hRenderWindow)
+	if (hRenderWindow != NULL && hRenderWindow != hWnd && s_RenderApi.DestroyRenderWindow)
 	{
 		s_RenderApi.DestroyRenderWindow(hWnd, hRenderWindow);
 	}
@@ -656,7 +661,8 @@ bool DisplayWindowWindows::_borderlessDevice()
 		_setBufferSize();
         // While deviceMode.position on Windows is always 0,0, Linux emulation is broken so respect it.
 		SetWindowPos(hWnd, NULL, deviceMode.dmPosition.x, deviceMode.dmPosition.y, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
-		SetWindowPos(hRenderWindow, NULL, 0, 0, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
+		if (hWnd != hRenderWindow)
+			SetWindowPos(hRenderWindow, NULL, 0, 0, m_screenWidth + 1, m_screenHeight, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
 		return true;
 	}
 
@@ -705,9 +711,11 @@ bool DisplayWindowWindows::_resizeWindow()
 		if (hWnd != hRenderWindow)
 		{
 			m_heightOffset = 0;
+			// windowRect has been through AdjustWindowRect, so its width includes the frame
+			// borders. The render window has to match the client area instead.
 			SetWindowPos(hRenderWindow, NULL
 				,0, 0
-				, windowRect.right - windowRect.left, config.video.windowedHeight
+				, config.video.windowedWidth, config.video.windowedHeight
 				, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 		}
 		return true;
