@@ -121,16 +121,33 @@ struct MemoryProtectionGuard
 	}
 };
 
-static void doProcessDList()
+static void doProcessDListImpl()
 {
-	GLContextGuard lck;
-	MemoryProtectionGuard memGuard;
 	__try
 	{
 		RSP_ProcessDList();
 	}
 	__except (memoryFilter(_exception_code(), _exception_info()))
-	{ }
+	{
+	}
+}
+
+static void doProcessDList()
+{
+	GLContextGuard lck;
+	MemoryProtectionGuard memGuard;
+	doProcessDListImpl();
+}
+
+static void doProcessRDPListImpl()
+{
+	__try
+	{
+		RDP_ProcessRDPList();
+	}
+	__except (memoryFilter(_exception_code(), _exception_info()))
+	{
+	}
 }
 
 static void doProcessRDPList()
@@ -142,12 +159,7 @@ static void doProcessRDPList()
 	}
 
 	MemoryProtectionGuard memGuard;
-	__try
-	{
-		RDP_ProcessRDPList();
-	}
-	__except (memoryFilter(_exception_code(), _exception_info()))
-	{ }
+	doProcessRDPListImpl();
 }
 #endif
 

@@ -46,12 +46,8 @@
     <PlatformToolset>ClangCL</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LLVMToolsVersion>19</LLVMToolsVersion>
-    <LLVMInstallDir>D:/VisualStudio/IDE/VC/Tools/Llvm</LLVMInstallDir>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LLVMInstallDir>D:/VisualStudio/IDE/VC/Tools/Llvm</LLVMInstallDir>
-    <LLVMToolsVersion>19</LLVMToolsVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
