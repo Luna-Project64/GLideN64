@@ -1,4 +1,17 @@
 #include "QueueExecutor.h"
+
+struct LunaThreadBoosterApi
+{
+    void (*BoostCurrentThread)();
+    void (*UnboostCurrentThread)();
+};
+struct LunaThreadBoosterApi s_ThreadBoosterApi = {};
+
+void registerThreadBoosterApi(void* api)
+{
+    s_ThreadBoosterApi = *(const LunaThreadBoosterApi*)api;
+}
+
 void QueueExecutor::start(TaskStart fn) {
     if (running_)
         return;
@@ -68,6 +81,9 @@ void QueueExecutor::stopWait()
 }
 
 void QueueExecutor::loop() {
+    if (s_ThreadBoosterApi.BoostCurrentThread)
+        s_ThreadBoosterApi.BoostCurrentThread();
+
     std::unique_lock<std::mutex> lck(mutex_);
     while (running_) {
         if (!hasPendingTasksForExecutor())
@@ -81,4 +97,7 @@ void QueueExecutor::loop() {
         lck.lock();
         tasks_.pop_front();
     }
+
+    if (s_ThreadBoosterApi.UnboostCurrentThread)
+        s_ThreadBoosterApi.UnboostCurrentThread();
 }

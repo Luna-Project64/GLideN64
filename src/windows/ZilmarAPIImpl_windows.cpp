@@ -40,11 +40,17 @@ void PluginAPI::LunaRegisterRenderWindowApi(void* data)
 	registerRenderApi(data);
 }
 
+extern void registerThreadBoosterApi(void* api);
+void PluginAPI::LunaRegisterThreadBoosterApi(void* data)
+{
+	registerThreadBoosterApi(data);
+}
+
 void PluginAPI::GetDllInfo(PLUGIN_INFO * PluginInfo)
 {
 	PluginInfo->Version = 0x103;
 	PluginInfo->Type = PLUGIN_TYPE_GFX;
-	sprintf(PluginInfo->Name, "ANGLE %s v4.3.40", pluginName);
+	sprintf(PluginInfo->Name, "ANGLE %s v4.3.41", pluginName);
 	PluginInfo->NormalMemory = FALSE;
 	PluginInfo->MemoryBswaped = TRUE;
 }

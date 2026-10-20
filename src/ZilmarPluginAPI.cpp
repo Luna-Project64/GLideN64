@@ -72,6 +72,11 @@ EXPORT void CALL LunaRegisterRenderWindowApi(void* data)
 	api().LunaRegisterRenderWindowApi(data);
 }
 
+EXPORT void CALL LunaRegisterThreadBoosterApi(void* data)
+{
+	api().LunaRegisterThreadBoosterApi(data);
+}
+
 EXPORT void CALL LunaSetSpStatus(uint32_t* value)
 {
 	api().SetSpStatus(value);
